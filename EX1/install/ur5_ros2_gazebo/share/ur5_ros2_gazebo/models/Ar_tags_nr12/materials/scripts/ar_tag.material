@@ -1,15 +1,1 @@
-material ar_tag
-{
-  technique
-  {
-    pass
-    {
-      texture_unit
-      {
-        texture MarkerData_2.png
-	scale 1 1
-      }
-    }
-  }
-}
-
+/home/athimet/FRA532_Mobile_Robot/EX1/src/ur5_ros2_gazebo/models/Ar_tags_nr12/materials/scripts/ar_tag.material

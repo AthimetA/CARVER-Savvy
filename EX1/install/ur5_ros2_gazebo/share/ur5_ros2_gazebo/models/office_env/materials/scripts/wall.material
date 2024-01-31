@@ -1,15 +1,1 @@
-material wall
-{
-  technique
-  {
-    pass
-    {
-      texture_unit
-      {
-        texture wall_color.jpg
-	scale 1 1
-      }
-    }
-  }
-}
-
+/home/athimet/FRA532_Mobile_Robot/EX1/src/ur5_ros2_gazebo/models/office_env/materials/scripts/wall.material

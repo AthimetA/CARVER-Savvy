@@ -1,2 +1,1 @@
-source;share/carver_navigation/environment/ament_prefix_path.sh
-source;share/carver_navigation/environment/path.sh
+/home/athimet/FRA532_Mobile_Robot/EX1/build/carver_navigation/ament_cmake_environment_hooks/local_setup.dsv

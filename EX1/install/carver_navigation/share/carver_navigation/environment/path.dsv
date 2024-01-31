@@ -1,1 +1,1 @@
-prepend-non-duplicate-if-exists;PATH;bin
+/home/athimet/FRA532_Mobile_Robot/EX1/build/carver_navigation/ament_cmake_environment_hooks/path.dsv

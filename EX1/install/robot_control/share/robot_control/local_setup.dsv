@@ -1,2 +1,1 @@
-source;share/robot_control/environment/ament_prefix_path.sh
-source;share/robot_control/environment/path.sh
+/home/athimet/FRA532_Mobile_Robot/EX1/build/robot_control/ament_cmake_environment_hooks/local_setup.dsv
