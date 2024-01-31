@@ -36,7 +36,8 @@ install(DIRECTORY
   # add directories here
   description
   launch
-  config 
+  config
+  worlds 
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

@@ -4,31 +4,31 @@
     <!-- This file is not a robot in and of itself, it just contains some useful tags that could be included in any robot -->
 
     <!-- add more codes -->
-    <material name="Grey">
+    <material name="grey">
         <color rgba="0.2 0.2 0.2 1.0"/>
     </material>
 
-    <material name="Orange">
+    <material name="orange">
         <color rgba="1.0 0.423529411765 0.0392156862745 1.0"/>
     </material>
 
-    <material name="Blue">
+    <material name="blue">
         <color rgba="0.0 0.5 1.0 1.0"/>      
     </material>
 
-    <material name="Red">
+    <material name="red">
     <color rgba="1.0 0.0 0.0 1.0"/>      
     </material>
 
-    <material name="Black">
+    <material name="black">
         <color rgba="0.0 0.0 0.0 0.6"/>      
     </material>
 
-    <material name="White">
+    <material name="white">
         <color rgba="1.0 1.0 1.0 1.0"/>      
     </material>
 
-    <material name="DarkBlue">
+    <material name="darkblue">
         <color rgba="0.0 0.0 0.3764 0.6"/>      
     </material>
 

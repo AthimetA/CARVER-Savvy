@@ -1,40 +1,37 @@
 import os
 
 from ament_index_python.packages import get_package_share_directory
-
 from launch import LaunchDescription
+from launch.actions import ExecuteProcess
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
-from launch_ros.actions import Node
 
-import xacro
-
+#TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
 
 def generate_launch_description():
-
-    # Check if we're told to use sim time
-    use_sim_time = LaunchConfiguration('use_sim_time')
-
-    # Process the URDF file
-    pkg_path = os.path.join(get_package_share_directory('cocoam_description'))
-    xacro_file = os.path.join(pkg_path,'description','cocoam_robot.urdf.xacro')
-    robot_description_config = xacro.process_file(xacro_file)
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    robot_name = 'my_robot'
+    world_file_name = 'empty.world'
     
-    # Create a robot_state_publisher node
-    params = {'robot_description': robot_description_config.toxml(), 'use_sim_time': use_sim_time}
-    node_robot_state_publisher = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        parameters=[params]
-    )
-    
-    # Launch!
+    world = os.path.join(get_package_share_directory(robot_name), 'worlds', world_file_name)
+
+    urdf = os.path.join(get_package_share_directory(robot_name), 'urdf', 'my_robot.urdf')
+
+    xml = open(urdf, 'r').read()
+
+    xml = xml.replace('"', '\\"')
+
+    swpan_args = '{name: \"my_robot\", xml: \"'  +  xml + '\" }'
+
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time',
-            default_value='false',
-            description='Use sim time if true'),
+        ExecuteProcess(
+            cmd=['gazebo', '--verbose', world, '-s', 'libgazebo_ros_factory.so'],
+            output='screen'),
 
-        node_robot_state_publisher
+        ExecuteProcess(
+            cmd=['ros2', 'param', 'set', '/gazebo', 'use_sim_time', use_sim_time],
+            output='screen'),
+
+        # ExecuteProcess(
+        #     cmd=['ros2', 'service', 'call', '/spawn_entity', 'gazebo_msgs/SpawnEntity', swpan_args],
+        #     output='screen'),
     ])

@@ -31,26 +31,33 @@ def generate_launch_description():
     )
     launch_description.add_action(node_robot_state_publisher)
 
-    # Add Gazebo
-    # gazebo = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource([os.path.join(
-    #         get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-    #     )
-    # launch_description.add_action(gazebo)
+    # ***** GAZEBO ***** #   
+    # DECLARE Gazebo WORLD file:
+    ur5_ros2_gazebo = os.path.join(
+        get_package_share_directory(description_package_name),
+        'worlds',
+        'pal_office.world')
+    # DECLARE Gazebo LAUNCH file:
+    gazebo = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+                launch_arguments={'world': ur5_ros2_gazebo}.items(),
+             )
+    launch_description.add_action(gazebo)
 
-    # # Add spawn entity
-    # # SPAWN ROBOT TO GAZEBO:
-    # spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-    #                     arguments=['-topic', 'robot_description',
-    #                                '-entity', 'robot',
-    #                                '-x', '0.0',
-    #                                 '-y', '0.0',
-    #                                 '-z', '0.0',
-    #                                 '-R', '0.0',
-    #                                 '-P', '0.0',
-    #                                 '-Y', '0.0',],
-    #                     output='screen')
-    # launch_description.add_action(spawn_entity)
+    # Add spawn entity
+    # SPAWN ROBOT TO GAZEBO:
+    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
+                        arguments=['-topic', 'robot_description',
+                                   '-entity', 'robot',
+                                   '-x', '0.0',
+                                    '-y', '0.0',
+                                    '-z', '0.0',
+                                    '-R', '0.0',
+                                    '-P', '0.0',
+                                    '-Y', '0.0',],
+                        output='screen')
+    launch_description.add_action(spawn_entity)
 
     # # ***** CONTROLLERS ***** #
     # # Joint state broadcaster:

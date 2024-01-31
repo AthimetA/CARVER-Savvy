@@ -24,7 +24,7 @@
             <geometry>
                 <box size="0.3 0.3 0.15"/>
             </geometry>
-            <material name="White"/>
+            <material name="white"/>
         </visual>
         <collision>
             <origin xyz="0.15 0 0.075"/>
@@ -51,7 +51,7 @@
             <geometry>
                 <cylinder radius="0.05" length="0.04"/>
             </geometry>
-            <material name="Blue"/>
+            <material name="blue"/>
         </visual>
         <collision>
             <geometry>
@@ -77,7 +77,7 @@
             <geometry>
                 <cylinder radius="0.05" length="0.04"/>
             </geometry>
-            <material name="Blue"/>
+            <material name="blue"/>
         </visual>
         <collision>
             <geometry>
@@ -103,7 +103,7 @@
             <geometry>
                 <sphere radius="0.05"/>
             </geometry>
-            <material name="Black"/>
+            <material name="black"/>
         </visual>
         <collision>
             <geometry>
