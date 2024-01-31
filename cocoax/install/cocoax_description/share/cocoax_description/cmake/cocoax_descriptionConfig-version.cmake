@@ -1,0 +1,1 @@
+/home/athimet/FRA532_Mobile_Robot/cocoax/build/cocoax_description/ament_cmake_core/cocoax_descriptionConfig-version.cmake

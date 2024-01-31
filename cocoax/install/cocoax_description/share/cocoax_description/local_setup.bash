@@ -1,0 +1,1 @@
+/home/athimet/FRA532_Mobile_Robot/cocoax/build/cocoax_description/ament_cmake_environment_hooks/local_setup.bash

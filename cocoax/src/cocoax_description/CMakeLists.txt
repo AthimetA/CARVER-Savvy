@@ -34,8 +34,7 @@ install(PROGRAMS
 ################ INSTALL LAUNCH, ETC #################
 install(DIRECTORY
   # add directories here
-  meshes
-  robot
+  description
   launch
   config 
   DESTINATION share/${PROJECT_NAME})
