@@ -1,5 +1,4 @@
 import os
-import sys
 
 from ament_index_python.packages import get_package_share_directory
 
@@ -13,32 +12,29 @@ import xacro
 
 def generate_launch_description():
 
+    # Check if we're told to use sim time
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
-    # Create the launch description 
-    launch_description = LaunchDescription()
+    # Process the URDF file
+    pkg_path = os.path.join(get_package_share_directory('cocoax_description'))
+    xacro_file = os.path.join(pkg_path,'description','cocoax_robot.urdf.xacro')
+    robot_description_config = xacro.process_file(xacro_file)
     
-    # Add Robot description
-    description_package_name = 'cocoax_description'
-    description_file_subpath = 'description/cocoax_robot.urdf.xacro'
-    xacro_file = os.path.join(get_package_share_directory(description_package_name),description_file_subpath) # Use xacro to process the file
-    robot_description_raw = xacro.process_file(xacro_file).toxml()
-    node_robot_state_publisher = Node(     # Configure the node
+    # Create a robot_state_publisher node
+    params = {'robot_description': robot_description_config.toxml(), 'use_sim_time': use_sim_time}
+    node_robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        parameters=[{'robot_description': robot_description_raw,
-        'use_sim_time': True}]
+        parameters=[params]
     )
-    launch_description.add_action(node_robot_state_publisher)
+    
+    # Launch!
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='false',
+            description='Use sim time if true'),
 
-    return launch_description
-
-def main(args=None):
-    try:
-        generate_launch_description()
-    except KeyboardInterrupt:
-        # quit
-        sys.exit()
-
-if __name__ == '__main__':
-    main()
+        node_robot_state_publisher
+    ])
