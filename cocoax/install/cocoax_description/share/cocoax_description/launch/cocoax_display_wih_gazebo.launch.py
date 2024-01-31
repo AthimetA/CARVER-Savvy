@@ -1,1 +1,0 @@
-/home/athimet/FRA532_Mobile_Robot/cocoax/src/cocoax_description/launch/cocoax_display_wih_gazebo.launch.py

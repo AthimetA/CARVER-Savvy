@@ -1,0 +1,23 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    cocoam_joint_group_VelocityController:
+      type: velocity_controllers/JointGroupVelocityController
+
+cocoam_joint_group_VelocityController:
+  ros__parameters:
+    joints:
+      - joint_rev_0_1
+      - joint_rev_1_2
+      - joint_rev_2_3
+
+    command_interfaces:
+      - velocity
+    
+    state_interfaces:
+      - velocity
+      - effort
