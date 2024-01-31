@@ -34,6 +34,8 @@ install(
   PROGRAMS
     scripts/ik.py
     scripts/simple_controller_example.py
+    scripts/purepursuit_solution.py
+    scripts/test_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import numpy as np
 import rclpy
 from rclpy.node import Node

@@ -18,8 +18,6 @@ class Controller(Node):
         # Set the timer period for periodic callback execution
         timer_period = 0.1
         self.timer = self.create_timer(timer_period, self.timer_callback)
-        # # Subscribe to the pose topic to get the robot's current position
-        # self.pose_subscription = self.create_subscription(Pose, '/turtle1/pose', self.pose_callback, 10)
         # Initialize pose and goal
         self.pose = Pose()
         self.goal = np.array([0.0, 0.0])

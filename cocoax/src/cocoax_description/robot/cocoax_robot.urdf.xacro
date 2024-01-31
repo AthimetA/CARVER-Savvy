@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="robot">
+
+  <!-- This is an example of a URDF. -->
+  <!-- As we move through the file, new things to note will be pointed out. -->
+  <!-- It's not meant an example of GOOD design, but an example of some of the various features of URDF/xacro. -->
+
+  <!-- This will include all the contents of example_include.xacro first. Go check it out! -->
+  <xacro:include filename="cocoax_include.xacro" />
+  <xacro:include filename="cocoax_gazebo.xacro" />
+
+  <!-- This first link called "world" is empty -->
+  <link name="world"></link>
+
+  <!-- A simple fixed joint from our empty world link, to our base. -->
+  <!-- The base origin is offset from the world origin. -->
+  <joint name="world_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="world"/>
+      <child link="link_0"/>        
+  </joint>
+
+  <link name="link_0">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///$(find cocoax_description)/meshes/link_0.stl"/>
+      </geometry>
+      <material name="Grey"/>
+    </visual>
+
+    <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <contact_coefficients mu="0" kp="1000.0" kd="1.0"/>
+        <geometry>
+            <mesh filename="file:///$(find cocoax_description)/meshes/link_0.stl"/>
+        </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${link_0_c_offset_x} ${link_0_c_offset_y} ${link_0_c_offset_z}" rpy="0 0 0"/>
+      <mass value="0.689781" />
+      <inertia ixx="0.001916" ixy="0.000000" ixz="0.000000" iyy="0.001916" iyz="0.000000" izz="0.003787" />
+    </inertial>
+  </link>
+
+  <joint name="joint_rev_0_1" type="revolute">
+    <parent link="link_0"/>
+    <child link="link_1"/>
+    <origin rpy="0 0 0" xyz="0 0 0.136"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="1.0" velocity="1.0"/>
+  </joint>
+
+  <link name="link_1">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///$(find cocoax_description)/meshes/link_1.stl"/>
+      </geometry>
+      <material name="White"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <contact_coefficients mu="0" kp="1000.0" kd="1.0"/>
+      <geometry>
+          <mesh filename="file:///$(find cocoax_description)/meshes/link_1.stl"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${link_1_c_offset_x} ${link_1_c_offset_y} ${link_1_c_offset_z}" rpy="0 0 0"/>
+      <mass value="3.584649" />
+      <inertia ixx="0.012069" ixy="0.000340" ixz="0.000161" iyy="0.018044" iyz="0.000626" izz="0.024030" />
+    </inertial>
+  </link>
+
+  <joint name="joint_rev_1_2" type="revolute">
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <origin rpy="1.5708 -1.5708 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-0.523" upper="0.523" effort="1.0" velocity="1.0"/>
+  </joint>
+
+  <link name="link_2">
+    <visual>
+      <origin xyz="0 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///$(find cocoax_description)/meshes/link_2.stl"/>
+      </geometry>
+      <material name="Orange"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <contact_coefficients mu="0" kp="1000.0" kd="1.0"/>
+      <geometry>
+          <mesh filename="file:///$(find cocoax_description)/meshes/link_2.stl"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${link_2_c_offset_x} ${link_2_c_offset_y} ${link_2_c_offset_z}" rpy="0 0 0"/>
+      <mass value="1.674836" />
+      <inertia ixx="0.002594" ixy="-0.000469" ixz="0.000898" iyy="0.012791" iyz="0.000258" izz="0.012890" />
+    </inertial>
+  </link>
+
+  <joint name="joint_rev_2_3" type="revolute">
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <origin rpy="0 0 0" xyz="0.26179 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.0472" upper="1.5708" effort="1.0" velocity="1.0"/>
+  </joint>
+
+  <link name="link_3">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///$(find cocoax_description)/meshes/link_3.stl"/>
+      </geometry>
+      <material name="Blue"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <contact_coefficients mu="0" kp="1000.0" kd="1.0"/>
+      <geometry>
+          <mesh filename="file:///$(find cocoax_description)/meshes/link_3.stl"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${link_3_c_offset_x} ${link_3_c_offset_y} ${link_3_c_offset_z}" rpy="0 0 0"/>
+      <mass value="1.783530" />
+      <inertia ixx="0.010684" ixy="0.000433" ixz="-0.000003" iyy="0.002620" iyz="-0.000004" izz="0.011479" />
+    </inertial>
+  </link>
+
+  <joint name="joint_eff" type="fixed">
+    <parent link="link_3"/>
+    <child link="end_effector"/>
+    <origin rpy="-1.5708 0 -1.5708" xyz="0 -0.245 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="end_effector">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///$(find cocoax_description)/meshes/end_effector.stl"/>
+      </geometry>
+      <material name="White"/>
+    </visual>
+  </link>
+</robot>
