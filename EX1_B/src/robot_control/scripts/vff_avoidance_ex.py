@@ -109,8 +109,8 @@ class VFF_Avoidance(Node):
             obstacle_angle = scan.angle_min + scan.angle_increment * dist_nearest_angle
             opposite_angle = obstacle_angle - math.pi
             obstacle_dist = OBSTACLE_DISTANCE - dist_nearest
-            vff_vector.repulsive[0] = math.cos(opposite_angle) + obstacle_dist
-            vff_vector.repulsive[1] = math.sin(opposite_angle) + obstacle_dist
+            vff_vector.repulsive[0] = math.cos(opposite_angle) * obstacle_dist
+            vff_vector.repulsive[1] = math.sin(opposite_angle) * obstacle_dist
 
         # Calculate the resultant vector by combining attractive and repulsive vectors
         vff_vector.result[0] = (vff_vector.repulsive[0] + vff_vector.attractive[0])
