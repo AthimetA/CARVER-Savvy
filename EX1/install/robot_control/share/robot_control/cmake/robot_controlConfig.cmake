@@ -1,1 +1,1 @@
-/home/athimet/FRA532_Mobile_Robot/EX1/build/robot_control/ament_cmake_core/robot_controlConfig.cmake
+/home/duplicix/FRA532_Mobile_Robot/EX1/build/robot_control/ament_cmake_core/robot_controlConfig.cmake

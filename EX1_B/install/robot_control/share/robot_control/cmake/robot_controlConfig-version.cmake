@@ -1,0 +1,1 @@
+/home/duplicix/FRA532_Mobile_Robot/EX1_B/build/robot_control/ament_cmake_core/robot_controlConfig-version.cmake

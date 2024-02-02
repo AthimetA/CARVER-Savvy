@@ -1,1 +1,1 @@
-/home/athimet/FRA532_Mobile_Robot/EX1/build/carver_navigation/ament_cmake_environment_hooks/local_setup.sh
+/home/duplicix/FRA532_Mobile_Robot/EX1/build/carver_navigation/ament_cmake_environment_hooks/local_setup.sh

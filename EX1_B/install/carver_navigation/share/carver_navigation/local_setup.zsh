@@ -1,0 +1,1 @@
+/home/duplicix/FRA532_Mobile_Robot/EX1_B/build/carver_navigation/ament_cmake_environment_hooks/local_setup.zsh

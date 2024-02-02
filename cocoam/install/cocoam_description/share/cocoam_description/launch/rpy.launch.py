@@ -1,1 +1,0 @@
-/home/athimet/FRA532_Mobile_Robot/cocoam/src/cocoam_description/launch/rpy.launch.py

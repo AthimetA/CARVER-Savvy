@@ -1,1 +1,1 @@
-/home/athimet/FRA532_Mobile_Robot/cocoam/src/cocoam_description/launch/cocoam_gazebo.launch.py
+/home/duplicix/FRA532_Mobile_Robot/cocoam/src/cocoam_description/launch/cocoam_gazebo.launch.py
