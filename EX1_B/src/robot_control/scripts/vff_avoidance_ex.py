@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # Import necessary ROS 2 and other Python libraries
 import rclpy
 from rclpy.node import Node
@@ -33,6 +34,7 @@ class VFF_Avoidance(Node):
     def laser_scan_callback(self, msg):
         # Store the laser scan data for use in the controller
         self.laser_scan = msg
+        self.get_vff(self.laser_scan)
     
     # Generate visualization markers for the VFF vectors
     def get_debug_vff(self, vff_vectors):
@@ -76,11 +78,13 @@ class VFF_Avoidance(Node):
     def vff_controller(self):
         # Only proceed if laser scan data is available
         if self.laser_scan != None:
+            
             # Calculate the VFF based on the current laser scan
             # Extract the resultant vector for calculating velocity commands
             # Create the velocity command message
             # Publish the velocity command
             # Publish visualization markers
+
             pass
     
     # Calculate the Virtual Force Field based on laser scan data
@@ -91,12 +95,27 @@ class VFF_Avoidance(Node):
                       'repulsive': [0.0, 0.0],  # Obstacle avoidance vector
                       'result': [0.0, 0.0]}  # Combined vector
         # Find the nearest obstacle
+        dist_nearest_angle = np.argmin(scan.ranges)
+        dist_nearest = scan.ranges[dist_nearest_angle]
+
+        print("min_idx = " + str(dist_nearest_angle) + "min_dist = " + str(dist_nearest))
+
         # If the nearest obstacle is within the influence threshold, calculate the repulsive vector
         # if distance_min < OBSTACLE_DISTANCE:
+        if dist_nearest <= OBSTACLE_DISTANCE:
+
             # Opposite direction to the obstacle
             # Convert to Cartesian coordinates
-        
+            obstacle_angle = scan.angle_min + scan.angle_increment * dist_nearest_angle
+            opposite_angle = obstacle_angle - math.pi
+            obstacle_dist = OBSTACLE_DISTANCE - dist_nearest
+            vff_vector.repulsive[0] = math.cos(opposite_angle) + obstacle_dist
+            vff_vector.repulsive[1] = math.sin(opposite_angle) + obstacle_dist
+
         # Calculate the resultant vector by combining attractive and repulsive vectors
+        vff_vector.result[0] = (vff_vector.repulsive[0] + vff_vector.attractive[0])
+        vff_vector.result[1] = (vff_vector.repulsive[1] + vff_vector.attractive[1])
+        
         return vff_vector
 
 # Main function to execute the node

@@ -34,8 +34,11 @@ install(
   PROGRAMS
     scripts/ik.py
     scripts/simple_controller_example.py
+    scripts/simple_controller_solution.py
+    scripts/purepursuit_example.py
     scripts/purepursuit_solution.py
     scripts/test_node.py
+    scripts/vff_avoidance_ex.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
