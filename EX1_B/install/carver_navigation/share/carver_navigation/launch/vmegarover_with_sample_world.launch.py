@@ -1,1 +1,0 @@
-/home/duplicix/FRA532_Mobile_Robot/EX1_B/src/carver_navigation/launch/vmegarover_with_sample_world.launch.py

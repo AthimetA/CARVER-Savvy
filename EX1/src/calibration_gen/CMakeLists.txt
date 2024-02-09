@@ -28,6 +28,9 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/signal_generate.py
+  scripts/cal_node.py
+  scripts/cal_node_arduino.py
+  scripts/imuread_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

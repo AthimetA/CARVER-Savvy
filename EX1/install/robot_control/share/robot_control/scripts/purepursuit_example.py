@@ -1,1 +1,1 @@
-/home/duplicix/FRA532_Mobile_Robot/EX1/src/robot_control/scripts/purepursuit_example.py
+/home/athimet/FRA532_Mobile_Robot/EX1/src/robot_control/scripts/purepursuit_example.py

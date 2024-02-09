@@ -1,1 +1,0 @@
-/home/duplicix/FRA532_Mobile_Robot/EX1_B/src/carver_navigation/launch/robot_state_publisher.launch.py
