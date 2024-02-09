@@ -28,6 +28,9 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/signal_generate.py
+  scripts/signal_receive_calibrate.py
+  scripts/imuread_node.py
+  scripts/imu_receive_calibrate.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

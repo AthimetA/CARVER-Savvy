@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-
 import os
 from signal import signal
 import rclpy
@@ -14,7 +13,7 @@ class CalibrationGen(Node):
         super().__init__('signal_generator')
         
         # establish timer
-        self.timer_period = 0.1
+        self.timer_period = 0.01
         self.sensor_publisher = self.create_publisher(Float64MultiArray,'/sensor_data',10)
         self.timer = self.create_timer(self.timer_period,self.timer_callback)
         
