@@ -1,1 +1,0 @@
-/home/athimet/FRA532_Mobile_Robot/EX1/src/ur5_ros2_gazebo/launch/ur5_simulation.launch.py
