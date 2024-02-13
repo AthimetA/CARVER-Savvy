@@ -37,11 +37,18 @@ def generate_launch_description():
         get_package_share_directory(description_package_name),
         'worlds',
         'pal_office.world')
+    
+    # Gazebo parameters file
+    gazebo_params_file = os.path.join(
+        get_package_share_directory(description_package_name),
+        'config',
+        'gazebo_params.yaml')
+
     # DECLARE Gazebo LAUNCH file:
     gazebo = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
                     get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': ur5_ros2_gazebo}.items(),
+                launch_arguments={'world': ur5_ros2_gazebo, 'extra_gazebo_args': '--ros-args --params-file '+ gazebo_params_file}.items(),
              )
     launch_description.add_action(gazebo)
 
@@ -60,13 +67,21 @@ def generate_launch_description():
     launch_description.add_action(spawn_entity)
 
     # # ***** CONTROLLERS ***** #
-    # # Joint state broadcaster:
-    # joint_state_broadcaster_spawner = Node(
-    #     package="controller_manager",
-    #     executable="spawner",
-    #     arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-    # )
-    # launch_description.add_action(joint_state_broadcaster_spawner)
+    # Joint state broadcaster:
+    joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+    )
+    launch_description.add_action(joint_state_broadcaster_spawner)
+
+    # Diff drive controller:
+    diff_drive_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_drive_controller", "--controller-manager", "/controller_manager"],
+    )
+    launch_description.add_action(diff_drive_controller_spawner)
 
 
     return launch_description

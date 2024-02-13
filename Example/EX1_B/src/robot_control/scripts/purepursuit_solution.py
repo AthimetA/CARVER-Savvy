@@ -139,6 +139,7 @@ class DifferentialDrivePurePursuit(Node):
 
     # Method to get the current pose of the robot using TF2 transformations
     def get_robot_pose(self):
+        self.get_logger().info('Getting robot pose')
         try:
             trans = self.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
             pose = Pose()
@@ -146,6 +147,7 @@ class DifferentialDrivePurePursuit(Node):
             pose.position.y = trans.transform.translation.y
             pose.position.z = trans.transform.translation.z
             pose.orientation = trans.transform.rotation
+            self.get_logger().info('Current position: x=%f, y=%f' % (pose.position.x, pose.position.y))
             return pose
         except (LookupException, ConnectivityException, ExtrapolationException) as e:
             self.get_logger().error('Could not transform from base_link to map: %s' % str(e))

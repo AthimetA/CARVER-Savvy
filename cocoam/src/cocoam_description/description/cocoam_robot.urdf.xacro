@@ -3,6 +3,9 @@
 
     <xacro:include filename="cocoam_robot_core.xacro" />
 
-    <xacro:include filename="gazebo_control.xacro" />
+    <!-- <xacro:include filename="gazebo_control.xacro" /> -->
+    <xacro:include filename="cocoam_ros2_control.xacro" />
+
+    <xacro:include filename="lidar.xacro" />
     
 </robot>

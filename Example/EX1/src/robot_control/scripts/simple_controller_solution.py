@@ -29,6 +29,7 @@ class Controller(Node):
 
     # Callback method for the timer
     def timer_callback(self):
+        self.get_logger().info('Timer callback')
         try:
             # Attempt to get the current transform from the map to the base_link
             trans = self.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
@@ -38,6 +39,7 @@ class Controller(Node):
             pose.position.z = trans.transform.translation.z
             pose.orientation = trans.transform.rotation
             self.pose = pose
+            self.get_logger().info('Current position: x=%f, y=%f' % (pose.position.x, pose.position.y))
         except (LookupException, ConnectivityException, ExtrapolationException) as e:
             # Log an error if the transformation is not possible
             self.get_logger().error('Could not transform from base_link to map: %s' % str(e))
