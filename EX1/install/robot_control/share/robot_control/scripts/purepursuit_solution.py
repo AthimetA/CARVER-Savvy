@@ -1,1 +1,0 @@
-/home/athimet/FRA532_Mobile_Robot/EX1/src/robot_control/scripts/purepursuit_solution.py

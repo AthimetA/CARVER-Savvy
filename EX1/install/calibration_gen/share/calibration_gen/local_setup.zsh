@@ -1,1 +1,0 @@
-/home/athimet/FRA532_Mobile_Robot/EX1/build/calibration_gen/ament_cmake_environment_hooks/local_setup.zsh
