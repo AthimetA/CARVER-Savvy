@@ -165,11 +165,6 @@ cocoam/build
 cocoam/install
 cocoam/log
 
-
-cocoam_B/build
-cocoam_B/install
-cocoam_B/log
-
 Example/EX1/build
 Example/EX1/install
 Example/EX1/log
@@ -179,3 +174,7 @@ Example/EX1_B/build
 Example/EX1_B/install
 Example/EX1_B/log
 Example/EX1_B/src/carver_navigation
+
+zhbbot/build
+zhbbot/install
+zhbbot/log
