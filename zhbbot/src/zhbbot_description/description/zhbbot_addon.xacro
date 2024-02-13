@@ -1,16 +1,24 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
+    <!-- Laser  -->
     <joint name="laser_joint" type="fixed">
-        <parent link="chassis"/>
+        <parent link="base_link"/>
         <child link="laser_frame"/>
-        <origin xyz="0.1 0 0.175" rpy="0 0 0"/>
+        <origin xyz="0.122 0 0.312" rpy="0 0 0"/>
     </joint>
 
     <link name="laser_frame">
         <visual>
             <geometry>
                 <cylinder radius="0.05" length="0.04"/>
+            </geometry>
+            <material name="red"/>
+        </visual>
+        <visual>
+            <origin xyz="0 0 -0.05"/>
+            <geometry>
+                <cylinder radius="0.01" length="0.1"/>
             </geometry>
             <material name="red"/>
         </visual>
@@ -24,10 +32,8 @@
         </xacro:inertial_cylinder>
     </link>
 
-
-
     <gazebo reference="laser_frame">
-        <material>Gazebo/Red</material>
+        <material>Gazebo/Black</material>
 
         <sensor name="laser" type="ray">
             <pose> 0 0 0 0 0 0 </pose>
@@ -42,7 +48,7 @@
                     </horizontal>
                 </scan>
                 <range>
-                    <min>0.1</min>
+                    <min>0.25</min>
                     <max>12</max>
                 </range>
             </ray>
@@ -54,6 +60,25 @@
                 <frame_name>laser_frame</frame_name>
             </plugin>
         </sensor>
+    </gazebo>
+
+    <!-- Ground truth pose -->
+    <gazebo>
+      <plugin name="groud_truth_pose" filename="libgazebo_ros_p3d.so">
+        <always_on>true</always_on>
+        <update_rate>50.0</update_rate>
+        <body_name>base_link</body_name>
+        <topic_name>odom</topic_name>
+        <gaussian_noise>0.00</gaussian_noise>
+        <frame_name>world</frame_name>
+        <tf_frame_name>world</tf_frame_name>
+        <tf_prefix>odom_groud_truth_pose</tf_prefix>
+        <xyz_offset>0 0 0</xyz_offset>
+        <rpy_offset>0 0 0</rpy_offset>
+        <ros>
+            <remapping>/odom:=odom_groud_truth_pose</remapping>
+        </ros>
+      </plugin>
     </gazebo>
 
 </robot>

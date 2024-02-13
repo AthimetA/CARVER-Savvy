@@ -6,7 +6,7 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    diff_drive_controller:
+    diff_cont:
       type: diff_drive_controller/DiffDriveController
 
 # diff_drive_controller:
@@ -58,7 +58,7 @@ controller_manager:
 #     angular.z.min_jerk: 0.0
 
 
-diff_drive_controller:
+diff_cont:
   ros__parameters:
 
     publish_rate: 50.0

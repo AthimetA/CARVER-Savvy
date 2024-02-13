@@ -18,8 +18,8 @@ def generate_launch_description():
     launch_description = LaunchDescription()
     
     # Add Robot description
-    description_package_name = 'cocoam_description'
-    description_file_subpath = 'description/cocoam_robot.urdf.xacro'
+    description_package_name = 'zhbbot_description'
+    description_file_subpath = 'description/zhbbot_robot.urdf.xacro'
     xacro_file = os.path.join(get_package_share_directory(description_package_name),description_file_subpath) # Use xacro to process the file
     robot_description_raw = xacro.process_file(xacro_file).toxml()
     node_robot_state_publisher = Node(     # Configure the node
@@ -33,7 +33,7 @@ def generate_launch_description():
 
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
-    ur5_ros2_gazebo = os.path.join(
+    world_file = os.path.join(
         get_package_share_directory(description_package_name),
         'worlds',
         'pal_office.world')
@@ -48,7 +48,7 @@ def generate_launch_description():
     gazebo = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
                     get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': ur5_ros2_gazebo, 'extra_gazebo_args': '--ros-args --params-file '+ gazebo_params_file}.items(),
+                launch_arguments={'world': world_file, 'extra_gazebo_args': '--ros-args --params-file '+ gazebo_params_file}.items(),
              )
     launch_description.add_action(gazebo)
 
@@ -87,8 +87,8 @@ def generate_launch_description():
     # Rviz
     rviz_config_file = os.path.join(
         get_package_share_directory(description_package_name),
-        'config',
-        'cocoam.rviz')
+        'rviz',
+        'zhbbot.rviz')
     
     rviz_node = Node(
         package='rviz2',
