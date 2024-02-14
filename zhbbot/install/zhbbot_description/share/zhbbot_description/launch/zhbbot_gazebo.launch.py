@@ -1,1 +1,0 @@
-/home/athimet/FRA532_Mobile_Robot/zhbbot/src/zhbbot_description/launch/zhbbot_gazebo.launch.py

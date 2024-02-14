@@ -9,7 +9,9 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
 
-    joy_params = os.path.join(get_package_share_directory('cocoam_description'),'config','joystick.yaml')
+    package_name = 'zhbbot_description'
+
+    joy_params = os.path.join(get_package_share_directory(package_name),'config','zhbbot_joystick.yaml')
 
     joy_node = Node(
             package='joy',
