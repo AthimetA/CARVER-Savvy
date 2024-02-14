@@ -80,10 +80,19 @@ def generate_launch_description():
         get_package_share_directory('nav2_bringup'),
         'launch')
     
-    # TOPIC RELAY
-    cmd_vel_relay = Node(package='topic_tools', executable='relay', name='cmd_vel_relay', output='screen',
-                        parameters=[{'input_topic': '/cmd_vel',
-                                    'output_topic': '/diff_cont/cmd_vel_unstamped'}])
+    # Twist Mux
+    twist_mux_config = os.path.join(
+        get_package_share_directory(package_name),
+        'config',
+        'twist_mux.yaml')
+    
+    twist_mux_node = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        name='twist_mux',
+        parameters=[twist_mux_config, {'use_sim_time': use_sim_time}],
+        remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
+        )
 
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
@@ -95,8 +104,8 @@ def generate_launch_description():
         rviz_node,
         # Joystick
         joy,
-        # Topic relay
-        cmd_vel_relay,
+        # Twist Mux
+        twist_mux_node,
 
         # SLAM Toolbox and Navigation
         DeclareLaunchArgument(
