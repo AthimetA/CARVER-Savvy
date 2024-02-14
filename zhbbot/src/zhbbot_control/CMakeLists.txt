@@ -34,6 +34,7 @@ install(PROGRAMS
   scripts/simple_controller_solution.py
   scripts/test_node.py
   scripts/vff_avoidance_ex.py
+  scripts/vff_avoidance.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

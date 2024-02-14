@@ -96,7 +96,7 @@ class VFF_Avoidance(Node):
     
     # Calculate the Virtual Force Field based on laser scan data
     def get_vff(self, scan):
-        OBSTACLE_DISTANCE = 2.00  # Threshold distance for obstacle influence
+        OBSTACLE_DISTANCE = 0.60  # Threshold distance for obstacle influence
         # Initialize the VFF vectors
         vff_vector = {'attractive': [OBSTACLE_DISTANCE, 0.0],  # Goal-directed vector
                       'repulsive': [0.0, 0.0],  # Obstacle avoidance vector
