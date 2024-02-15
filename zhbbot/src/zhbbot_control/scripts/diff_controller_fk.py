@@ -60,9 +60,9 @@ class DifferentialDriveTransform(Node):
         # Get the wheel velocities from the joint_states
         velocities = np.array(joint_states.velocity).astype(np.float64)
 
-        wl = velocities[0]
-        wr = velocities[1]
-        r = 0.75                           # radius of the wheel
+        wl = velocities[0] / 10.0
+        wr = velocities[1] / 10.0
+        r = 0.075                           # radius of the wheel
         base_width = 0.4                             # distance between the wheels
 
         vx = (r/2) * (wl + wr)
