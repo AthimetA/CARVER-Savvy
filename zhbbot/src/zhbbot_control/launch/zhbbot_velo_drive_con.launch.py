@@ -34,7 +34,14 @@ def generate_launch_description():
                     PathJoinSubstitution(
                         [FindPackageShare(package_name), gazebo_launch_subpath])),
                 )
-    
+
+    # Velocity Controller
+    velocity_controllers = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["velocity_cont", "-c", "/controller_manager"],
+    )
+
     diff_controller = Node(
         package='zhbbot_control',
         executable='diff_controller_fk.py',
@@ -45,6 +52,7 @@ def generate_launch_description():
     return LaunchDescription([
         
         gazebo,
+        velocity_controllers,
         diff_controller,
 
     ])

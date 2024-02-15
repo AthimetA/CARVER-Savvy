@@ -96,12 +96,12 @@ def generate_launch_description():
     #     arguments=["diff_cont", "-c", "/controller_manager"],
     # )
 
-    # Velocity Controller
-    velocity_controllers = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["velocity_cont", "-c", "/controller_manager"],
-    )
+    # # Velocity Controller
+    # velocity_controllers = Node(
+    #     package="controller_manager",
+    #     executable="spawner",
+    #     arguments=["velocity_cont", "-c", "/controller_manager"],
+    # )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -110,7 +110,7 @@ def generate_launch_description():
         node_robot_state_publisher,
         spawn_entity,
         # diff_drive_controllers,
-        velocity_controllers,
+        # velocity_controllers,
 
         RegisterEventHandler(
             OnProcessExit(

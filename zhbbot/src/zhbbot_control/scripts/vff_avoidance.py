@@ -31,9 +31,10 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         self.laser_scan = None
 
         # Create a publisher for robot velocity commands
-        # self.velocity_publisher = self.create_publisher(Twist, '/cmd_vel_zhbbot', 10) # publish to /cmd_vel_zhbbot topic
+        self.velocity_publisher = self.create_publisher(Twist, '/cmd_vel_zhbbot', 10) # publish to /cmd_vel_zhbbot topic
 
-        self.velocity_publisher = self.create_publisher(Twist, '/diff_drive_zhbbot', 10) # publish to /cmd_vel_zhbbot topic
+        # Publisher for ik controller
+        self.velocity_publisher = self.create_publisher(Twist, '/diff_drive_zhbbot', 10) 
 
         # ----- Visualization ----- #
         # Publisher for lookahead marker

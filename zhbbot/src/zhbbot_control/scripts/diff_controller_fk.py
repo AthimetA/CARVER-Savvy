@@ -24,15 +24,16 @@ class DifferentialDriveTransform(Node):
         # Initialize the ROS 2 node
         super().__init__('diffential_drive_transform')
 
+        print("Differential Drive Transform Node Started")
+        self.joint_states_buffer = JointState()
         # Create a subscriber for the Joint State Publisher
         self.create_subscription(JointState, '/joint_states', self.joint_states_callback, 10)
-        self.joint_states_buffer = JointState()
 
         # Create a publisher for robot velocity commands
         self.odom_pub = self.create_publisher(Odometry, '/odom', 10) # publish to /odom topic
 
         # create timer_callback
-        self.create_timer(1/20, self.differential_drive_inverse_kinematic)
+        self.create_timer(1/10, self.timer_callback)
 
         # Create a TransformBroadcaster
         self.odom_broadcaster = tf2_ros.TransformBroadcaster(self)
@@ -43,7 +44,10 @@ class DifferentialDriveTransform(Node):
         self.wz = 0.0
 
     def timer_callback(self):
-        self.differential_drive_inverse_kinematic(self.joint_states_buffer)
+        try:
+            self.differential_drive_inverse_kinematic(self.joint_states_buffer)
+        except:
+            self.get_logger().error('Did not receive joint_states yet')
 
     def joint_states_callback(self, msg:JointState):
         # Create a Twist message to subscribe to the diff drive controller
@@ -53,8 +57,11 @@ class DifferentialDriveTransform(Node):
         now = self.get_clock().now()
 
         # Create a Float64MultiArray message to publish the velocity commands
-        wl = joint_states.velocity[0]
-        wr = joint_states.velocity[1]
+        # Get the wheel velocities from the joint_states
+        velocities = np.array(joint_states.velocity).astype(np.float64)
+
+        wl = velocities[0]
+        wr = velocities[1]
         r = 0.075                           # radius of the wheel
         base_width = 0.4                             # distance between the wheels
 

@@ -35,6 +35,11 @@ class DifferentialDrivetoVelocityController(Node):
         # Create a Float64MultiArray message to publish the velocity commands
         velocity_cont_msg = Float64MultiArray()
         velocity_cont_msg.data = self.velocity_controller_inverse_kinematics(self.diff_drive_velocity)
+        # -------------------------For Demo purposes-------------------------
+        # 
+        # # Create a Float64MultiArray message to publish the velocity commands
+        velocity_cont_msg.data = [1.5, 0.5]
+        # -------------------------------------------------------------------
 
         # Publish the velocity commands
         self.velocity_cont_pub.publish(velocity_cont_msg)
