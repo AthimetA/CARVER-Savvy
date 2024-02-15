@@ -79,7 +79,7 @@ def generate_launch_description():
     nav2_launch_file_path = os.path.join(
         get_package_share_directory('nav2_bringup'),
         'launch')
-    
+
     # Twist Mux
     twist_mux_config = os.path.join(
         get_package_share_directory(package_name),
@@ -93,7 +93,6 @@ def generate_launch_description():
         parameters=[twist_mux_config, {'use_sim_time': use_sim_time}],
         remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
         )
-
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([

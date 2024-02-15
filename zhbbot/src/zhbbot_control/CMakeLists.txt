@@ -27,12 +27,13 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  scripts/ik.py 
+  scripts/diff_controller_fk.py
   scripts/purepursuit_example.py 
   scripts/purepursuit_solution.py 
   scripts/simple_controller_example.py
   scripts/simple_controller_solution.py
   scripts/test_node.py
+  scripts/velocity_controller_ik.py
   scripts/vff_avoidance_ex.py
   scripts/vff_avoidance.py
   DESTINATION lib/${PROJECT_NAME}
@@ -43,6 +44,7 @@ install(PROGRAMS
 install(DIRECTORY
   # add directories here
   config
+  launch
   scripts
   DESTINATION share/${PROJECT_NAME})
 

@@ -23,6 +23,7 @@
           </command_interface>
           <state_interface name="velocity"/>
           <state_interface name="position"/>
+          <state_interface name="effort"/>
       </joint>
 
       <joint name="right_wheel_joint">
@@ -32,6 +33,7 @@
           </command_interface>
           <state_interface name="velocity"/>
           <state_interface name="position"/>
+          <state_interface name="effort"/>
       </joint>
 
     </ros2_control>
