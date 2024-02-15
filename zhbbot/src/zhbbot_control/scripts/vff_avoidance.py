@@ -34,7 +34,7 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         self.velocity_publisher = self.create_publisher(Twist, '/cmd_vel_zhbbot', 10) # publish to /cmd_vel_zhbbot topic
 
         # Publisher for ik controller
-        self.velocity_publisher = self.create_publisher(Twist, '/diff_drive_zhbbot', 10) 
+        self.velocity_publisher_ik = self.create_publisher(Twist, '/diff_drive_zhbbot', 10) 
 
         # ----- Visualization ----- #
         # Publisher for lookahead marker
@@ -221,6 +221,7 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         twist.linear.x = linear_vel
         twist.angular.z = angular_vel
         self.velocity_publisher.publish(twist)
+        self.velocity_publisher_ik.publish(twist)
 
     # Method to check if the goal is reached
     def is_goal_reached(self, robot_pose, goal_pose):
