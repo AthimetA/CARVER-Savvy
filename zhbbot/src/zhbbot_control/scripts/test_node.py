@@ -17,7 +17,7 @@ class TestNode(Node):
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
 
-        self.odom_cal_sub = self.create_subscription(Odometry, '/odom', self.odom_cal_callback, 10)
+        self.odom_cal_sub = self.create_subscription(Odometry, '/odometry/filtered', self.odom_cal_callback, 10)
         self.odom_cal_buffer = Odometry()
         self.odom_true_sub = self.create_subscription(Odometry, '/odom_groud_truth_pose', self.odom_true_callback, 10)
         self.odom_true_buffer = Odometry()

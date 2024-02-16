@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:macro name="sensor_plugins" params="">
+        <!-- imu -->
+        <gazebo reference="imu_link">
+            <gravity>true</gravity>
+            <sensor name="imu_sensor" type="imu">
+                <always_on>true</always_on>
+                <update_rate>10</update_rate>
+                <visualize>true</visualize>
+                <topic>__default_topic__</topic>
+                <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                    <ros >
+                        <remapping>~/out:=imu</remapping>
+                    </ros>
+                    <topicName>imu</topicName>
+                    <bodyName>imu_link</bodyName>
+                    <updateRateHZ>10.0</updateRateHZ>
+                    <gaussianNoise>0.05</gaussianNoise>
+                    <xyzOffset>0 0 0</xyzOffset>
+                    <rpyOffset>0 0 0</rpyOffset>
+                    <frame_name>imu_link</frame_name>
+                    <initialOrientationAsReference>false</initialOrientationAsReference>
+                </plugin>
+                <pose>0 0 0 0 0 0</pose>
+                <imu>
+                    <angular_velocity>
+                        <x>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>2e-4</stddev>
+                            <bias_mean>0.000000</bias_mean>
+                            <bias_stddev>0.0000000</bias_stddev>
+                        </noise>
+                        </x>
+                        <y>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>2e-4</stddev>
+                            <bias_mean>0.000000</bias_mean>
+                            <bias_stddev>0.0000000</bias_stddev>
+                        </noise>
+                        </y>
+                        <z>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>2e-4</stddev>
+                            <bias_mean>0.000000</bias_mean>
+                            <bias_stddev>0.0000000</bias_stddev>
+                        </noise>
+                        </z>
+                    </angular_velocity>
+                    <linear_acceleration>
+                        <x>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>1.7e-2</stddev>
+                            <bias_mean>0.0</bias_mean>
+                            <bias_stddev>0.000</bias_stddev>
+                        </noise>
+                        </x>
+                        <y>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>1.7e-2</stddev>
+                            <bias_mean>0.0</bias_mean>
+                            <bias_stddev>0.000</bias_stddev>
+                        </noise>
+                        </y>
+                        <z>
+                        <noise type="gaussian">
+                            <mean>0.0</mean>
+                            <stddev>1.7e-2</stddev>
+                            <bias_mean>0.0</bias_mean>
+                            <bias_stddev>0.000</bias_stddev>
+                        </noise>
+                        </z>
+                    </linear_acceleration>
+                    </imu>
+            </sensor>
+        </gazebo> 
+    
+        <!-- lidar-->
+        <gazebo reference="lidar_link">
+            <sensor type="ray" name="lidar_sensor">
+                <pose>0 0 0 0 0 0</pose>
+                <visualize>true</visualize>
+                <always_on>true</always_on>
+                <update_rate>40</update_rate>
+                <ray>
+                    <scan>
+                        <horizontal>
+                            <samples>720</samples>
+                            <resolution>1</resolution>
+                            <min_angle>-3.1415926</min_angle>
+                            <max_angle>3.1415926</max_angle>
+                        </horizontal>
+                    </scan>
+                    <range>
+                        <min>0.05</min>
+                        <max>16.0</max>
+                        <resolution>0.03</resolution>
+                    </range>
+                    <noise>
+                        <type>gaussian</type>
+                        <mean>0.0</mean>
+                        <stddev>0.03</stddev>
+                    </noise>
+                </ray>
+                <plugin name="lidar_controller" filename="libgazebo_ros_ray_sensor.so">
+                    <ros>
+                        <remapping>~/out:=scan</remapping>
+                    </ros>
+                    <output_type>sensor_msgs/LaserScan</output_type>
+                    <topicName>scan</topicName>
+                    <frame_name>lidar_link</frame_name>
+                    <frame_Id>lidar_link</frame_Id>
+                </plugin>
+            </sensor>
+        </gazebo>
+    
+        <gazebo reference="camera_optical">
+            <sensor type="depth" name="camera">
+            <always_on>1</always_on>
+            <update_rate>20.0</update_rate>
+            <camera name="d435">
+                <pose>0 0 0 0 0 3.14</pose>
+                <horizontal_fov>1.3962634</horizontal_fov>
+                <image>
+                    <width>1600</width>
+                    <height>900</height>
+                    <format>R8G8B8</format>
+                </image>
+                <clip>
+                    <near>0.005</near>
+                    <far>10.0</far>
+                </clip>
+            </camera>
+            <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <baseline>0.2</baseline>
+                <alwaysOn>true</alwaysOn>
+                <updateRate>1.0</updateRate>
+                <cameraName>camera</cameraName>
+                <imageTopicName>color/image_raw</imageTopicName>
+                <cameraInfoTopicName>color/camera_info</cameraInfoTopicName>
+                <frame_name>camera_optical</frame_name>
+                <frame_Id>camera_optical</frame_Id>
+                <hackBaseline>0.07</hackBaseline>
+            </plugin>
+            </sensor>
+        </gazebo>    
+    </xacro:macro>
+</robot>

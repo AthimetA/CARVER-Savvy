@@ -1,0 +1,6 @@
+uint64 num
+---
+float64[] mean
+float64[] covariance
+---
+float64[] data

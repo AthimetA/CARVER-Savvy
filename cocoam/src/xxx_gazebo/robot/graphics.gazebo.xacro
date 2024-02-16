@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="gazebo_graphics_wheel" params="name">
+    <gazebo reference="${name}_wheel">
+      <material>Gazebo/Black</material>
+    </gazebo>
+  </xacro:macro>
+  <xacro:macro name="gazebo_graphics_castor" params="name">
+    <gazebo reference="${name}_castor">
+      <material>Gazebo/Yellow</material>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Contents-->
+  <xacro:macro name="gazebo_graphics" params="">
+    <gazebo reference="base_link">
+      <material>Gazebo/White</material>
+    </gazebo>
+    <xacro:gazebo_graphics_wheel name="left"/>
+    <xacro:gazebo_graphics_wheel name="right"/>
+    <xacro:gazebo_graphics_castor name="left_front"/>
+    <xacro:gazebo_graphics_castor name="right_front"/>
+    <xacro:gazebo_graphics_castor name="left_rear"/>
+    <xacro:gazebo_graphics_castor name="right_rear"/>  
+  </xacro:macro>
+    
+</robot>

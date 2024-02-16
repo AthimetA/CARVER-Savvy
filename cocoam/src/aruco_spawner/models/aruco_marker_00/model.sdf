@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<sdf version="1.7">
+  <model name="marker_00">
+    <static>true</static>
+    <link name="link">
+      <visual name="front_visual">
+        <pose>0.00005 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0001 0.15 0.15</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://aruco_marker_00/materials/scripts</uri>
+            <uri>model://aruco_marker_00/materials/textures</uri>
+            <name>Marker00</name>
+          </script>
+        </material>
+      </visual>
+      <!-- Hide the marker from the back -->
+      <visual name="rear_visual">
+        <pose>-0.00005 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.0001 0.15 0.15</size>
+          </box>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

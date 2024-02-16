@@ -42,11 +42,54 @@ def generate_launch_description():
         arguments=["velocity_cont", "-c", "/controller_manager"],
     )
 
+    # Forward Kinematics Controller
     diff_controller = Node(
         package='zhbbot_control',
         executable='diff_controller_fk.py',
         name='diff_controller_fk',
     )
+
+    # Robot Localization
+    pkg_name = 'zhbbot_control'
+    file_subfolder = 'config'
+    file_name = 'zhbbot_ekf.yaml'
+
+    file_path_full = file_subfolder + '/' + file_name
+
+    file_path = get_package_share_directory(pkg_name) + '/' + file_path_full
+    
+    robot_localization_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[file_path],
+        remappings=[("odometry/filtered", "/odom")],
+    ) 
+
+    # ***** SLAM TOOLBOX ***** #
+    # SLAM map
+    slam_map_path = os.path.join(
+        get_package_share_directory(package_name),
+        'maps',
+        'pal_office_map.yaml')
+    
+    slam_map_file = LaunchConfiguration('map', default=slam_map_path)
+
+    # ***** NAVIGATION ***** #
+    # Navigation parameters
+    nav2_param_path = os.path.join(
+        get_package_share_directory(package_name),
+        'config',
+        'navigation_param.yaml')
+    
+    nav2_param_file = LaunchConfiguration('params', default=nav2_param_path)
+
+    # launch file directory
+    nav2_launch_file_path = os.path.join(
+        get_package_share_directory('nav2_bringup'),
+        'launch')
+
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -54,5 +97,26 @@ def generate_launch_description():
         gazebo,
         velocity_controllers,
         diff_controller,
+        robot_localization_node,
+
+    # SLAM Toolbox and Navigation
+        DeclareLaunchArgument(
+            'map',
+            default_value=slam_map_file,
+            description='Full path to map file to load'),
+
+        DeclareLaunchArgument(
+            'params',
+            default_value=nav2_param_file,
+            description='Full path to param file to load'),
+
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                [nav2_launch_file_path, '/bringup_launch.py']),
+            launch_arguments={
+                'map': slam_map_file,
+                'use_sim_time': use_sim_time,
+                'params_file': nav2_param_file}.items(),
+        )
 
     ])

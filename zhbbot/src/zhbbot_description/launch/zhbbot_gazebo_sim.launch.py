@@ -56,30 +56,6 @@ def generate_launch_description():
                     PathJoinSubstitution(
                         [FindPackageShare(package_name), joy_launch_subpath])),
                 )
-    
-    # ***** SLAM TOOLBOX ***** #
-    # SLAM map
-    slam_map_path = os.path.join(
-        get_package_share_directory(package_name),
-        'maps',
-        'pal_office_map.yaml')
-    
-    slam_map_file = LaunchConfiguration('map', default=slam_map_path)
-
-    # ***** NAVIGATION ***** #
-    # Navigation parameters
-    nav2_param_path = os.path.join(
-        get_package_share_directory(package_name),
-        'config',
-        'navigation_param.yaml')
-    
-    nav2_param_file = LaunchConfiguration('params', default=nav2_param_path)
-
-    # launch file directory
-    nav2_launch_file_path = os.path.join(
-        get_package_share_directory('nav2_bringup'),
-        'launch')
-    # ***** NAVIGATION ***** #
 
     # Twist Mux
     twist_mux_config = os.path.join(
@@ -106,25 +82,5 @@ def generate_launch_description():
         joy,
         # Twist Mux
         twist_mux_node,
-
-        # SLAM Toolbox and Navigation
-        DeclareLaunchArgument(
-            'map',
-            default_value=slam_map_file,
-            description='Full path to map file to load'),
-
-        DeclareLaunchArgument(
-            'params',
-            default_value=nav2_param_file,
-            description='Full path to param file to load'),
-
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                [nav2_launch_file_path, '/bringup_launch.py']),
-            launch_arguments={
-                'map': slam_map_file,
-                'use_sim_time': use_sim_time,
-                'params_file': nav2_param_file}.items(),
-        )
 
     ])
