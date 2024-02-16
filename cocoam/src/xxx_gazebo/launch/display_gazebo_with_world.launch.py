@@ -134,6 +134,21 @@ def generate_launch_description():
         arguments=[property_urdf]
     )
     
+    odom = Node(
+        package="xxx_control",
+        executable="wheel_odom.py",
+        arguments=[property_urdf],
+    ) 
+    ekf = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[os.path.join(get_package_share_directory("xxx_description"), 'config', 'ekf.yaml')],
+    ) 
+    launch_description = LaunchDescription()
+
+
     launch_description = LaunchDescription()
     # launch_description.add_action(gazebo_server)
     launch_description.add_action(gazebo_server_with_world)
@@ -144,6 +159,8 @@ def generate_launch_description():
     launch_description.add_action(robot_controller_spawner)
     launch_description.add_action(spawn_entity)
     launch_description.add_action(ik)
+    launch_description.add_action(odom)
+    launch_description.add_action(ekf)
     
     return launch_description
 

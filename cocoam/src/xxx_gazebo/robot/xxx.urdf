@@ -456,7 +456,7 @@
   </ros2_control>
   <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_wheel_control">
-      <parameters>/home/pi31415/xxx2_ws/install/xxx_gazebo/share/xxx_gazebo/config/ros2_controllers_config.yaml</parameters>
+      <parameters>/home/athimet/FRA532_Mobile_Robot/cocoam/src/xxx_gazebo/config/ros2_controllers_config.yaml</parameters>
     </plugin>
   </gazebo>
 </robot>

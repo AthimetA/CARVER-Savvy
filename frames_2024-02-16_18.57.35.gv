@@ -1,7 +1,8 @@
 digraph G {
-"base_link" -> "left_wheel"[label=" Broadcaster: default_authority\nAverage rate: 60.042\nBuffer length: 4.78\nMost recent transform: 116.725\nOldest transform: 111.945\n"];
-"base_link" -> "right_wheel"[label=" Broadcaster: default_authority\nAverage rate: 60.042\nBuffer length: 4.78\nMost recent transform: 116.725\nOldest transform: 111.945\n"];
-"base_link" -> "base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"base_link" -> "left_wheel"[label=" Broadcaster: default_authority\nAverage rate: 60.12\nBuffer length: 4.99\nMost recent transform: 43.122\nOldest transform: 38.132\n"];
+"base_footprint" -> "base_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"base_link" -> "right_wheel"[label=" Broadcaster: default_authority\nAverage rate: 60.12\nBuffer length: 4.99\nMost recent transform: 43.122\nOldest transform: 38.132\n"];
+"odom" -> "base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 10.2\nBuffer length: 5.0\nMost recent transform: 1708084655.670984\nOldest transform: 1708084650.670859\n"];
 "base_link" -> "caster_wheel_f_l"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
 "base_link" -> "caster_wheel_f_r"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
 "base_link" -> "caster_wheel_r_l"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
@@ -10,6 +11,6 @@ digraph G {
 "base_link" -> "laser_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
 edge [style=invis];
  subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
-"Recorded at time: 1708081619.4745457"[ shape=plaintext ] ;
-}->"base_link";
+"Recorded at time: 1708084655.2627027"[ shape=plaintext ] ;
+}->"odom";
 }
