@@ -30,7 +30,7 @@ class DifferentialDriveTransform(Node):
         self.create_subscription(JointState, '/joint_states', self.joint_states_callback, 10)
 
         # Create a publisher for robot velocity commands
-        self.odom_topic_name = '/odom'
+        self.odom_topic_name = 'zhbbot_wheel/odom'
         self.odom_pub = self.create_publisher(Odometry, self.odom_topic_name, 10) # publish to /odom topic
 
         # create timer_callback
@@ -97,7 +97,7 @@ class DifferentialDriveTransform(Node):
         transform_stamped_msg = TransformStamped()
         transform_stamped_msg.header.stamp = self.get_clock().now().to_msg()
         transform_stamped_msg.header.frame_id = 'odom'
-        transform_stamped_msg.child_frame_id = 'base_link'
+        transform_stamped_msg.child_frame_id = 'base_footprint'
         transform_stamped_msg.transform.translation.x = self.x
         transform_stamped_msg.transform.translation.y = self.y
         transform_stamped_msg.transform.translation.z = 0.0
@@ -106,7 +106,7 @@ class DifferentialDriveTransform(Node):
         transform_stamped_msg.transform.rotation.z = quaternion.z
         transform_stamped_msg.transform.rotation.w = quaternion.w
 
-        self.odom_broadcaster.sendTransform(transform_stamped_msg)
+        # self.odom_broadcaster.sendTransform(transform_stamped_msg)
 
         odom = Odometry()
         odom.header.stamp = now.to_msg()
@@ -115,7 +115,7 @@ class DifferentialDriveTransform(Node):
         odom.pose.pose.position.y = self.y
         odom.pose.pose.position.z = 0.0
         odom.pose.pose.orientation = quaternion
-        odom.child_frame_id = "base_link"
+        odom.child_frame_id = "base_footprint"
         odom.twist.twist.linear.x = vx
         odom.twist.twist.linear.y = 0.0
         odom.twist.twist.angular.z = wz

@@ -64,7 +64,7 @@ def generate_launch_description():
         name='ekf_filter_node',
         output='screen',
         parameters=[file_path],
-        remappings=[("odometry/filtered", "/odom")],
+        # remappings=[("odometry/filtered", "/odom")],
     ) 
 
     # ***** SLAM TOOLBOX ***** #
@@ -79,7 +79,7 @@ def generate_launch_description():
     # ***** NAVIGATION ***** #
     # Navigation parameters
     nav2_param_path = os.path.join(
-        get_package_share_directory(package_name),
+        get_package_share_directory('zhbbot_control'),
         'config',
         'navigation_param.yaml')
     
