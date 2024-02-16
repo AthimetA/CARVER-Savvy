@@ -37,6 +37,13 @@ def generate_launch_description():
                         [FindPackageShare(package_name), gazebo_launch_subpath])),
                 )
     
+    # Diff Drive Controller
+    diff_drive_controllers = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_cont", "-c", "/controller_manager"],
+    )
+
     # ***Rviz*** #
     rviz_config_file = os.path.join(
         get_package_share_directory(package_name),
@@ -57,6 +64,20 @@ def generate_launch_description():
                         [FindPackageShare(package_name), joy_launch_subpath])),
                 )
     
+    # Twist Mux
+    twist_mux_config = os.path.join(
+        get_package_share_directory(package_name),
+        'config',
+        'twist_mux.yaml')
+    
+    twist_mux_node = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        name='twist_mux',
+        parameters=[twist_mux_config, {'use_sim_time': use_sim_time}],
+        remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
+        )
+    
     # ***** SLAM TOOLBOX ***** #
     config_dir = os.path.join(get_package_share_directory(package_name), 'config')
     config_file = os.path.join(config_dir, 'mapper_params_online_sync.yaml')
@@ -67,10 +88,13 @@ def generate_launch_description():
         
         # Gazebo
         gazebo,
+        diff_drive_controllers,
         # Rviz
         rviz_node,
         # Joystick
         joy,
+        # Twist Mux
+        twist_mux_node,
 
         # SLAM Toolbox and Navigation
         DeclareLaunchArgument(

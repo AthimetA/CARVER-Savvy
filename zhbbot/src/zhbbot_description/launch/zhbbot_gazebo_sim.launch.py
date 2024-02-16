@@ -79,6 +79,7 @@ def generate_launch_description():
     nav2_launch_file_path = os.path.join(
         get_package_share_directory('nav2_bringup'),
         'launch')
+    # ***** NAVIGATION ***** #
 
     # Twist Mux
     twist_mux_config = os.path.join(
