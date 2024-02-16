@@ -57,6 +57,11 @@ def generate_launch_description():
     file_path_full = file_subfolder + '/' + file_name
 
     file_path = get_package_share_directory(pkg_name) + '/' + file_path_full
+
+    robot_localization_dir = get_package_share_directory('zhbbot_control')
+    parameters_file_dir = os.path.join(robot_localization_dir, 'config')
+    parameters_file_path = os.path.join(parameters_file_dir, 'zhbbot_map_ekf.yaml')
+    os.environ['FILE_PATH'] = str(parameters_file_dir)
     
     robot_localization_node = Node(
         package='robot_localization',
@@ -64,8 +69,36 @@ def generate_launch_description():
         name='ekf_filter_node',
         output='screen',
         parameters=[file_path],
-        # remappings=[("odometry/filtered", "/odom")],
     ) 
+
+    ekf_filter_node_odom = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node_odom',
+	        output='screen',
+            parameters=[parameters_file_path],
+            remappings=[('odometry/filtered', 'odometry/local')]           
+           )
+    ekf_filter_node_map = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node_map',
+	        output='screen',
+            parameters=[parameters_file_path],
+            remappings=[('odometry/filtered', 'odometry/global')]
+           ) 
+    navsat_transform = Node(
+            package='robot_localization', 
+            executable='navsat_transform_node', 
+            name='navsat_transform',
+	        output='screen',
+            parameters=[parameters_file_path],
+            remappings=[('imu', 'imu/data'),
+                        ('gps/fix', 'gps/fix'), 
+                        ('gps/filtered', 'gps/filtered'),
+                        ('odometry/gps', 'odometry/gps'),
+                        ('odometry/filtered', 'odometry/global')]           
+           )     
 
     # ***** SLAM TOOLBOX ***** #
     # SLAM map
@@ -90,7 +123,6 @@ def generate_launch_description():
         get_package_share_directory('nav2_bringup'),
         'launch')
 
-
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
@@ -98,6 +130,9 @@ def generate_launch_description():
         velocity_controllers,
         diff_controller,
         robot_localization_node,
+        # ekf_filter_node_odom,
+        # ekf_filter_node_map,
+        # navsat_transform,
 
     # SLAM Toolbox and Navigation
         DeclareLaunchArgument(
