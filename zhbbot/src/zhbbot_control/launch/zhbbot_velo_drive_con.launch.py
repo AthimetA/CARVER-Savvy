@@ -42,11 +42,18 @@ def generate_launch_description():
         arguments=["velocity_cont", "-c", "/controller_manager"],
     )
 
-    # Forward Kinematics Controller
-    diff_controller = Node(
+    # Forward Kinematics Node
+    zhbbot_forward_kinemetic = Node(
         package='zhbbot_control',
-        executable='diff_controller_fk.py',
-        name='diff_controller_fk',
+        executable='zhbbot_forward_kinemetic.py',
+        name='zhbbot_forward_kinemetic',
+    )
+
+    # Inverse Kinematics Node
+    zhbbot_inverse_kinemetic = Node(
+        package='zhbbot_control',
+        executable='zhbbot_inverse_kinemetic.py',
+        name='zhbbot_inverse_kinemetic',
     )
 
     # Robot Localization
@@ -72,18 +79,18 @@ def generate_launch_description():
             remappings=[('odometry/filtered', 'odometry/global')]
            ) 
     
-    navsat_transform = Node(
-            package='robot_localization', 
-            executable='navsat_transform_node', 
-            name='navsat_transform',
-	        output='screen',
-            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
-            remappings=[('imu', 'imu/data'),
-                        ('gps/fix', 'gps/fix'), 
-                        ('gps/filtered', 'gps/filtered'),
-                        ('odometry/gps', 'odometry/gps'),
-                        ('odometry/filtered', 'odometry/global')]           
-           )     
+    # navsat_transform = Node(
+    #         package='robot_localization', 
+    #         executable='navsat_transform_node', 
+    #         name='navsat_transform',
+	#         output='screen',
+    #         parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
+    #         remappings=[('imu', 'imu/data'),
+    #                     ('gps/fix', 'gps/fix'), 
+    #                     ('gps/filtered', 'gps/filtered'),
+    #                     ('odometry/gps', 'odometry/gps'),
+    #                     ('odometry/filtered', 'odometry/global')]           
+    #        )     
 
     # ***** SLAM TOOLBOX ***** #
     # SLAM map
@@ -111,9 +118,13 @@ def generate_launch_description():
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
+        # Gazebo
         gazebo,
+        # Controllers
         velocity_controllers,
-        diff_controller,
+        # Kinematics
+        zhbbot_forward_kinemetic,
+        zhbbot_inverse_kinemetic,
 
         # EKF
         ekf_filter_node_odom,

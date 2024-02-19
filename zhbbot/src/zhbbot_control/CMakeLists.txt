@@ -27,9 +27,9 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  scripts/diff_controller_fk.py
+  scripts/zhbbot_forward_kinemetic.py
+  scripts/zhbbot_inverse_kinemetic.py
   scripts/test_node.py
-  scripts/velocity_controller_ik.py
   scripts/vff_avoidance.py
   DESTINATION lib/${PROJECT_NAME}
 )
