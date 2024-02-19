@@ -52,7 +52,7 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         General Variables
         
         '''
-        self.node_enable = False
+        self.node_status = "DISABLED" # SLEEP, ACTIVE, DISABLED
 
         # Create an action server for ZhbbotSendPath service
         self.send_path_service_server = self.create_service(ZhbbotSendPath, '/zhbbot_service/send_path', self.send_path_callback)
@@ -97,6 +97,10 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         self.__timer_hz = 20
         self.create_timer(1.0 / self.__timer_hz, self.timer_callback)
 
+        # Actknowledged timer
+        self.actknowledged_period = 5.0
+        self.last_actknowledged_timer = self.create_timer(self.actknowledged_period, self.actknowledged_callback)
+
 
         '''
         
@@ -108,14 +112,16 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         # Publisher for visualization markers
         self.vff_marker_pub = self.create_publisher(MarkerArray, "zhbbot/vff_marker", self.__qos_profile)
 
-
-
     def reset_node(self):
         # Reset the path and current pose index
         self.path = None
         self.current_pose_index = 0
         # Reset the laser scan data
         self.laser_scan = None
+        self.node_status = "DISABLED"
+
+    def actknowledged_callback(self):
+        self.get_logger().info(f'DifferentialDrivePurePursuitVFFAvoidance: Node status: {self.node_status}')
 
     '''
     
@@ -123,9 +129,11 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
 
     '''
 
+
     def timer_callback(self):
-        if self.node_enable:
+        if self.node_status == 'ENABLED':
             if self.path is not None and self.current_pose_index < len(self.path):
+                self.get_logger().info(f'current_pose_index: {self.current_pose_index}/{len(self.path)}')
                 # Get the current target pose from the path
                 current_pose = self.path[self.current_pose_index]
                 # Retrieve the robot's current pose
@@ -141,6 +149,16 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
                         # Check if the current target pose is reached
                         if self.is_goal_reached(robot_pose, current_pose):
                             self.current_pose_index += 1
+                        else:
+                            self.node_status = 'SLEEP'
+
+        if self.node_status == 'SLEEP':
+            self.vff_marker_pub.publish(MarkerArray())
+            self.reset_node()
+
+    # Method to check if the goal is reached
+    def is_goal_reached(self, robot_pose, goal_pose):
+        return self.distance_between_points(robot_pose.position, goal_pose.pose.position) <= self.__GOAL_THRESHOLD
 
     # Method to get the current pose of the robot using TF2 transformations
     def get_robot_pose(self):
@@ -243,8 +261,7 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         response.status = "DifferentialDrivePurePursuitVFFAvoidance: Path received from ZhbbotHandlerNode"
         self.path = request.path.poses
         self.current_pose_index = 0
-        self.node_enable = True
-
+        self.node_status = "ENABLED"
 
         # Send the goal to the fk node
         self.robot_sent_goal_service_call(self.path[-1])
@@ -364,10 +381,6 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
     Start Utility Functions
     
     '''
-
-    # Method to check if the goal is reached
-    def is_goal_reached(self, robot_pose, goal_pose):
-        return self.distance_between_points(robot_pose.position, goal_pose.pose.position) <= self.__GOAL_THRESHOLD
 
     # Utility method to calculate the Euclidean distance between two points
     def distance_between_points(self, point1, point2):

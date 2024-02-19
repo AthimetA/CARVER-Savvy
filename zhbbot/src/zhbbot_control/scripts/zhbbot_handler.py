@@ -24,6 +24,9 @@ class ZhbbotHandler(Node):
         # Initialize the ROS 2 node
         super().__init__('ZhbbotHandlerNode')
 
+        self.actknowledged_period = 5.0
+        self.last_actknowledged_timer = self.create_timer(self.actknowledged_period, self.actknowledged_callback)
+
         # Create an action client for ComputePathToPose to get the path for the robot
         self.action_client = ActionClient(self, ComputePathToPose, 'compute_path_to_pose')
 
@@ -90,6 +93,9 @@ class ZhbbotHandler(Node):
             self.get_logger().info('Path sent to the service RECEIVER NODE RESPONSE: %s' % response.status)
         except Exception as e:
             self.get_logger().info('Service call failed %r' % (e,))
+
+    def actknowledged_callback(self):
+        self.get_logger().info(f'ZhbbotHandlerNode: Is Running')
 
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
