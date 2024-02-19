@@ -214,7 +214,6 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         # Store the laser scan data for use in the controller
         self.laser_scan = msg
 
-
     # Method to publish the calculated velocity commands
     def publish_velocity(self, linear_vel, angular_vel):
         twist = Twist()

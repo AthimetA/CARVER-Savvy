@@ -38,7 +38,7 @@ class DifferentialDrivetoVelocityController(Node):
         # -------------------------For Demo purposes-------------------------
         # 
         # # Create a Float64MultiArray message to publish the velocity commands
-        velocity_cont_msg.data = [1.5, 0.5]
+        # velocity_cont_msg.data = [1.5, 0.5]
         # -------------------------------------------------------------------
 
         # Publish the velocity commands
