@@ -50,33 +50,17 @@ def generate_launch_description():
     )
 
     # Robot Localization
-    pkg_name = 'zhbbot_control'
-    file_subfolder = 'config'
-    file_name = 'zhbbot_ekf.yaml'
-
-    file_path_full = file_subfolder + '/' + file_name
-
-    file_path = get_package_share_directory(pkg_name) + '/' + file_path_full
-
     robot_localization_dir = get_package_share_directory('zhbbot_control')
     parameters_file_dir = os.path.join(robot_localization_dir, 'config')
     parameters_file_path = os.path.join(parameters_file_dir, 'zhbbot_map_ekf.yaml')
     os.environ['FILE_PATH'] = str(parameters_file_dir)
     
-    robot_localization_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        output='screen',
-        parameters=[file_path],
-    ) 
-
     ekf_filter_node_odom = Node(
             package='robot_localization', 
             executable='ekf_node', 
             name='ekf_filter_node_odom',
 	        output='screen',
-            parameters=[parameters_file_path],
+            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
             remappings=[('odometry/filtered', 'odometry/local')]           
            )
     ekf_filter_node_map = Node(
@@ -84,15 +68,16 @@ def generate_launch_description():
             executable='ekf_node', 
             name='ekf_filter_node_map',
 	        output='screen',
-            parameters=[parameters_file_path],
+            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
             remappings=[('odometry/filtered', 'odometry/global')]
            ) 
+    
     navsat_transform = Node(
             package='robot_localization', 
             executable='navsat_transform_node', 
             name='navsat_transform',
 	        output='screen',
-            parameters=[parameters_file_path],
+            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
             remappings=[('imu', 'imu/data'),
                         ('gps/fix', 'gps/fix'), 
                         ('gps/filtered', 'gps/filtered'),
@@ -129,9 +114,10 @@ def generate_launch_description():
         gazebo,
         velocity_controllers,
         diff_controller,
-        robot_localization_node,
-        # ekf_filter_node_odom,
-        # ekf_filter_node_map,
+
+        # EKF
+        ekf_filter_node_odom,
+        ekf_filter_node_map,
         # navsat_transform,
 
     # SLAM Toolbox and Navigation

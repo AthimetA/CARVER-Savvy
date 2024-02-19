@@ -87,21 +87,9 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+        output="screen",
+        parameters=[{'use_sim_time': True}]
     )
- 
-    # # Diff Drive Controller
-    # diff_drive_controllers = Node(
-    #     package="controller_manager",
-    #     executable="spawner",
-    #     arguments=["diff_cont", "-c", "/controller_manager"],
-    # )
-
-    # # Velocity Controller
-    # velocity_controllers = Node(
-    #     package="controller_manager",
-    #     executable="spawner",
-    #     arguments=["velocity_cont", "-c", "/controller_manager"],
-    # )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -109,8 +97,6 @@ def generate_launch_description():
         gazebo, 
         node_robot_state_publisher,
         spawn_entity,
-        # diff_drive_controllers,
-        # velocity_controllers,
 
         RegisterEventHandler(
             OnProcessExit(
