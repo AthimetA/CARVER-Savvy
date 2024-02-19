@@ -129,7 +129,6 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
 
     '''
 
-
     def timer_callback(self):
         if self.node_status == 'ENABLED':
             if self.path is not None and self.current_pose_index < len(self.path):
@@ -151,8 +150,7 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
                             self.current_pose_index += 1
                         else:
                             self.node_status = 'SLEEP'
-
-        if self.node_status == 'SLEEP':
+        elif self.node_status == 'SLEEP':
             self.vff_marker_pub.publish(MarkerArray())
             self.reset_node()
 
