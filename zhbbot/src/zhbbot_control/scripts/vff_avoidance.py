@@ -16,6 +16,8 @@ from sensor_msgs.msg import LaserScan
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import ColorRGBA
 
+from zhbbot_interfaces.srv import RobotSentgoal, Goalreach
+
 class DifferentialDrivePurePursuitVFFAvoidance(Node):
     # Constructor of the class
     def __init__(self):
@@ -59,6 +61,29 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         # Initialize path and current pose index
         self.path = None
         self.current_pose_index = 0
+
+        # Create a service server to recive goalreach from Fk node
+        self.goalreach_service_server = self.create_service(Goalreach, 'zhbbot/goal_reach', self.goal_reach_callback)
+        self.goal_reach = False
+
+        # Create a service client to send goal to Fk node
+        self.robot_sent_goal_service_client = self.create_client(RobotSentgoal, 'zhbbot/robot_sent_goal')
+
+    def goal_reach_callback(self, request: Goalreach.Request, response: Goalreach.Response):
+        self.goal_reach = request.goal_reach
+        response.status = "Goal reach status updated!"
+        print(f'Goal reach: {self.goal_reach}')
+        return response
+    
+    def goalreach_service_server_call(self, goal_pose):
+        while not self.robot_sent_goal_service_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Sent Goal service not available, waiting again...')
+        request = RobotSentgoal.Request()
+        request.goal_x = goal_pose.pose.position.x
+        request.goal_y = goal_pose.pose.position.y
+        future = self.robot_sent_goal_service_client.call_async(request)
+        self.get_logger().info('VFF Avoidance: Sent goal to FK node')
+        self.get_logger().info(f'future: {future}')
 
     # Method implementing the Pure Pursuit control logic
     def pure_pursuit_controller(self):
@@ -202,6 +227,9 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
     def get_result_callback(self, future):
         result = future.result().result
         self.get_logger().info('Path received')
+
+        self.goalreach_service_server_call(result.path.poses[-1])
+
         self.follow_path(result.path.poses)
 
     # Method to store the received path for following

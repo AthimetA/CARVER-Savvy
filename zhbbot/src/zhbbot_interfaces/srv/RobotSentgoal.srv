@@ -1,3 +1,4 @@
-float64[2] robot_sentgoal
+float64 goal_x
+float64 goal_y
 ---
-bool robot_sentgoal_status
+string status

@@ -18,6 +18,11 @@ from std_msgs.msg import ColorRGBA
 from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Odometry
 
+from zhbbot_interfaces.srv import RobotSentgoal, Goalreach
+
+# import all other neccesary libraries
+import sys
+
 class DifferentialDriveTransform(Node):
     # Constructor of the class
     def __init__(self):
@@ -25,6 +30,8 @@ class DifferentialDriveTransform(Node):
         super().__init__('diffential_drive_transform')
 
         print("Differential Drive Transform Node Started")
+        self.node_enabled = True
+
         self.joint_states_buffer = JointState()
         # Create a subscriber for the Joint State Publisher
         self.create_subscription(JointState, '/joint_states', self.joint_states_callback, 10)
@@ -34,7 +41,8 @@ class DifferentialDriveTransform(Node):
         self.odom_pub = self.create_publisher(Odometry, self.odom_topic_name, 10) # publish to /odom topic
 
         # create timer_callback
-        self.create_timer(1/10, self.timer_callback)
+        self.timer_hz = 10
+        self.create_timer(1.0 / self.timer_hz, self.timer_callback)
 
         # Create a TransformBroadcaster
         self.odom_broadcaster = tf2_ros.TransformBroadcaster(self)
@@ -45,16 +53,17 @@ class DifferentialDriveTransform(Node):
         self.wz = 0.0
 
     def timer_callback(self):
-        try:
-            self.differential_drive_inverse_kinematic(self.joint_states_buffer)
-        except:
-            self.get_logger().error('Did not receive joint_states yet')
+        if self.node_enabled:
+            try:
+                self.forward_kinematic_cal(self.joint_states_buffer)
+            except:
+                self.get_logger().error('Did not receive joint_states yet')
 
     def joint_states_callback(self, msg:JointState):
         # Create a Twist message to subscribe to the diff drive controller
         self.joint_states_buffer = msg
 
-    def differential_drive_inverse_kinematic(self, joint_states:JointState):
+    def forward_kinematic_cal(self, joint_states:JointState):
         now = self.get_clock().now()
 
         # Create a Float64MultiArray message to publish the velocity commands
@@ -119,8 +128,6 @@ class DifferentialDriveTransform(Node):
         odom.twist.twist.linear.y = 0.0
         odom.twist.twist.angular.z = wz
         self.odom_pub.publish(odom)
-
-        # print("x: " + str(self.x) + " y: " + str(self.y) + " wz: " + str(self.wz))
 
 # Main function to initialize and run the ROS 2 node
 def main(args=None):

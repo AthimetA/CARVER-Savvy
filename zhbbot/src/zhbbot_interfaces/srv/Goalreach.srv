@@ -1,3 +1,3 @@
 bool goalreach
 ---
-bool goalreach_status
+string status

@@ -34,13 +34,16 @@ endif()
 
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs)
-
+find_package(nav_msgs)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Goalreach.srv"
   "srv/RobotSentgoal.srv"
-  "srv/UserSetgoal.srv"
+  "srv/ZhbbotUserSetgoal.srv"
+  "srv/ZhbbotEnableNode.srv"
+  "srv/ZhbbotSendPath.srv"
   DEPENDENCIES std_msgs
+  DEPENDENCIES nav_msgs
 )
 
 

@@ -8,6 +8,7 @@ from tf2_ros import LookupException, ConnectivityException, ExtrapolationExcepti
 import tf2_ros
 import tf_transformations
 from nav_msgs.msg import Odometry
+from zhbbot_interfaces.srv import RobotSentgoal, Goalreach
 
 class TestNode(Node):
     def __init__(self):
@@ -17,10 +18,22 @@ class TestNode(Node):
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
 
-        self.odom_cal_sub = self.create_subscription(Odometry, '/odometry/filtered', self.odom_cal_callback, 10)
+        self.odom_cal_sub = self.create_subscription(Odometry, '/odometry/local', self.odom_cal_callback, 10)
         self.odom_cal_buffer = Odometry()
         self.odom_true_sub = self.create_subscription(Odometry, '/odom_groud_truth_pose', self.odom_true_callback, 10)
         self.odom_true_buffer = Odometry()
+
+        # Action server to get the goal pose
+        self.robot_sent_goal_service_server = self.create_service(RobotSentgoal, 'zhbbot/robot_sent_goal', self.robot_sent_goal_service_callback)
+        self.goal_x = 0.0
+        self.goal_y = 0.0
+
+    def robot_sent_goal_service_callback(self, request, response):
+        self.goal_x = request.goal_x
+        self.goal_y = request.goal_y
+        response.status = 'Goal received'
+        self.get_logger().info(f'Goal received: {self.goal_x}, {self.goal_y}')
+        return response
 
     # Callback function for the subscriber
     def odom_cal_callback(self, msg:Odometry):

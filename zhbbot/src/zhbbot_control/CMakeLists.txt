@@ -29,6 +29,9 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/zhbbot_forward_kinemetic.py
   scripts/zhbbot_inverse_kinemetic.py
+  scripts/zhbbot_handler.py
+  scripts/zhbbot_vff_avoidance.py
+  scripts/hest_node.py
   scripts/test_node.py
   scripts/vff_avoidance.py
   DESTINATION lib/${PROJECT_NAME}
