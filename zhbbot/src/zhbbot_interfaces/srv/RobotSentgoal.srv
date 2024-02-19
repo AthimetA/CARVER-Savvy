@@ -1,0 +1,3 @@
+float64[2] robot_sentgoal
+---
+bool robot_sentgoal_status
