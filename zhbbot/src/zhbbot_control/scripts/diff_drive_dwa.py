@@ -18,11 +18,11 @@ from std_msgs.msg import ColorRGBA
 
 from zhbbot_interfaces.srv import RobotSentgoal, Goalreach
 
-class DynamicWindowApproach(Node):
+class DiffDriveDynamicWindowApproach(Node):
     # Constructor of the class
     def __init__(self):
         # Initialize the ROS 2 node
-        super().__init__('dynamic_window_approach')
+        super().__init__('DiffDriveDynamicWindowApproach')
 
         # Create a subscription to the laser scan topic
         self.create_subscription(LaserScan, "/scan", self.laser_scan_callback, 10)
@@ -48,6 +48,18 @@ class DynamicWindowApproach(Node):
         self.max_rot_speed = np.pi
         # self.goal = [5.76, 2.84]
         self.goal = [7.2,-1.29]
+
+
+        '''
+        
+        Edit
+        
+        '''
+
+        # Create an action client for ComputePathToPose to get the path for the robot
+        self.action_client = ActionClient(self, ComputePathToPose, 'compute_path_to_pose')
+
+        self.path = None
 
     # Timer callback for the control loop
     def timer_callback(self):
@@ -134,6 +146,34 @@ class DynamicWindowApproach(Node):
             
             # If the goal is reached, stop the robot
             return [0.0, 0.0]
+        
+    # Method to send a navigation goal to the ComputePathToPose action server
+    def send_goal(self, pose):
+        goal_msg = ComputePathToPose.Goal()
+        goal_msg.goal = pose
+        self.action_client.wait_for_server()
+        self.future = self.action_client.send_goal_async(goal_msg)
+        self.future.add_done_callback(self.goal_response_callback)
+
+    # Callback for handling the response from the ComputePathToPose action server
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Goal rejected')
+            return
+        self.result_future = goal_handle.get_result_async()
+        self.result_future.add_done_callback(self.get_result_callback)
+
+    # Callback for handling the path result from the ComputePathToPose action server
+    def get_result_callback(self, future):
+        result = future.result().result
+        self.get_logger().info('Path received')
+
+        self.follow_path(result.path.poses)
+
+    # Method to store the received path for following
+    def follow_path(self, path):
+        self.path = path
 
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
