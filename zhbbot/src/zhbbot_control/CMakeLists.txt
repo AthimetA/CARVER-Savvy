@@ -34,6 +34,7 @@ install(PROGRAMS
   scripts/hest_node.py
   scripts/test_node.py
   scripts/vff_avoidance.py
+  scripts/dwa_diffdrive.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
