@@ -20,11 +20,11 @@ from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Odometry
 from zhbbot_interfaces.srv import RobotSentgoal, Goalreach
 
-class DifferentialDrivetoVelocityController(Node):
+class ZhbbotIKNode(Node):
     # Constructor of the class
     def __init__(self):
         # Initialize the ROS 2 node
-        super().__init__('differential_drive_to_velocity_controller')
+        super().__init__('ZhbbotIKNode')
         self.get_logger().info('Differential Drive to Velocity Controller Node Initialized')
         self.node_enabled = False
 
@@ -111,7 +111,7 @@ class DifferentialDrivetoVelocityController(Node):
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
     rclpy.init(args=args)
-    node = DifferentialDrivetoVelocityController()
+    node = ZhbbotIKNode()
     rclpy.spin(node)
     rclpy.shutdown()
 

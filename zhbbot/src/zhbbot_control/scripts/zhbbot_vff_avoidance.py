@@ -16,13 +16,13 @@ from sensor_msgs.msg import LaserScan
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import ColorRGBA
 
-from zhbbot_interfaces.srv import RobotSentgoal, Goalreach, ZhbbotSendPath
+from zhbbot_interfaces.srv import RobotSentgoal, Goalreach, ZhbbotSendPath, ZhbbotSetNodeStaus
 
-class DifferentialDrivePurePursuitVFFAvoidance(Node):
+class ZhbbotVFFNode(Node):
     # Constructor of the class
     def __init__(self):
         # Initialize the ROS 2 node
-        super().__init__('DifferentialDrivePurePursuitVFFAvoidance')
+        super().__init__(node_name='ZhbbotVFFNode')
 
         '''
         
@@ -52,7 +52,6 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         General Variables
         
         '''
-        self.node_status = "DISABLED" # SLEEP, ACTIVE, DISABLED
 
         # Create an action server for ZhbbotSendPath service
         self.send_path_service_server = self.create_service(ZhbbotSendPath, '/zhbbot_service/send_path', self.send_path_callback)
@@ -97,11 +96,6 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         self.__timer_hz = 20
         self.create_timer(1.0 / self.__timer_hz, self.timer_callback)
 
-        # Actknowledged timer
-        self.actknowledged_period = 5.0
-        self.last_actknowledged_timer = self.create_timer(self.actknowledged_period, self.actknowledged_callback)
-
-
         '''
         
         Marker Visualization
@@ -112,16 +106,36 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         # Publisher for visualization markers
         self.vff_marker_pub = self.create_publisher(MarkerArray, "zhbbot/vff_marker", self.__qos_profile)
 
+
+        '''
+        
+        Set Node Status
+        
+        '''
+        self.node_status = "DISABLED" # SLEEP, ACTIVE, DISABLED
+
+        self._node_name = "ZhbbotVFFNode"
+
+        self.set_node_status_service = self.create_service(ZhbbotSetNodeStaus,
+                                                            '/zhbbot_service/ZhbbotVFFNode/set_node_status',
+                                                              self.set_node_status_callback)
+
+        self.get_logger().info(f'ZhbbotVFFNode.py started with node name: {self._node_name}')
+
     def reset_node(self):
         # Reset the path and current pose index
         self.path = None
         self.current_pose_index = 0
         # Reset the laser scan data
         self.laser_scan = None
-        self.node_status = "DISABLED"
 
-    def actknowledged_callback(self):
-        self.get_logger().info(f'DifferentialDrivePurePursuitVFFAvoidance: Node status: {self.node_status}')
+    def set_node_status_callback(self, request: ZhbbotSetNodeStaus.Request, response: ZhbbotSetNodeStaus.Response):
+        # Request to set the node status
+        self.node_status = request.node_status
+        # Response to the request
+        response.node_name = self._node_name
+        response.call_back_status = self.node_status
+        return response
 
     '''
     
@@ -148,9 +162,7 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
                         # Check if the current target pose is reached
                         if self.is_goal_reached(robot_pose, current_pose):
                             self.current_pose_index += 1
-                        else:
-                            self.node_status = 'SLEEP'
-        elif self.node_status == 'SLEEP':
+        elif self.node_status == 'DISABLED':
             self.vff_marker_pub.publish(MarkerArray())
             self.reset_node()
 
@@ -256,14 +268,11 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
     def send_path_callback(self, request: ZhbbotSendPath.Request, response: ZhbbotSendPath.Response):
         self.get_logger().info('Path received from ZhbbotHandlerNode')
         # Process the path and send the goal to the robot
-        response.status = "DifferentialDrivePurePursuitVFFAvoidance: Path received from ZhbbotHandlerNode"
+        response.status = "ZhbbotVFFNode: Path received from ZhbbotHandlerNode"
         self.path = request.path.poses
         self.current_pose_index = 0
-        self.node_status = "ENABLED"
-
         # Send the goal to the fk node
         self.robot_sent_goal_service_call(self.path[-1])
-
         return response
     
     # Service client function to send the goal to the robot
@@ -275,7 +284,15 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         request.goal_y = goal_pose.pose.position.y
         future = self.robot_sent_goal_service_client.call_async(request)
         self.get_logger().info('VFF Avoidance: Sent goal to FK node')
-        self.get_logger().info(f'future: {future}')
+        future.add_done_callback(self.robot_sent_goal_response_callback)
+
+    # Callback function for the robot_sent_goal service
+    def robot_sent_goal_response_callback(self, future):
+        try:
+            response = future.result()
+            self.get_logger().info(f'VFF Avoidance: {response.status}')
+        except Exception as e:
+            self.get_logger().info('Service call failed %r' % (e,))
 
     '''
     
@@ -400,7 +417,7 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
     rclpy.init(args=args)
-    node = DifferentialDrivePurePursuitVFFAvoidance()
+    node = ZhbbotVFFNode()
     rclpy.spin(node)
     rclpy.shutdown()
 

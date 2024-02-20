@@ -24,13 +24,13 @@ def generate_launch_description():
     zhbbot_handler = Node(
         package='zhbbot_control',
         executable='zhbbot_handler.py',
-        name='zhbbot_handler',
+        name='zhbbotHandlerNode',
     )
 
     zhbbot_vff = Node(
         package='zhbbot_control',
         executable='zhbbot_vff_avoidance.py',
-        name='zhbbot_vff_avoidance',
+        name='ZhbbotVFFNode',
     )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #

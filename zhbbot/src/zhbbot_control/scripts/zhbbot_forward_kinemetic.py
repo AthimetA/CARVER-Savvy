@@ -23,13 +23,13 @@ from zhbbot_interfaces.srv import RobotSentgoal, Goalreach
 # import all other neccesary libraries
 import sys
 
-class DifferentialDriveTransform(Node):
+class ZhbbotFKNode(Node):
     # Constructor of the class
     def __init__(self):
         # Initialize the ROS 2 node
-        super().__init__('diffential_drive_transform')
+        super().__init__('ZhbbotFKNode')
 
-        print("Differential Drive Transform Node Started")
+        self.node_name = 'ZhbbotFKNode'
         self.node_enabled = True
 
         self.joint_states_buffer = JointState()
@@ -132,7 +132,7 @@ class DifferentialDriveTransform(Node):
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
     rclpy.init(args=args)
-    node = DifferentialDriveTransform()
+    node = ZhbbotFKNode()
     rclpy.spin(node)
     rclpy.shutdown()
 

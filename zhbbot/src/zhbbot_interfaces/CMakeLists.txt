@@ -40,7 +40,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Goalreach.srv"
   "srv/RobotSentgoal.srv"
   "srv/ZhbbotUserSetgoal.srv"
-  "srv/ZhbbotEnableNode.srv"
+  "srv/ZhbbotSetNodeStaus.srv"
   "srv/ZhbbotSendPath.srv"
   DEPENDENCIES std_msgs
   DEPENDENCIES nav_msgs
