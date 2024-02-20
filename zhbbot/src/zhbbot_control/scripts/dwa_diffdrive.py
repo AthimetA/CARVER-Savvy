@@ -80,7 +80,7 @@ class DynamicWindowApproach(Node):
             obstacle_diff = math.sqrt((obstacle_x-new_x)**2 + (obstacle_y-new_y)**2)
 
             return obstacle_diff
-        else
+        else:
             return 1
 
     def select_best_trajectory(self, goal):
@@ -105,7 +105,7 @@ class DynamicWindowApproach(Node):
 
                 # Update best trajectory
 
-                
+
         return best_velocity
 
 # Main function to initialize and run the ROS 2 node
