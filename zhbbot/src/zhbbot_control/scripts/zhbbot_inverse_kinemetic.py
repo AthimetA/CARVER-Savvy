@@ -18,15 +18,13 @@ from std_msgs.msg import ColorRGBA
 from std_msgs.msg import Float64MultiArray
 
 from nav_msgs.msg import Odometry
-from zhbbot_interfaces.srv import RobotSentgoal, Goalreach
+from zhbbot_interfaces.srv import ZhbbotSetNodeStaus
 
 class ZhbbotIKNode(Node):
     # Constructor of the class
     def __init__(self):
         # Initialize the ROS 2 node
         super().__init__('ZhbbotIKNode')
-        self.get_logger().info('Differential Drive to Velocity Controller Node Initialized')
-        self.node_enabled = False
 
         # Create a subscriber for the Diff Drive Publisher
         self.create_subscription(Twist, '/diff_drive_zhbbot', self.diff_drive_cont_sub_callback, 10)
@@ -37,59 +35,42 @@ class ZhbbotIKNode(Node):
         self.create_timer(0.05, self.velocity_cont_timer_callback)
 
 
-        self.odom_ekf_read = self.create_subscription(Odometry, '/odometry/local', self.odom_ekf_callback, 10)
-        self.x = 0.0
-        self.y = 0.0
-        self.error_range = 1.0
+        '''
+        
+        Set Node Status
+        
+        '''
+        self.node_status = "DISABLED" # SLEEP, ACTIVE, DISABLED
 
-        # Action server to get the goal pose
-        self.robot_sent_goal_service_server = self.create_service(RobotSentgoal, 'zhbbot/robot_sent_goal', self.robot_sent_goal_callback)
-        self.goal_x = 0.0
-        self.goal_y = 0.0
+        self._node_name = "ZhbbotIKNode"
 
-        # Action client to send the goal pose
-        self.goal_reach_client = self.create_client(Goalreach, 'zhbbot/goal_reach')
+        self.set_node_status_service = self.create_service(ZhbbotSetNodeStaus,
+                                                            f'/zhbbot_service/{self._node_name}/set_node_status',
+                                                              self.set_node_status_callback)
 
-    def odom_ekf_callback(self, msg:Odometry):
-        self.x = msg.pose.pose.position.x
-        self.y = msg.pose.pose.position.y
-        quaternion = (
-            msg.pose.pose.orientation.x,
-            msg.pose.pose.orientation.y,
-            msg.pose.pose.orientation.z,
-            msg.pose.pose.orientation.w)
-        euler = tf_transformations.euler_from_quaternion(quaternion)
-        self.wz = euler[2]
-        print(f'x: {self.x}, y: {self.y}, wz: {self.wz}')
+        self.get_logger().info(f'ZhbbotIKNode.py started with node name: {self._node_name}')
 
-    # Callback function for the robot_sent_goal service
-    # Receives the goal pose from the action client and stores it in the class variables
-    def robot_sent_goal_callback(self, request, response):
-        self.goal_x = request.goal_x
-        self.goal_y = request.goal_y
-        response.status = 'Foward Kinematic: Goal received'
-        self.get_logger().info(f'Goal received: {self.goal_x}, {self.goal_y}')
-        self.get_logger().info(f'Current position: {self.x}, {self.y}')
-        self.get_logger().info(f'IK node: Enabled')
-        self.node_enabled = True
+    def set_node_status_callback(self, request: ZhbbotSetNodeStaus.Request, response: ZhbbotSetNodeStaus.Response):
+        # Request to set the node status
+        self.node_status = request.node_status
+        # Response to the request
+        response.node_name = self._node_name
+        response.call_back_status = self.node_status
         return response
 
     def velocity_cont_timer_callback(self):
-        if self.node_enabled:
-            self.get_logger().info(f'Current position: {self.x}, {self.y}')
+        if self.node_status == 'ENABLED':
             # Create a Float64MultiArray message to publish the velocity commands
             velocity_cont_msg = Float64MultiArray()
             velocity_cont_msg.data = self.velocity_controller_inverse_kinematics(self.diff_drive_velocity)
             # Publish the velocity commands
             self.velocity_cont_pub.publish(velocity_cont_msg)
-
-            if (abs(self.x - self.goal_x) < self.error_range) and (abs(self.y - self.goal_y) < self.error_range):
-                self.node_enabled = False
-                self.get_logger().info(f'Goal reached: {self.x}, {self.y}')
-                self.get_logger().info(f'IK node: Disabled')
-                self.get_logger().info(f'Goal sent to the action server')
         else:
-            self.velocity_cont_pub.publish(Float64MultiArray(data=[0.0, 0.0]))
+            # Create a Float64MultiArray message to publish the velocity commands
+            velocity_cont_msg = Float64MultiArray()
+            velocity_cont_msg.data = [0.0, 0.0]
+            # Publish the velocity commands
+            self.velocity_cont_pub.publish(velocity_cont_msg)
 
     def diff_drive_cont_sub_callback(self, msg):
         # Create a Twist message to subscribe to the diff drive controller

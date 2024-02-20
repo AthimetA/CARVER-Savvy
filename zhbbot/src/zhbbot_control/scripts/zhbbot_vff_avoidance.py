@@ -16,7 +16,7 @@ from sensor_msgs.msg import LaserScan
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import ColorRGBA
 
-from zhbbot_interfaces.srv import RobotSentgoal, Goalreach, ZhbbotSendPath, ZhbbotSetNodeStaus
+from zhbbot_interfaces.srv import ZhbbotSendPath, ZhbbotSetNodeStaus
 
 class ZhbbotVFFNode(Node):
     # Constructor of the class
@@ -83,8 +83,15 @@ class ZhbbotVFFNode(Node):
 
         '''
 
-        # Create a service client to send goal to Fk node
-        self.robot_sent_goal_service_client = self.create_client(RobotSentgoal, 'zhbbot/robot_sent_goal')
+        self.node_status = "DISABLED" # SLEEP, ACTIVE, DISABLED
+
+        self._node_name = "ZhbbotVFFNode"
+
+        self.set_node_status_service = self.create_service(ZhbbotSetNodeStaus,
+                                                            '/zhbbot_service/ZhbbotVFFNode/set_node_status',
+                                                              self.set_node_status_callback)
+
+        self.get_logger().info(f'ZhbbotVFFNode.py started with node name: {self._node_name}')
 
 
         '''
@@ -107,20 +114,6 @@ class ZhbbotVFFNode(Node):
         self.vff_marker_pub = self.create_publisher(MarkerArray, "zhbbot/vff_marker", self.__qos_profile)
 
 
-        '''
-        
-        Set Node Status
-        
-        '''
-        self.node_status = "DISABLED" # SLEEP, ACTIVE, DISABLED
-
-        self._node_name = "ZhbbotVFFNode"
-
-        self.set_node_status_service = self.create_service(ZhbbotSetNodeStaus,
-                                                            '/zhbbot_service/ZhbbotVFFNode/set_node_status',
-                                                              self.set_node_status_callback)
-
-        self.get_logger().info(f'ZhbbotVFFNode.py started with node name: {self._node_name}')
 
     def reset_node(self):
         # Reset the path and current pose index
@@ -227,6 +220,7 @@ class ZhbbotVFFNode(Node):
         
         else:
             self.get_logger().info('Laser scan data not available')
+            return 0.0, 0.0
         
     # Calculate the Virtual Force Field based on laser scan data
     def get_vff(self, scan, goal_point, robot_pose):
@@ -271,28 +265,7 @@ class ZhbbotVFFNode(Node):
         response.status = "ZhbbotVFFNode: Path received from ZhbbotHandlerNode"
         self.path = request.path.poses
         self.current_pose_index = 0
-        # Send the goal to the fk node
-        self.robot_sent_goal_service_call(self.path[-1])
         return response
-    
-    # Service client function to send the goal to the robot
-    def robot_sent_goal_service_call(self, goal_pose):
-        while not self.robot_sent_goal_service_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Sent Goal service not available, waiting again...')
-        request = RobotSentgoal.Request()
-        request.goal_x = goal_pose.pose.position.x
-        request.goal_y = goal_pose.pose.position.y
-        future = self.robot_sent_goal_service_client.call_async(request)
-        self.get_logger().info('VFF Avoidance: Sent goal to FK node')
-        future.add_done_callback(self.robot_sent_goal_response_callback)
-
-    # Callback function for the robot_sent_goal service
-    def robot_sent_goal_response_callback(self, future):
-        try:
-            response = future.result()
-            self.get_logger().info(f'VFF Avoidance: {response.status}')
-        except Exception as e:
-            self.get_logger().info('Service call failed %r' % (e,))
 
     '''
     

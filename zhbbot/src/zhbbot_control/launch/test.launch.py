@@ -33,11 +33,19 @@ def generate_launch_description():
         name='ZhbbotVFFNode',
     )
 
+    # Inverse Kinematics Node
+    zhbbot_inverse_kinemetic = Node(
+        package='zhbbot_control',
+        executable='zhbbot_inverse_kinemetic.py',
+        name='ZhbbotIKNode',
+    )
+
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
         # Launch the test node
         zhbbot_handler,
         zhbbot_vff,
+        zhbbot_inverse_kinemetic,
 
     ])

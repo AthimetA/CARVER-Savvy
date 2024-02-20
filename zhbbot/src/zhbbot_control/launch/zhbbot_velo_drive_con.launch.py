@@ -53,7 +53,7 @@ def generate_launch_description():
     zhbbot_inverse_kinemetic = Node(
         package='zhbbot_control',
         executable='zhbbot_inverse_kinemetic.py',
-        name='zhbbot_inverse_kinemetic',
+        name='ZhbbotIKNode',
     )
 
     # Robot Localization
@@ -124,7 +124,7 @@ def generate_launch_description():
         velocity_controllers,
         # Kinematics
         zhbbot_forward_kinemetic,
-        zhbbot_inverse_kinemetic,
+        # zhbbot_inverse_kinemetic,
 
         # EKF
         ekf_filter_node_odom,
