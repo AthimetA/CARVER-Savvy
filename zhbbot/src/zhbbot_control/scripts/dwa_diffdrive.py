@@ -37,10 +37,10 @@ class DynamicWindowApproach(Node):
         # Create a publisher for robot velocity commands
         self.velocity_publisher = self.create_publisher(Twist, '/cmd_vel_zhbbot', 10) # publish to /cmd_vel_zhbbot topic
 
-        self.min_speed = 0.00
+        self.min_speed = -0.1
         self.max_speed = 0.2
-        self.min_rot_speed = -np.pi
-        self.max_rot_speed = np.pi
+        self.min_rot_speed = -np.pi/2
+        self.max_rot_speed = np.pi/2
         self.goal = [5.76, 2.84]
 
     # Timer callback for the control loop
@@ -63,8 +63,8 @@ class DynamicWindowApproach(Node):
         # Store the odometry data for use in the controller
         self.odom_buffer = msg
 
-    def score_trajectory(self, new_x, new_y, goal):
-        distance_diff = np.sqrt((goal[0]-new_x)**2 + (goal[1]-new_y)**2)
+    def score_trajectory(self, new_x, new_y, goal, goal_distance):
+        distance_diff = (np.sqrt((goal[0]-new_x)**2 + (goal[1]-new_y)**2))/goal_distance
         obstacle_diff = self.obstacle_diff(new_x, new_y)
         total_score = -distance_diff + obstacle_diff
         return total_score
@@ -95,6 +95,7 @@ class DynamicWindowApproach(Node):
         euler = tf_transformations.euler_from_quaternion(quaternion)
         theta = euler[2]
         self.get_logger().info(f'Current position: {x}, {y}, {theta}')
+
         # --------------------------------------------
         wp = self.odom_buffer.pose.pose.position
 
@@ -106,14 +107,14 @@ class DynamicWindowApproach(Node):
         
 
         while goal_distance > goal_radius:
-            for linear_speed in np.arange(self.min_speed, self.max_speed, 0.05):
+            for linear_speed in np.arange(self.min_speed, self.max_speed, 0.02):
                 for rot_speed in np.arange(self.min_rot_speed, self.max_rot_speed, 0.05):
                     # Simulate trajectory
                     new_x = x + linear_speed * math.cos(rot_speed + theta)
                     new_y = y + linear_speed * math.sin(rot_speed + theta)
 
                     # Score trajectory
-                    score = self.score_trajectory(new_x, new_y, goal)
+                    score = self.score_trajectory(new_x, new_y, goal, goal_distance)
 
                     if score > best_score:
                         best_score = score
