@@ -32,7 +32,8 @@ class ZhbbotIKNode(Node):
 
         # Create a publisher for robot velocity commands
         self.velocity_cont_pub = self.create_publisher(Float64MultiArray, '/velocity_cont/commands', 10) # publish to /cmd_vel_zhbbot topic
-        self.create_timer(0.05, self.velocity_cont_timer_callback)
+        self.cont_timer = 10
+        self.create_timer(1 / self.cont_timer, self.velocity_cont_timer_callback)
 
 
         '''

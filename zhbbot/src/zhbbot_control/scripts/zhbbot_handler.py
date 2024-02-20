@@ -48,6 +48,11 @@ class ZhbbotHandler(Node):
         self.robot_y = 0.0
         self.robot_theta = 0.0
 
+        self.odom_true_read = self.create_subscription(Odometry, '/odom_groud_truth_pose', self.odom_true_callback, 10)
+        self.true_robot_x = 0.0
+        self.true_robot_y = 0.0
+        self.true_robot_theta = 0.0
+
         '''
         
         Actknowledged Timer
@@ -120,6 +125,8 @@ class ZhbbotHandler(Node):
     def actknowledged_callback(self):
         self.get_logger().info('-'*50)
         self.get_logger().info(f'ZhbbotHandlerNode: Robot position: x: {self.robot_x:2f}, y: {self.robot_y:2f}, theta: {self.robot_theta:2f}')
+        self.get_logger().info(f'ZhbbotHandlerNode: True robot position: x: {self.true_robot_x:2f}, y: {self.true_robot_y:2f}, theta: {self.true_robot_theta:2f}')
+        self.get_logger().info(f'ZhbbotHandlerNode: Difference: x: {np.abs(self.robot_x - self.true_robot_x):2f}, y: {np.abs(self.robot_y - self.true_robot_y):2f}, theta: {np.abs(self.robot_theta - self.true_robot_theta):2f}')
         for slave_node in self.slave_node_status:
             self.get_logger().info(f'Slave node: {slave_node}, status: {self.slave_node_status[slave_node]}')
         
@@ -134,6 +141,17 @@ class ZhbbotHandler(Node):
             msg.pose.pose.orientation.w)
         euler = tf_transformations.euler_from_quaternion(quaternion)
         self.robot_theta = euler[2]
+
+    def odom_true_callback(self, msg:Odometry):
+        self.true_robot_x = msg.pose.pose.position.x
+        self.true_robot_y = msg.pose.pose.position.y
+        quaternion = (
+            msg.pose.pose.orientation.x,
+            msg.pose.pose.orientation.y,
+            msg.pose.pose.orientation.z,
+            msg.pose.pose.orientation.w)
+        euler = tf_transformations.euler_from_quaternion(quaternion)
+        self.true_robot_theta = euler[2]
 
         
     def user_setgoal_callback(self, request: ZhbbotUserSetgoal.Request, response: ZhbbotUserSetgoal.Response):
