@@ -70,8 +70,8 @@ class DynamicWindowApproach(Node):
         return total_score
     
     def obstacle_diff(self, new_x, new_y):
-        obstacle_diff = 2
-        obstacle_max_distance = 2
+        obstacle_diff = 1
+        obstacle_max_distance = 1
 
         nearest_obstacle_angle = np.argmin(self.laser_scan.ranges)
 
