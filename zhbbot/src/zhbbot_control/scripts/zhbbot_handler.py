@@ -69,7 +69,7 @@ class ZhbbotHandler(Node):
         self.goal_y = 0.0
         self.goal_theta = 0.0
 
-        self.error_range = 1.0
+        self.error_range = 0.5
 
         '''
         
