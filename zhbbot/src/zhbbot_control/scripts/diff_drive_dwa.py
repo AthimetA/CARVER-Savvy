@@ -178,7 +178,7 @@ class DiffDriveDynamicWindowApproach(Node):
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
     rclpy.init(args=args)
-    node = DynamicWindowApproach()
+    node = DiffDriveDynamicWindowApproach()
     rclpy.spin(node)
     rclpy.shutdown()
 
