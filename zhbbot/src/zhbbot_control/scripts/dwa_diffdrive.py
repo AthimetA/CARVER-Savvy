@@ -74,7 +74,7 @@ class DynamicWindowApproach(Node):
         nearest_obstacle_angle = np.argmin(self.laser_scan.ranges)
         dist_nearest = self.laser_scan.ranges[nearest_obstacle_angle]
         if dist_nearest < obstacle_max_distance:
-            obstacle_angle = self.laser_scan.angle_min + self.laser_scan.angle_increment * nearest_obstacle_angle
+            obstacle_angle = self.laser_scan.angle_min + (self.laser_scan.angle_increment * nearest_obstacle_angle)
             obstacle_x = self.laser_scan.ranges[nearest_obstacle_angle] * math.cos(obstacle_angle)
             obstacle_y = self.laser_scan.ranges[nearest_obstacle_angle] * math.sin(obstacle_angle)
             obstacle_diff = math.sqrt((obstacle_x-new_x)**2 + (obstacle_y-new_y)**2)
@@ -86,27 +86,35 @@ class DynamicWindowApproach(Node):
     def select_best_trajectory(self, goal):
         x = self.odom_buffer.pose.pose.position.x
         y = self.odom_buffer.pose.pose.position.y
-        th = self.odom_buffer.pose.pose.orientation.z
+        quaternion = (self.odom_buffer.pose.pose.orientation.x, 
+                      self.odom_buffer.pose.pose.orientation.y, 
+                      self.odom_buffer.pose.pose.orientation.z, 
+                      self.odom_buffer.pose.pose.orientation.w)
+        
+        theta = tf_transformations.euler_from_quaternion(quaternion)[2]
 
         goal_radius = 0.5
 
-        best_distance_score = float('-inf')
-        best_obstacle_score = float('-inf')
-        best_velocity = None
+        current_score = float('-inf')
 
-        for speed in np.arange(self.min_speed, self.max_speed, 0.1):
-            for rot_speed in np.arange(self.min_rot_speed, self.max_rot_speed, 0.1):
-                # Simulate trajectory
-                new_x = x + speed * math.cos(rot_speed)
-                new_y = y + speed * math.sin(rot_speed)
+        goal_distance = math.sqrt((goal[0]-x)**2 + (goal[1]-y)**2)
 
-                # Score trajectory
-                score = self.score_trajectory(new_x, new_y, goal)
+        while goal_distance > goal_radius:
+            for linear_speed in np.arange(self.min_speed, self.max_speed, 0.1):
+                for rot_speed in np.arange(self.min_rot_speed, self.max_rot_speed, 0.1):
+                    # Simulate trajectory
+                    new_x = x + linear_speed * math.cos(rot_speed)
+                    new_y = y + linear_speed * math.sin(rot_speed)
 
-                # Update best trajectory
-
-
-        return best_velocity
+                    # Score trajectory
+                    score = self.score_trajectory(new_x, new_y, goal)
+                    if score > current_score:
+                        current_score = score
+                        best_velocity = [linear_speed, rot_speed]
+                        self.get_logger().info('Best velocity: ' + str(best_velocity))
+    
+            return best_velocity
+        return [0.0, 0.0]
 
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
