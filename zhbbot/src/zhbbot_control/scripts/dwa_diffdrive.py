@@ -29,7 +29,7 @@ class DynamicWindowApproach(Node):
 
         # Create a subscription for the current pose of the robot
         self.odom_buffer = Odometry()
-        self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+        self.create_subscription(Odometry, '/diff_cont/odom', self.odom_callback, 10)
 
         # Create a timer to control the control loop
         self.timer_callback_loop = self.create_timer(1/10, self.timer_callback)
@@ -37,11 +37,11 @@ class DynamicWindowApproach(Node):
         # Create a publisher for robot velocity commands
         self.velocity_publisher = self.create_publisher(Twist, '/cmd_vel_zhbbot', 10) # publish to /cmd_vel_zhbbot topic
 
-        self.min_speed = 0.0
+        self.min_speed = 0.00
         self.max_speed = 0.5
-        self.min_rot_speed = -3.0
-        self.max_rot_speed = 3.0
-        self.goal = [9,-3]
+        self.min_rot_speed = -0.5
+        self.max_rot_speed = 0.5
+        self.goal = [2.0,-3.0]
 
     # Timer callback for the control loop
     def timer_callback(self):
@@ -64,15 +64,19 @@ class DynamicWindowApproach(Node):
         self.odom_buffer = msg
 
     def score_trajectory(self, new_x, new_y, goal):
-        distance_diff = math.sqrt((goal[0]-new_x)**2 + (goal[1]-new_y)**2)
+        distance_diff = np.sqrt((goal[0]-new_x)**2 + (goal[1]-new_y)**2)
         obstacle_diff = self.obstacle_diff(new_x, new_y)
-        return -distance_diff + obstacle_diff
+        total_score = -distance_diff + obstacle_diff
+        return total_score
     
     def obstacle_diff(self, new_x, new_y):
-        obstacle_diff = 0
+        obstacle_diff = 1
         obstacle_max_distance = 1
+
         nearest_obstacle_angle = np.argmin(self.laser_scan.ranges)
+
         dist_nearest = self.laser_scan.ranges[nearest_obstacle_angle]
+
         if dist_nearest < obstacle_max_distance:
             obstacle_angle = self.laser_scan.angle_min + (self.laser_scan.angle_increment * nearest_obstacle_angle)
             obstacle_x = self.laser_scan.ranges[nearest_obstacle_angle] * math.cos(obstacle_angle)
@@ -81,38 +85,41 @@ class DynamicWindowApproach(Node):
 
             return obstacle_diff
         else:
-            return 1
+            return obstacle_diff
 
     def select_best_trajectory(self, goal):
+        # Get the current position and orientation of the robot
         x = self.odom_buffer.pose.pose.position.x
         y = self.odom_buffer.pose.pose.position.y
-        quaternion = (self.odom_buffer.pose.pose.orientation.x, 
-                      self.odom_buffer.pose.pose.orientation.y, 
-                      self.odom_buffer.pose.pose.orientation.z, 
-                      self.odom_buffer.pose.pose.orientation.w)
-        
-        theta = tf_transformations.euler_from_quaternion(quaternion)[2]
+        quaternion = (self.odom_buffer.pose.pose.orientation.x, self.odom_buffer.pose.pose.orientation.y, self.odom_buffer.pose.pose.orientation.z, self.odom_buffer.pose.pose.orientation.w)
+        euler = tf_transformations.euler_from_quaternion(quaternion)
+        theta = euler[2]
+        # --------------------------------------------
+        wp = self.odom_buffer.pose.pose.position
 
         goal_radius = 0.5
 
-        current_score = float('-inf')
+        best_score = float('-inf')
 
         goal_distance = math.sqrt((goal[0]-x)**2 + (goal[1]-y)**2)
+        
 
         while goal_distance > goal_radius:
-            for linear_speed in np.arange(self.min_speed, self.max_speed, 0.1):
-                for rot_speed in np.arange(self.min_rot_speed, self.max_rot_speed, 0.1):
+            for linear_speed in np.arange(self.min_speed, self.max_speed, 0.05):
+                for rot_speed in np.arange(self.min_rot_speed, self.max_rot_speed, 0.05):
                     # Simulate trajectory
                     new_x = x + linear_speed * math.cos(rot_speed)
                     new_y = y + linear_speed * math.sin(rot_speed)
 
                     # Score trajectory
                     score = self.score_trajectory(new_x, new_y, goal)
-                    if score > current_score:
-                        current_score = score
+
+                    if score > best_score:
+                        best_score = score
                         best_velocity = [linear_speed, rot_speed]
-                        self.get_logger().info('Best velocity: ' + str(best_velocity))
-    
+
+                    
+            self.get_logger().info(f'Best_score: {best_score} of velocity: {best_velocity[0]} and {best_velocity[1]}')
             return best_velocity
         return [0.0, 0.0]
 
