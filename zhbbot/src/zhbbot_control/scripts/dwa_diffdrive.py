@@ -38,10 +38,10 @@ class DynamicWindowApproach(Node):
         self.velocity_publisher = self.create_publisher(Twist, '/cmd_vel_zhbbot', 10) # publish to /cmd_vel_zhbbot topic
 
         self.min_speed = 0.00
-        self.max_speed = 0.5
-        self.min_rot_speed = -0.5
-        self.max_rot_speed = 0.5
-        self.goal = [2.0,-3.0]
+        self.max_speed = 0.2
+        self.min_rot_speed = -np.pi
+        self.max_rot_speed = np.pi
+        self.goal = [5.76, 2.84]
 
     # Timer callback for the control loop
     def timer_callback(self):
@@ -70,8 +70,8 @@ class DynamicWindowApproach(Node):
         return total_score
     
     def obstacle_diff(self, new_x, new_y):
-        obstacle_diff = 1
-        obstacle_max_distance = 1
+        obstacle_diff = 2
+        obstacle_max_distance = 2
 
         nearest_obstacle_angle = np.argmin(self.laser_scan.ranges)
 
@@ -94,6 +94,7 @@ class DynamicWindowApproach(Node):
         quaternion = (self.odom_buffer.pose.pose.orientation.x, self.odom_buffer.pose.pose.orientation.y, self.odom_buffer.pose.pose.orientation.z, self.odom_buffer.pose.pose.orientation.w)
         euler = tf_transformations.euler_from_quaternion(quaternion)
         theta = euler[2]
+        self.get_logger().info(f'Current position: {x}, {y}, {theta}')
         # --------------------------------------------
         wp = self.odom_buffer.pose.pose.position
 
@@ -108,8 +109,8 @@ class DynamicWindowApproach(Node):
             for linear_speed in np.arange(self.min_speed, self.max_speed, 0.05):
                 for rot_speed in np.arange(self.min_rot_speed, self.max_rot_speed, 0.05):
                     # Simulate trajectory
-                    new_x = x + linear_speed * math.cos(rot_speed)
-                    new_y = y + linear_speed * math.sin(rot_speed)
+                    new_x = x + linear_speed * math.cos(rot_speed + theta)
+                    new_y = y + linear_speed * math.sin(rot_speed + theta)
 
                     # Score trajectory
                     score = self.score_trajectory(new_x, new_y, goal)
