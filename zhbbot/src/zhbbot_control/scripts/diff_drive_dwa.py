@@ -34,7 +34,7 @@ class DiffDriveDynamicWindowApproach(Node):
         self.create_subscription(Odometry, '/diff_cont/odom', self.odom_callback, 10)
 
         # Create a timer to control the control loop
-        self.timer_callback_loop = self.create_timer(1/10, self.timer_callback)
+        self.timer_callback_loop = self.create_timer(1/40, self.timer_callback)
 
         # Create a publisher for robot velocity commands
         self.velocity_publisher = self.create_publisher(Twist, '/cmd_vel_zhbbot', 10) # publish to /cmd_vel_zhbbot topic
@@ -44,10 +44,11 @@ class DiffDriveDynamicWindowApproach(Node):
 
         self.min_speed = -0.00
         self.max_speed = 0.40
-        self.min_rot_speed = -np.pi
-        self.max_rot_speed = np.pi
-        # self.goal = [5.76, 2.84]
-        self.goal = [7.2,-1.29]
+        self.min_rot_speed = -3.0
+        self.max_rot_speed = 3.0
+        # self.xxxgoal = [5.76, 2.84]
+        # self.xxxgoal = [7.2,-1.29]
+        self.xxxgoal = [5.43,-4.84]
 
 
         '''
@@ -60,15 +61,36 @@ class DiffDriveDynamicWindowApproach(Node):
         self.action_client = ActionClient(self, ComputePathToPose, 'compute_path_to_pose')
 
         self.path = None
+        self.current_pose_index = 0
+        
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
     # Timer callback for the control loop
     def timer_callback(self):
-        # Get the best velocity command
-        best_velocity = self.select_best_trajectory(self.goal)
+        # # Get the best velocity command
+        # best_velocity = self.select_best_trajectory(self.goal)
 
+        # msg = Twist()
+        # msg.linear.x = best_velocity[0]
+        # msg.angular.z = best_velocity[1]
+        # self.velocity_publisher.publish(msg)
+
+        # Method implementing the Pure Pursuit control logic
+        # self.get_logger().info('Timer callback')
+        if self.path is not None and self.current_pose_index < len(self.path):
+            self.get_logger().info(f'Current pose index: {self.current_pose_index}/{len(self.path)}')
+            # Get the current target pose from the path
+            goal_pose = self.path[self.current_pose_index]
+            # Retrieve the robot's current pose
+            best_velocity = self.select_best_trajectory([goal_pose.pose.position.x, goal_pose.pose.position.y])
+            # Calculate the distance to the current target pose
+            self.publish_velocity(best_velocity[0], best_velocity[1])
+
+    def publish_velocity(self, linear_vel, angular_vel):
         msg = Twist()
-        msg.linear.x = best_velocity[0]
-        msg.angular.z = best_velocity[1]
+        msg.linear.x = linear_vel
+        msg.angular.z = angular_vel
         self.velocity_publisher.publish(msg)
         
     # Callback for processing laser scan messages
@@ -116,10 +138,12 @@ class DiffDriveDynamicWindowApproach(Node):
             return [0.0, 0.0]
         else:
             # Get the current position and orientation of the robot
-            x = self.odom_buffer.pose.pose.position.x
-            y = self.odom_buffer.pose.pose.position.y
-            quaternion = (self.odom_buffer.pose.pose.orientation.x, self.odom_buffer.pose.pose.orientation.y, self.odom_buffer.pose.pose.orientation.z, self.odom_buffer.pose.pose.orientation.w)
-            _, _, theta = tf_transformations.euler_from_quaternion(quaternion)
+            # x = self.odom_buffer.pose.pose.position.x
+            # y = self.odom_buffer.pose.pose.position.y
+            # quaternion = (self.odom_buffer.pose.pose.orientation.x, self.odom_buffer.pose.pose.orientation.y, self.odom_buffer.pose.pose.orientation.z, self.odom_buffer.pose.pose.orientation.w)
+            # _, _, theta = tf_transformations.euler_from_quaternion(quaternion)
+            x, y, theta = self.get_robot_pose()
+
             # --------------------------------------------
             # Initialize best score to negative infinity
             best_score = float('-inf')
@@ -129,8 +153,8 @@ class DiffDriveDynamicWindowApproach(Node):
             
             # Calculate best velocity command
             while goal_distance > self.goal_radius:
-                for linear_speed in np.arange(self.min_speed, self.max_speed, 0.02):
-                    for rot_speed in np.arange(self.min_rot_speed, self.max_rot_speed, 0.05):
+                for linear_speed in np.arange(self.min_speed, self.max_speed, 0.05):
+                    for rot_speed in np.arange(self.min_rot_speed, self.max_rot_speed, 0.10):
                         # Simulate trajectory
                         new_x = x + linear_speed * math.cos(rot_speed + theta)
                         new_y = y + linear_speed * math.sin(rot_speed + theta)
@@ -141,16 +165,22 @@ class DiffDriveDynamicWindowApproach(Node):
                         if score > best_score:
                             best_score = score
                             best_velocity = [linear_speed, rot_speed]
-
+                self.get_logger().info(f'Best score: {best_score}, Linear speed: {best_velocity[0]}, Rotational speed: {best_velocity[1]}')
                 return best_velocity
             
             # If the goal is reached, stop the robot
+            self.current_pose_index += 1
             return [0.0, 0.0]
         
     # Method to send a navigation goal to the ComputePathToPose action server
     def send_goal(self, pose):
+        gp= PoseStamped()
+        gp.header.frame_id = "map"
+        gp.pose.position.x = pose[0]
+        gp.pose.position.y = pose[1]
+
         goal_msg = ComputePathToPose.Goal()
-        goal_msg.goal = pose
+        goal_msg.goal = gp
         self.action_client.wait_for_server()
         self.future = self.action_client.send_goal_async(goal_msg)
         self.future.add_done_callback(self.goal_response_callback)
@@ -174,11 +204,37 @@ class DiffDriveDynamicWindowApproach(Node):
     # Method to store the received path for following
     def follow_path(self, path):
         self.path = path
+        self.current_pose_index = 0
+
+    # Method to get the current pose of the robot using TF2 transformations
+    def get_robot_pose(self):
+        try:
+            trans = self.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
+            pose = Pose()
+            pose.position.x = trans.transform.translation.x
+            pose.position.y = trans.transform.translation.y
+            pose.position.z = trans.transform.translation.z
+            pose.orientation = trans.transform.rotation
+
+            x = pose.position.x
+            y = pose.position.y
+            quaternion = (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
+            _, _, theta = tf_transformations.euler_from_quaternion(quaternion)
+
+            return x, y, theta
+        except (LookupException, ConnectivityException, ExtrapolationException) as e:
+            self.get_logger().error('Could not transform from base_link to map: %s' % str(e))
+            x = self.odom_buffer.pose.pose.position.x
+            y = self.odom_buffer.pose.pose.position.y
+            quaternion = (self.odom_buffer.pose.pose.orientation.x, self.odom_buffer.pose.pose.orientation.y, self.odom_buffer.pose.pose.orientation.z, self.odom_buffer.pose.pose.orientation.w)
+            _, _, theta = tf_transformations.euler_from_quaternion(quaternion)
+            return x , y, theta
 
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
     rclpy.init(args=args)
     node = DiffDriveDynamicWindowApproach()
+    node.send_goal(node.xxxgoal)
     rclpy.spin(node)
     rclpy.shutdown()
 
