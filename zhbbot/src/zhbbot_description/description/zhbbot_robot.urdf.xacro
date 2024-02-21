@@ -8,7 +8,6 @@
     <xacro:include filename="zhbbot_addon.xacro" />
 
     <!-- ADD Control -->
-    <!-- <xacro:include filename="gazebo_control.xacro" /> -->
     <xacro:include filename="zhbbot_ros2control.xacro" />
 
 </robot>
