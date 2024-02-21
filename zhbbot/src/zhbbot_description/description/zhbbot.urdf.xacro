@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="robot">
+
+    <xacro:include filename="/home/athimet/FRA532_Mobile_Robot/zhbbot/src/zhbbot_description/description/zhbbot_core.urdf.xacro" />
+    <xacro:zhbbot_core/>
+
+</robot>

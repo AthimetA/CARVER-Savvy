@@ -8,6 +8,8 @@ from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 import xacro
 import yaml
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 
 # LOAD FILE:
 def load_file(package_name, file_path):
@@ -49,22 +51,46 @@ def generate_launch_description():
         'gazebo_params.yaml')
 
     # DECLARE Gazebo LAUNCH file:
-    gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': world_file, 'extra_gazebo_args': '--ros-args --params-file '+ gazebo_params_file}.items(),
-             )
+    # gazebo = IncludeLaunchDescription(
+    #             PythonLaunchDescriptionSource([os.path.join(
+    #                 get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+    #             launch_arguments={'world': world_file, 'extra_gazebo_args': '--ros-args --params-file '+ gazebo_params_file}.items(),
+    #          )
+    
+    # gzserver launch with world 
+    gazebo_server_with_world = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+                FindPackageShare('gazebo_ros'),
+                'launch',
+                'gzserver.launch.py'
+            ])
+        ]),
+        # launch_arguments={'world': world_file}.items()
+        launch_arguments={'world': world_file, 'extra_gazebo_args': '--ros-args --params-file '+ gazebo_params_file}.items(),
+    )
+
+    # gzclient
+    gazebo_client = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+                FindPackageShare('gazebo_ros'),
+                'launch',
+                'gzclient.launch.py'
+            ])
+        ])
+    )
 
     # ***** ROBOT DESCRIPTION ***** #
     # Add Robot description
-    description_file_subpath = 'description/zhbbot_robot.urdf.xacro'
+    description_file_subpath = 'description/zhbbot.urdf.xacro'
     xacro_file = os.path.join(get_package_share_directory(description_package_name),description_file_subpath) # Use xacro to process the file
     robot_description_raw = xacro.process_file(xacro_file).toxml()
     # ROBOT STATE PUBLISHER NODE:
     node_robot_state_publisher = Node(     # Configure the node
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        output='screen',
+        output='both',
         parameters=[{'robot_description': robot_description_raw,
         'use_sim_time': True}]
     )
@@ -94,7 +120,9 @@ def generate_launch_description():
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
-        gazebo, 
+        # gazebo, 
+        gazebo_server_with_world,
+        gazebo_client,
         node_robot_state_publisher,
         spawn_entity,
 
