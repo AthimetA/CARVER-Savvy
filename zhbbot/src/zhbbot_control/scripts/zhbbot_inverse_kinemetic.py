@@ -2,29 +2,26 @@
 
 # Import necessary ROS 2 and other Python libraries
 import rclpy
-from rclpy.action import ActionClient
 from rclpy.node import Node
-from nav2_msgs.action import ComputePathToPose
 from geometry_msgs.msg import PoseStamped, Twist, Point
-import tf_transformations
-import math
-import tf2_ros
-from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
-from geometry_msgs.msg import Pose, TransformStamped
 import numpy as np
-from sensor_msgs.msg import LaserScan
-from visualization_msgs.msg import Marker, MarkerArray
-from std_msgs.msg import ColorRGBA
 from std_msgs.msg import Float64MultiArray
 
-from nav_msgs.msg import Odometry
 from zhbbot_interfaces.srv import ZhbbotSetNodeStaus
-
 class ZhbbotIKNode(Node):
     # Constructor of the class
     def __init__(self):
         # Initialize the ROS 2 node
         super().__init__('ZhbbotIKNode')
+
+        '''
+        
+        Stactic Parameters
+        
+        '''
+
+        self._WHEEL_RADIUS = 0.075 # radius of the wheel
+        self._BASE_WIDTH = 0.4   # distance between the wheels
 
         # Create a subscriber for the Diff Drive Publisher
         self.create_subscription(Twist, '/diff_drive_zhbbot', self.diff_drive_cont_sub_callback, 10)
@@ -82,8 +79,8 @@ class ZhbbotIKNode(Node):
         # Create a Float64MultiArray message to publish the velocity commands
         vx = diff_drive_velocity.linear.x   # linear velocity
         w = diff_drive_velocity.angular.z   # angular velocity
-        r = 0.075                           # radius of the wheel
-        d = 0.4                             # distance between the wheels
+        d = self._BASE_WIDTH
+        r = self._WHEEL_RADIUS
 
         wl = (vx / r) - ((w * d) / (2 * r))
         wr = (vx / r) + ((w * d) / (2 * r))
