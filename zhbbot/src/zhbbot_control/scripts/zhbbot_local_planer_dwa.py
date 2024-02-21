@@ -108,14 +108,13 @@ class ZhbbotDWANode(Node):
     def timer_callback(self):
         if self.node_status == 'ENABLED':
             if self.path is not None and self.current_pose_index < len(self.path):
-                self.get_logger().info(f'Current pose index: {self.current_pose_index}/{len(self.path)}')
+                # self.get_logger().info(f'Current pose index: {self.current_pose_index}/{len(self.path)}')
                 # Get the current target pose from the path
                 goal_pose = self.path[self.current_pose_index]
                 # Retrieve the robot's current pose
                 best_velocity = self.select_best_trajectory([goal_pose.pose.position.x, goal_pose.pose.position.y])
                 # Calculate the distance to the current target pose
                 self.publish_velocity(best_velocity[0], best_velocity[1])
-                self.get_logger().info(f'hi')
         elif self.node_status == 'DISABLED':
             self.reset_node()
     
@@ -181,7 +180,7 @@ class ZhbbotDWANode(Node):
                         if score > best_score:
                             best_score = score
                             best_velocity = [linear_speed, rot_speed]
-                self.get_logger().info(f'Best score: {best_score}, Linear speed: {best_velocity[0]}, Rotational speed: {best_velocity[1]}')
+                # self.get_logger().info(f'Best score: {best_score}, Linear speed: {best_velocity[0]}, Rotational speed: {best_velocity[1]}')
                 self.best_velocity = best_velocity
                 return best_velocity
             

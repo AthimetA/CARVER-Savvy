@@ -76,8 +76,8 @@ class ZhbbotHandler(Node):
         '''
         # Node status
         self.node_status = "SLEEP"
-        self.selected_local_planner = "ZhbbotVFFNode"
-        # self.selected_local_planner = "ZhbbotDWANode"
+        # self.selected_local_planner = "ZhbbotVFFNode"
+        self.selected_local_planner = "ZhbbotDWANode"
         self.slave_node_name = ["ZhbbotIKNode", self.selected_local_planner]
         self.slave_node_status = {slave_node: "DISABLED" for slave_node in self.slave_node_name}
         self.node_status_client = {slave_node: self.create_client(ZhbbotSetNodeStaus,
