@@ -39,9 +39,9 @@ class ZhbbotVFFNode(Node):
         # Set lookahead distance for the Pure Pursuit algorithm
         self.__LOOKAHEAD_DISTANCE = 1.0
         # Set the threshold to determine if the goal is reached
-        self.__GOAL_THRESHOLD = 0.75
+        self.__GOAL_THRESHOLD = 0.80
         # VFF controller parameters
-        self.__OBSTACLE_DISTANCE = 0.75  # Threshold distance for obstacle influence
+        self.__OBSTACLE_DISTANCE = 0.80 # Threshold distance for obstacle influence
         self.__GAIN = 2.5  # Gain for the attractive vector
 
         # Constants for visualization colors
@@ -75,10 +75,6 @@ class ZhbbotVFFNode(Node):
         # Publisher for ik controller
         self.velocity_publisher_ik = self.create_publisher(Twist, '/diff_drive_zhbbot', self.__qos_profile)
 
-        # Initialize TF2 buffer and listener for pose transformations
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
-
         # Create a subscription to the robot's odometry topic
         self.odom_ekf_read = self.create_subscription(Odometry, '/odometry/local', self.odom_ekf_callback, 10)  
         self.robot_pose = Pose()
@@ -94,7 +90,7 @@ class ZhbbotVFFNode(Node):
         self._node_name = "ZhbbotVFFNode"
 
         self.set_node_status_service = self.create_service(ZhbbotSetNodeStaus,
-                                                            '/zhbbot_service/ZhbbotVFFNode/set_node_status',
+                                                            f'/zhbbot_service/{self._node_name}/set_node_status',
                                                               self.set_node_status_callback)
 
         self.get_logger().info(f'ZhbbotVFFNode.py started with node name: {self._node_name}')
@@ -171,40 +167,17 @@ class ZhbbotVFFNode(Node):
 
     # Method to get the current pose of the robot using TF2 transformations
     def get_robot_pose(self):
-        # try:
-        #     trans = self.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
-        #     pose = Pose()
-        #     pose.position.x = trans.transform.translation.x
-        #     pose.position.y = trans.transform.translation.y
-        #     pose.position.z = trans.transform.translation.z
-        #     pose.orientation = trans.transform.rotation
-        #     return pose
-        # except (LookupException, ConnectivityException, ExtrapolationException) as e:
-        #     self.get_logger().error('Could not transform from base_link to map: %s' % str(e))
-        #     return None
         return self.robot_pose
 
     def odom_ekf_callback(self, msg:Odometry):
-        robot_x = msg.pose.pose.position.x
-        robot_y = msg.pose.pose.position.y
-        quaternion = (
-            msg.pose.pose.orientation.x,
-            msg.pose.pose.orientation.y,
-            msg.pose.pose.orientation.z,
-            msg.pose.pose.orientation.w)
-        euler = tf_transformations.euler_from_quaternion(quaternion)
-        robot_theta = euler[2]
-        # self.get_logger().info(f'Robot position: x: {robot_x:2f}, y: {robot_y:2f}, theta: {robot_theta:2f}')
-
         pos = Pose()
-        pos.position.x = robot_x
-        pos.position.y = robot_y
-        pos.position.z = 0.0
-        q = tf_transformations.quaternion_from_euler(0, 0, robot_theta)
-        pos.orientation.x = q[0]
-        pos.orientation.y = q[1]
-        pos.orientation.z = q[2]
-        pos.orientation.w = q[3]
+        pos.position.x = msg.pose.pose.position.x
+        pos.position.y = msg.pose.pose.position.y
+        pos.position.z = msg.pose.pose.position.z
+        pos.orientation.x = msg.pose.pose.orientation.x
+        pos.orientation.y = msg.pose.pose.orientation.y
+        pos.orientation.z = msg.pose.pose.orientation.z
+        pos.orientation.w = msg.pose.pose.orientation.w
         self.robot_pose = pos
         
     # Method to calculate the goal point based on the lookahead distance
