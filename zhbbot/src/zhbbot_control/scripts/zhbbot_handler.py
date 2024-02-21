@@ -58,7 +58,7 @@ class ZhbbotHandler(Node):
         Actknowledged Timer
 
         '''
-        self.actknowledged_period = 5.0
+        self.actknowledged_period = 1.0
         self.last_actknowledged_timer = self.create_timer(self.actknowledged_period, self.actknowledged_callback)
 
         '''
@@ -159,19 +159,8 @@ class ZhbbotHandler(Node):
         self.goal_x = request.x
         self.goal_y = request.y
         self.goal_theta = request.theta
-        # Generate the goal pose from the request
-        goal_pose = PoseStamped()
-        goal_pose.header.frame_id = "map"
-        goal_pose.pose.position.x = request.x
-        goal_pose.pose.position.y = request.y
-        goal_pose.pose.position.z = 0.0
-        quaternion = tf_transformations.quaternion_from_euler(0, 0, request.theta)
-        goal_pose.pose.orientation.x = quaternion[0]
-        goal_pose.pose.orientation.y = quaternion[1]
-        goal_pose.pose.orientation.z = quaternion[2]
-        goal_pose.pose.orientation.w = quaternion[3]
         # Send the goal to the robot to compute the path from ComputePathToPose action server
-        self.send_goal(goal_pose)
+        self.send_goal([self.goal_x, self.goal_y, self.goal_theta])
         response.status = "ZhbbotHandlerNode: Goal received from user"
 
         # Set the node status to "ENABLED"
@@ -183,11 +172,40 @@ class ZhbbotHandler(Node):
         return response
 
     # Method to send a navigation goal to the ComputePathToPose action server
-    def send_goal(self, pose):
-        goal_msg = ComputePathToPose.Goal()
-        goal_msg.goal = pose
+    def send_goal(self, gp):
+
+        goal_pose = PoseStamped()
+        goal_pose.header.frame_id = "map"
+        goal_pose.pose.position.x = gp[0]
+        goal_pose.pose.position.y = gp[1]
+        theta = gp[2] * (math.pi / 180.0)
+        q = tf_transformations.quaternion_from_euler(0, 0, theta)
+        goal_pose.pose.orientation.x = q[0]
+        goal_pose.pose.orientation.y = q[1]
+        goal_pose.pose.orientation.z = q[2]
+        goal_pose.pose.orientation.w = q[3]
+
+        star_pos = PoseStamped()
+        star_pos.header.frame_id = "map"
+        star_pos.pose.position.x = self.robot_x
+        star_pos.pose.position.y = self.robot_y
+        star_pos.pose.position.z = 0.0
+        q = tf_transformations.quaternion_from_euler(0, 0, self.robot_theta)
+        star_pos.pose.orientation.x = q[0]
+        star_pos.pose.orientation.y = q[1]
+        star_pos.pose.orientation.z = q[2]
+        star_pos.pose.orientation.w = q[3]
+        
+
+        self.get_logger().info('Sending goal to ComputePathToPose action server')
+        self.get_logger().info(f'Goal pose: {goal_pose}')
+        self.get_logger().info(f'Start pose: {star_pos}')
+
+        CPTP = ComputePathToPose.Goal()
+        CPTP.goal = goal_pose
+        CPTP.start = star_pos
         self.action_client.wait_for_server()
-        self.future = self.action_client.send_goal_async(goal_msg)
+        self.future = self.action_client.send_goal_async(CPTP)
         self.future.add_done_callback(self.goal_response_callback)
 
     # Callback for handling the response from the ComputePathToPose action server

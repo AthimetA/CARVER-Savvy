@@ -55,19 +55,13 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         # Initialize TF2 buffer and listener for pose transformations
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        self.tf_robot_pose = None
 
         # Create a timer to periodically run the pure pursuit controller method
         self.create_timer(0.05, self.pure_pursuit_controller)
         # Initialize path and current pose index
         self.path = None
         self.current_pose_index = 0
-
-        # Create a service server to recive goalreach from Fk node
-        self.goalreach_service_server = self.create_service(Goalreach, 'zhbbot/goal_reach', self.goal_reach_callback)
-        self.goal_reach = False
-
-        # Create a service client to send goal to Fk node
-        self.robot_sent_goal_service_client = self.create_client(RobotSentgoal, 'zhbbot/robot_sent_goal')
 
     def goal_reach_callback(self, request: Goalreach.Request, response: Goalreach.Response):
         self.goal_reach = request.goal_reach
@@ -87,27 +81,36 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
 
     # Method implementing the Pure Pursuit control logic
     def pure_pursuit_controller(self):
-        if self.path is not None and self.current_pose_index < len(self.path):
-            # Get the current target pose from the path
-            current_pose = self.path[self.current_pose_index]
-            # Retrieve the robot's current pose
-            robot_pose = self.get_robot_pose()
-            if robot_pose is not None:
-                # Calculate the goal point based on the robot's pose and the path
-                goal_point = self.calculate_goal_point(self.path, robot_pose, self.current_pose_index)
-                if goal_point is not None:
-                    print('-'*50)
-                    print(f'Current index: {self.current_pose_index}/{len(self.path)}')
-                    print(f'Goal point: {goal_point.pose.position.x}, {goal_point.pose.position.y}')
-                    print(f'Robot pose: {robot_pose.position.x}, {robot_pose.position.y}')
-                    # Vff controller
-                    linear_vel, angular_vel = self.vff_controller(goal_point, robot_pose)
-                    print(f'VFF linear velocity: {linear_vel}, angular velocity: {angular_vel}')
-                    # Publish the velocity commands
-                    self.publish_velocity(linear_vel, angular_vel)
-                    # Check if the current target pose is reached
-                    if self.is_goal_reached(robot_pose, current_pose):
-                        self.current_pose_index += 1
+        if self.tf_robot_pose is not None:
+
+            if self.path is not None and self.current_pose_index < len(self.path):
+                # Get the current target pose from the path
+                current_pose = self.path[self.current_pose_index]
+                # Retrieve the robot's current pose
+                robot_pose = self.get_robot_pose()
+                if robot_pose is not None:
+                    # Calculate the goal point based on the robot's pose and the path
+                    goal_point = self.calculate_goal_point(self.path, robot_pose, self.current_pose_index)
+                    if goal_point is not None:
+                        print('-'*50)
+                        print(f'Current index: {self.current_pose_index}/{len(self.path)}')
+                        print(f'Goal point: {goal_point.pose.position.x}, {goal_point.pose.position.y}, orientation: {goal_point.pose.orientation}')
+                        print(f'Robot pose: {robot_pose.position.x}, {robot_pose.position.y}, orientation: {robot_pose.orientation}')
+                        # Vff controller
+                        linear_vel, angular_vel = self.vff_controller(goal_point, robot_pose)
+                        print(f'VFF linear velocity: {linear_vel}, angular velocity: {angular_vel}')
+                        # Publish the velocity commands
+                        self.publish_velocity(linear_vel, angular_vel)
+                        # Check if the current target pose is reached
+                        if self.is_goal_reached(robot_pose, current_pose):
+                            self.current_pose_index += 1
+            if self.path == None:
+                goal_pose = [9.0,-3.0, 30.0] # x, y, theta(degrees) 
+                # goal_pose = [0.0,-0.0, 0.0] # x, y, theta(degrees) 
+                self.send_goal(goal_pose)
+        else:
+            self.get_logger().info('Robot pose not available')
+            self.get_robot_pose()
 
     # Method to calculate the goal point based on the lookahead distance
     def calculate_goal_point(self, path, robot_pose, start_index):
@@ -207,11 +210,33 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
         return marker_array
 
     # Method to send a navigation goal to the ComputePathToPose action server
-    def send_goal(self, pose):
-        goal_msg = ComputePathToPose.Goal()
-        goal_msg.goal = pose
+    def send_goal(self, gp):
+
+        goal_pose = PoseStamped()
+        goal_pose.header.frame_id = "map"
+        goal_pose.pose.position.x = gp[0]
+        goal_pose.pose.position.y = gp[1]
+        theta = gp[2] * (math.pi / 180.0)
+        q = tf_transformations.quaternion_from_euler(0, 0, theta)
+        goal_pose.pose.orientation.x = q[0]
+        goal_pose.pose.orientation.y = q[1]
+        goal_pose.pose.orientation.z = q[2]
+        goal_pose.pose.orientation.w = q[3]
+
+        star_pos = PoseStamped()
+        star_pos.header.frame_id = "map"
+        star_pos.pose = self.tf_robot_pose
+
+
+        self.get_logger().info('Sending goal to ComputePathToPose action server')
+        self.get_logger().info(f'Goal pose: {goal_pose}')
+        self.get_logger().info(f'Start pose: {star_pos}')
+
+        CPTP = ComputePathToPose.Goal()
+        CPTP.goal = goal_pose
+        CPTP.start = star_pos
         self.action_client.wait_for_server()
-        self.future = self.action_client.send_goal_async(goal_msg)
+        self.future = self.action_client.send_goal_async(CPTP)
         self.future.add_done_callback(self.goal_response_callback)
 
     # Callback for handling the response from the ComputePathToPose action server
@@ -227,9 +252,6 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
     def get_result_callback(self, future):
         result = future.result().result
         self.get_logger().info('Path received')
-
-        self.goalreach_service_server_call(result.path.poses[-1])
-
         self.follow_path(result.path.poses)
 
     # Method to store the received path for following
@@ -275,9 +297,14 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
             pose.position.y = trans.transform.translation.y
             pose.position.z = trans.transform.translation.z
             pose.orientation = trans.transform.rotation
+
+            # self.get_logger().info(f'Transform: {pose}')
+
+            self.tf_robot_pose = pose
             return pose
         except (LookupException, ConnectivityException, ExtrapolationException) as e:
             self.get_logger().error('Could not transform from base_link to map: %s' % str(e))
+
             return None
         
     def get_debug_lookahead(self, robot_pose):
@@ -336,10 +363,7 @@ class DifferentialDrivePurePursuitVFFAvoidance(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = DifferentialDrivePurePursuitVFFAvoidance()
-    goal_pose = PoseStamped()
-    goal_pose.header.frame_id = "map"
-    goal_pose.pose.position.x = 4.0
-    node.send_goal(goal_pose)
+
     rclpy.spin(node)
     rclpy.shutdown()
 

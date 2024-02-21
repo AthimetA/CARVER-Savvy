@@ -18,6 +18,8 @@ from std_msgs.msg import ColorRGBA
 
 from zhbbot_interfaces.srv import ZhbbotSendPath, ZhbbotSetNodeStaus
 
+from nav_msgs.msg import Odometry
+
 class ZhbbotVFFNode(Node):
     # Constructor of the class
     def __init__(self):
@@ -37,10 +39,10 @@ class ZhbbotVFFNode(Node):
         # Set lookahead distance for the Pure Pursuit algorithm
         self.__LOOKAHEAD_DISTANCE = 1.0
         # Set the threshold to determine if the goal is reached
-        self.__GOAL_THRESHOLD = 0.5
+        self.__GOAL_THRESHOLD = 0.75
         # VFF controller parameters
         self.__OBSTACLE_DISTANCE = 0.75  # Threshold distance for obstacle influence
-        self.__GAIN = 1.5  # Gain for the attractive vector
+        self.__GAIN = 2.5  # Gain for the attractive vector
 
         # Constants for visualization colors
         self.__RED = 0
@@ -76,6 +78,10 @@ class ZhbbotVFFNode(Node):
         # Initialize TF2 buffer and listener for pose transformations
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+
+        # Create a subscription to the robot's odometry topic
+        self.odom_ekf_read = self.create_subscription(Odometry, '/odometry/local', self.odom_ekf_callback, 10)  
+        self.robot_pose = Pose()
 
         '''
         
@@ -165,17 +171,41 @@ class ZhbbotVFFNode(Node):
 
     # Method to get the current pose of the robot using TF2 transformations
     def get_robot_pose(self):
-        try:
-            trans = self.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
-            pose = Pose()
-            pose.position.x = trans.transform.translation.x
-            pose.position.y = trans.transform.translation.y
-            pose.position.z = trans.transform.translation.z
-            pose.orientation = trans.transform.rotation
-            return pose
-        except (LookupException, ConnectivityException, ExtrapolationException) as e:
-            self.get_logger().error('Could not transform from base_link to map: %s' % str(e))
-            return None
+        # try:
+        #     trans = self.tf_buffer.lookup_transform('map', 'base_link', rclpy.time.Time())
+        #     pose = Pose()
+        #     pose.position.x = trans.transform.translation.x
+        #     pose.position.y = trans.transform.translation.y
+        #     pose.position.z = trans.transform.translation.z
+        #     pose.orientation = trans.transform.rotation
+        #     return pose
+        # except (LookupException, ConnectivityException, ExtrapolationException) as e:
+        #     self.get_logger().error('Could not transform from base_link to map: %s' % str(e))
+        #     return None
+        return self.robot_pose
+
+    def odom_ekf_callback(self, msg:Odometry):
+        robot_x = msg.pose.pose.position.x
+        robot_y = msg.pose.pose.position.y
+        quaternion = (
+            msg.pose.pose.orientation.x,
+            msg.pose.pose.orientation.y,
+            msg.pose.pose.orientation.z,
+            msg.pose.pose.orientation.w)
+        euler = tf_transformations.euler_from_quaternion(quaternion)
+        robot_theta = euler[2]
+        # self.get_logger().info(f'Robot position: x: {robot_x:2f}, y: {robot_y:2f}, theta: {robot_theta:2f}')
+
+        pos = Pose()
+        pos.position.x = robot_x
+        pos.position.y = robot_y
+        pos.position.z = 0.0
+        q = tf_transformations.quaternion_from_euler(0, 0, robot_theta)
+        pos.orientation.x = q[0]
+        pos.orientation.y = q[1]
+        pos.orientation.z = q[2]
+        pos.orientation.w = q[3]
+        self.robot_pose = pos
         
     # Method to calculate the goal point based on the lookahead distance
     def calculate_goal_point(self, path, robot_pose, start_index):
@@ -210,8 +240,10 @@ class ZhbbotVFFNode(Node):
                                                                 robot_pose.orientation.y,
                                                                 robot_pose.orientation.z,
                                                                 robot_pose.orientation.w])
+            
             # Calculate the heading error
             heading_error = self.normalize_angle(angle - theta)
+            
             # Calculate the linear and angular velocities
             linear_velocity = max_linear_velocity * (1 - abs(heading_error))
             angular_velocity = max_angular_velocity * heading_error
@@ -226,6 +258,13 @@ class ZhbbotVFFNode(Node):
     def get_vff(self, scan, goal_point, robot_pose):
         
         # Constants for the VFF algorithm
+        # Calculate the attractive vector based on the goal point and the robot's pose and robot's orientation
+
+        _, _, theta = tf_transformations.euler_from_quaternion([robot_pose.orientation.x,
+                                                                robot_pose.orientation.y,
+                                                                robot_pose.orientation.z,
+                                                                robot_pose.orientation.w])
+
         # Initialize the VFF vectors
         vff_vector = {'attractive': [goal_point.pose.position.x - robot_pose.position.x, goal_point.pose.position.y - robot_pose.position.y],  # Goal-directed vector
                       'repulsive': [0.0, 0.0],  # Obstacle-repulsive vector
@@ -240,7 +279,8 @@ class ZhbbotVFFNode(Node):
             print(f'Obstacle detected at {dist_nearest}m')
             # Opposite direction to the obstacle
             # Convert to Cartesian coordinates
-            obstacle_angle = scan.angle_min + scan.angle_increment * dist_nearest_angle
+            e = (scan.angle_min + theta) + (scan.angle_increment * dist_nearest_angle)
+            obstacle_angle =  np.arctan2(np.sin(e), np.cos(e))
             opposite_angle = obstacle_angle - math.pi
             obstacle_dist = self.__OBSTACLE_DISTANCE - dist_nearest
             vff_vector['repulsive'][0] = math.cos(opposite_angle) * obstacle_dist * self.__GAIN
