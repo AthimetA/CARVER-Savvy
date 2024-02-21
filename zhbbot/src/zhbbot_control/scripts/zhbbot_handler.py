@@ -83,7 +83,9 @@ class ZhbbotHandler(Node):
         '''
         # Node status
         self.node_status = "SLEEP"
-        self.slave_node_name = ["ZhbbotVFFNode", "ZhbbotIKNode"]
+        self.selected_local_planner = "ZhbbotVFFNode"
+        # self.selected_local_planner = "ZhbbotDWANode"
+        self.slave_node_name = ["ZhbbotIKNode", self.selected_local_planner]
         self.slave_node_status = {slave_node: "DISABLED" for slave_node in self.slave_node_name}
         self.node_status_client = {slave_node: self.create_client(ZhbbotSetNodeStaus,
                                                                    f'/zhbbot_service/{slave_node}/set_node_status') for slave_node in self.slave_node_name}
@@ -112,14 +114,12 @@ class ZhbbotHandler(Node):
 
     def handler_callback(self):
         if self.node_status == "ENABLED":
-            # self.get_logger().info('Handler: Node is enabled')
-            # self.get_logger().info('Handler: Path reach check result: %s' % self.path_reach_check())
             if self.path_reach_check():
                 self.get_logger().info('Handler: Path reached')
                 self.node_status = "SLEEP"
                 self.get_logger().info('Handler: Node is disabled')
-                self.send_node_status("ZhbbotVFFNode", "DISABLED")
                 self.send_node_status("ZhbbotIKNode", "DISABLED")
+                self.send_node_status(self.selected_local_planner, "DISABLED")
                 self.get_logger().info('Handler: All nodes are disabled')
     
     def actknowledged_callback(self):
@@ -166,7 +166,7 @@ class ZhbbotHandler(Node):
         # Set the node status to "ENABLED"
         self.node_status = "ENABLED"
 
-        self.send_node_status("ZhbbotVFFNode", "ENABLED")
+        self.send_node_status(self.selected_local_planner, "ENABLED")
         self.send_node_status("ZhbbotIKNode", "ENABLED")
 
         return response

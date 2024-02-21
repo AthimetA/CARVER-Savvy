@@ -49,7 +49,7 @@ class ZhbbotIKNode(Node):
                                                             f'/zhbbot_service/{self._node_name}/set_node_status',
                                                               self.set_node_status_callback)
 
-        self.get_logger().info(f'ZhbbotIKNode.py started with node name: {self._node_name}')
+        self.get_logger().info(f'zhbbot_inverse_kinemetic.py started with node name: {self._node_name}')
 
     def set_node_status_callback(self, request: ZhbbotSetNodeStaus.Request, response: ZhbbotSetNodeStaus.Response):
         # Request to set the node status

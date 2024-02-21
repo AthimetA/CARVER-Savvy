@@ -29,8 +29,14 @@ def generate_launch_description():
 
     zhbbot_vff = Node(
         package='zhbbot_control',
-        executable='zhbbot_vff_avoidance.py',
+        executable='zhbbot_local_planer_vff_avoidance.py',
         name='ZhbbotVFFNode',
+    )
+
+    zhbbot_dwa = Node(
+        package='zhbbot_control',
+        executable='zhbbot_local_planer_dwa.py',
+        name='ZhbbotDWANode',
     )
 
     # Inverse Kinematics Node
@@ -46,6 +52,7 @@ def generate_launch_description():
         # Launch the test node
         zhbbot_handler,
         zhbbot_vff,
+        zhbbot_dwa,
         zhbbot_inverse_kinemetic,
 
     ])

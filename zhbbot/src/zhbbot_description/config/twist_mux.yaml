@@ -5,6 +5,10 @@ twist_mux:
         topic   : /cmd_vel
         timeout : 0.5
         priority: 10
+      zhbbot_ik_navigation:
+        topic   : /diff_drive_zhbbot
+        timeout : 0.5
+        priority: 15
       zhbbot_navigation:
         topic   : /cmd_vel_zhbbot
         timeout : 0.5

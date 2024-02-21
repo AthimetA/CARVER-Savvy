@@ -51,19 +51,6 @@ class ZhbbotVFFNode(Node):
 
         '''
         
-        General Variables
-        
-        '''
-
-        # Create an action server for ZhbbotSendPath service
-        self.send_path_service_server = self.create_service(ZhbbotSendPath, '/zhbbot_service/send_path', self.send_path_callback)
-        # Initialize path and current pose index
-        self.path = None
-        self.current_pose_index = 0
-
-
-        '''
-        
         Subscribers, Publishers
 
         '''
@@ -84,7 +71,8 @@ class ZhbbotVFFNode(Node):
         Service Clients and Servers
 
         '''
-
+        
+        # Set the initial status of the node
         self.node_status = "DISABLED" # SLEEP, ACTIVE, DISABLED
 
         self._node_name = "ZhbbotVFFNode"
@@ -93,17 +81,15 @@ class ZhbbotVFFNode(Node):
                                                             f'/zhbbot_service/{self._node_name}/set_node_status',
                                                               self.set_node_status_callback)
 
-        self.get_logger().info(f'ZhbbotVFFNode.py started with node name: {self._node_name}')
+        self.get_logger().info(f'zhbbot_local_planer_vff_avoidance.py started with node name: {self._node_name}')
+
+            # Create an action server for ZhbbotSendPath service
+        self.send_path_service_server = self.create_service(ZhbbotSendPath, '/zhbbot_service/send_path', self.send_path_callback)
+        # Initialize path and current pose index
+        self.path = None
+        self.current_pose_index = 0
 
 
-        '''
-        
-        Timer
-        
-        '''
-        # Create a timer to periodically run the pure pursuit controller method
-        self.__timer_hz = 20
-        self.create_timer(1.0 / self.__timer_hz, self.timer_callback)
 
         '''
         
@@ -117,20 +103,14 @@ class ZhbbotVFFNode(Node):
 
 
 
-    def reset_node(self):
-        # Reset the path and current pose index
-        self.path = None
-        self.current_pose_index = 0
-        # Reset the laser scan data
-        self.laser_scan = None
-
-    def set_node_status_callback(self, request: ZhbbotSetNodeStaus.Request, response: ZhbbotSetNodeStaus.Response):
-        # Request to set the node status
-        self.node_status = request.node_status
-        # Response to the request
-        response.node_name = self._node_name
-        response.call_back_status = self.node_status
-        return response
+        '''
+        
+        Timer
+        
+        '''
+        # Create a timer to periodically run the pure pursuit controller method
+        self.__timer_hz = 20
+        self.create_timer(1.0 / self.__timer_hz, self.timer_callback)
 
     '''
     
@@ -141,12 +121,13 @@ class ZhbbotVFFNode(Node):
     def timer_callback(self):
         if self.node_status == 'ENABLED':
             if self.path is not None and self.current_pose_index < len(self.path):
-                self.get_logger().info(f'current_pose_index: {self.current_pose_index}/{len(self.path)}')
+                # self.get_logger().info(f'current_pose_index: {self.current_pose_index}/{len(self.path)}')
                 # Get the current target pose from the path
                 current_pose = self.path[self.current_pose_index]
                 # Retrieve the robot's current pose
                 robot_pose = self.get_robot_pose()
                 if robot_pose is not None:
+                    self.lookahead_marker_publisher.publish(self._get_marker_lookahead(robot_pose))
                     # Calculate the goal point based on the robot's pose and the path
                     goal_point = self.calculate_goal_point(self.path, robot_pose, self.current_pose_index)
                     if goal_point is not None:
@@ -159,6 +140,8 @@ class ZhbbotVFFNode(Node):
                             self.current_pose_index += 1
         elif self.node_status == 'DISABLED':
             self.vff_marker_pub.publish(MarkerArray())
+            if self.robot_pose is not None:
+                self.lookahead_marker_publisher.publish(self._get_marker_lookahead(self.robot_pose))
             self.reset_node()
 
     # Method to check if the goal is reached
@@ -169,22 +152,10 @@ class ZhbbotVFFNode(Node):
     def get_robot_pose(self):
         return self.robot_pose
 
-    def odom_ekf_callback(self, msg:Odometry):
-        pos = Pose()
-        pos.position.x = msg.pose.pose.position.x
-        pos.position.y = msg.pose.pose.position.y
-        pos.position.z = msg.pose.pose.position.z
-        pos.orientation.x = msg.pose.pose.orientation.x
-        pos.orientation.y = msg.pose.pose.orientation.y
-        pos.orientation.z = msg.pose.pose.orientation.z
-        pos.orientation.w = msg.pose.pose.orientation.w
-        self.robot_pose = pos
-        
     # Method to calculate the goal point based on the lookahead distance
     def calculate_goal_point(self, path, robot_pose, start_index):
         for i in range(start_index, len(path)):
             if self.distance_between_points(robot_pose.position, path[i].pose.position) >= self.__LOOKAHEAD_DISTANCE:
-                self.lookahead_marker_publisher.publish(self._get_marker_lookahead(robot_pose))
                 return path[i]
         return None
 
@@ -249,7 +220,6 @@ class ZhbbotVFFNode(Node):
         # If the nearest obstacle is within the influence threshold, calculate the repulsive vector
         # if distance_min < OBSTACLE_DISTANCE:
         if dist_nearest <= self.__OBSTACLE_DISTANCE:
-            print(f'Obstacle detected at {dist_nearest}m')
             # Opposite direction to the obstacle
             # Convert to Cartesian coordinates
             e = (scan.angle_min + theta) + (scan.angle_increment * dist_nearest_angle)
@@ -279,10 +249,19 @@ class ZhbbotVFFNode(Node):
         self.path = request.path.poses
         self.current_pose_index = 0
         return response
+    
+    # Service callback function to set the status of the node
+    def set_node_status_callback(self, request: ZhbbotSetNodeStaus.Request, response: ZhbbotSetNodeStaus.Response):
+        # Request to set the node status
+        self.node_status = request.node_status
+        # Response to the request
+        response.node_name = self._node_name
+        response.call_back_status = self.node_status
+        return response
 
     '''
     
-    Start msg callback functions
+    Msg callback functions
     
     '''
 
@@ -296,6 +275,18 @@ class ZhbbotVFFNode(Node):
         twist.linear.x = linear_vel
         twist.angular.z = angular_vel
         self.velocity_publisher_ik.publish(twist)
+
+    # Callback for processing odometry messages
+    def odom_ekf_callback(self, msg:Odometry):
+        pos = Pose()
+        pos.position.x = msg.pose.pose.position.x
+        pos.position.y = msg.pose.pose.position.y
+        pos.position.z = msg.pose.pose.position.z
+        pos.orientation.x = msg.pose.pose.orientation.x
+        pos.orientation.y = msg.pose.pose.orientation.y
+        pos.orientation.z = msg.pose.pose.orientation.z
+        pos.orientation.w = msg.pose.pose.orientation.w
+        self.robot_pose = pos
 
     '''
     
@@ -399,6 +390,18 @@ class ZhbbotVFFNode(Node):
     def verbose_print(self, *args, **kwargs):
         if self.__verbose:
             print(*args, **kwargs)
+
+    '''
+    
+    General Functions
+    
+    '''
+    def reset_node(self):
+        # Reset the path and current pose index
+        self.path = None
+        self.current_pose_index = 0
+        # Reset the laser scan data
+        self.laser_scan = None
 
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
