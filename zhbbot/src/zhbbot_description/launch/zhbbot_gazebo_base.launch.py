@@ -40,7 +40,7 @@ def generate_launch_description():
     world_file = os.path.join(
         get_package_share_directory(description_package_name),
         'worlds',
-        'pal_office.world')
+        'office_zhbbot.world')
     
     # Gazebo parameters file
     gazebo_params_file = os.path.join(

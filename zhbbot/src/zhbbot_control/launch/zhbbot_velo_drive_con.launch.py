@@ -97,7 +97,7 @@ def generate_launch_description():
     slam_map_path = os.path.join(
         get_package_share_directory(package_name),
         'maps',
-        'pal_office_map.yaml')
+        'office_zhbbot.yaml')
     
     slam_map_file = LaunchConfiguration('map', default=slam_map_path)
 
