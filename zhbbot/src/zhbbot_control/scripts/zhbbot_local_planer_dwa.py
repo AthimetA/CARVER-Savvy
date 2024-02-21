@@ -185,7 +185,7 @@ class ZhbbotDWANode(Node):
                 return best_velocity
             
             # If the goal is reached, stop the robot
-            self.current_pose_index += 1
+            self.current_pose_index += 3
             return self.best_velocity
 
     ''''

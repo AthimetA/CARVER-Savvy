@@ -6,7 +6,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 from nav2_msgs.action import ComputePathToPose
 from geometry_msgs.msg import PoseStamped, Twist, Point
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 import tf_transformations
 import math
 import numpy as np
@@ -67,7 +67,7 @@ class ZhbbotHandler(Node):
         self.goal_y = 0.0
         self.goal_theta = 0.0
 
-        self.error_range = 0.5
+        self.error_range = 0.1
 
         '''
         
@@ -76,13 +76,12 @@ class ZhbbotHandler(Node):
         '''
         # Node status
         self.node_status = "SLEEP"
-        self.selected_local_planner = "ZhbbotVFFNode"
-        # self.selected_local_planner = "ZhbbotDWANode"
+        # self.selected_local_planner = "ZhbbotVFFNode"
+        self.selected_local_planner = "ZhbbotDWANode"
         self.slave_node_name = ["ZhbbotIKNode", self.selected_local_planner]
         self.slave_node_status = {slave_node: "DISABLED" for slave_node in self.slave_node_name}
         self.node_status_client = {slave_node: self.create_client(ZhbbotSetNodeStaus,
                                                                    f'/zhbbot_service/{slave_node}/set_node_status') for slave_node in self.slave_node_name}
-
     def send_node_status(self, node_name, status):
         request = ZhbbotSetNodeStaus.Request()
         request.node_status = status
@@ -241,6 +240,7 @@ class ZhbbotHandler(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ZhbbotHandler()
+    # node.test_protocall()
     rclpy.spin(node)
     rclpy.shutdown()
 
