@@ -115,12 +115,13 @@ class ZhbbotHandler(Node):
     def handler_callback(self):
         if self.node_status == "ENABLED":
             if self.path_reach_check():
-                self.get_logger().info('Handler: Path reached')
+                self.get_logger().info('='*50)
                 self.node_status = "SLEEP"
-                self.get_logger().info('Handler: Node is disabled')
+                self.get_logger().info('Handler: Path reached, Handler is SLEEP')
                 self.send_node_status("ZhbbotIKNode", "DISABLED")
                 self.send_node_status(self.selected_local_planner, "DISABLED")
-                self.get_logger().info('Handler: All nodes are disabled')
+                self.get_logger().info('Handler: All Slave nodes are DISABLED')
+                self.get_logger().info('='*50)
     
     def actknowledged_callback(self):
         self.get_logger().info('-'*50)

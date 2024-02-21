@@ -49,6 +49,10 @@ class ZhbbotFKNode(Node):
         self.y = 0.0
         self.wz = 0.0
 
+
+        self._WHEEL_RADIUS = 0.075 # radius of the wheel
+        self._BASE_WIDTH = 0.4   # distance between the wheels
+
     def timer_callback(self):
         if self.node_enabled:
             try:
@@ -67,21 +71,13 @@ class ZhbbotFKNode(Node):
         # Get the wheel velocities from the joint_states
         velocities = np.array(joint_states.velocity).astype(np.float64)
 
-        wl = velocities[0]
-        wr = velocities[1]
-        r = 0.075                           # radius of the wheel
-        base_width = 0.4                             # distance between the wheels
+        # Get the wheel velocities from the joint_states
+        wl = velocities[0] # left wheel velocity
+        wr = velocities[1] # right wheel velocity
 
-        vx = (r/2) * (wl + wr)
-        wz = (r/base_width) * (wr - wl)
-
-        # d_left = joint_states.position[0]
-        # d_right = joint_states.position[1]
-
-        # # distance traveled is the average of the two wheels 
-        # d = (d_left + d_right) / 2
-        # # this approximation works (in radians) for small angles
-        # th = (d_right - d_left) / base_width
+        # calculate the linear and angular velocity of the robot
+        vx = (self._WHEEL_RADIUS/2) * (wl + wr)
+        wz = (self._WHEEL_RADIUS/self._BASE_WIDTH) * (wr - wl)
 
         if vx != 0:
             # calculate distance traveled in x and y
