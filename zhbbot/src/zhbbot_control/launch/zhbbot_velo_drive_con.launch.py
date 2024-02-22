@@ -85,28 +85,30 @@ def generate_launch_description():
     #                     ('odometry/filtered', 'odometry/global')]           
     #        )     
 
-    # ***** SLAM TOOLBOX ***** #
-    # SLAM map
-    slam_map_path = os.path.join(
-        get_package_share_directory(package_name),
-        'maps',
-        'office_zhbbot.yaml')
-    
-    slam_map_file = LaunchConfiguration('map', default=slam_map_path)
+    zhbbot_handler = Node(
+        package='zhbbot_control',
+        executable='zhbbot_handler.py',
+        name='zhbbotHandlerNode',
+    )
 
-    # ***** NAVIGATION ***** #
-    # Navigation parameters
-    nav2_param_path = os.path.join(
-        get_package_share_directory('zhbbot_control'),
-        'config',
-        'navigation_param.yaml')
-    
-    nav2_param_file = LaunchConfiguration('params', default=nav2_param_path)
+    zhbbot_vff = Node(
+        package='zhbbot_control',
+        executable='zhbbot_local_planer_vff_avoidance.py',
+        name='ZhbbotVFFNode',
+    )
 
-    # launch file directory
-    nav2_launch_file_path = os.path.join(
-        get_package_share_directory('nav2_bringup'),
-        'launch')
+    zhbbot_dwa = Node(
+        package='zhbbot_control',
+        executable='zhbbot_local_planer_dwa.py',
+        name='ZhbbotDWANode',
+    )
+
+    # Inverse Kinematics Node
+    zhbbot_inverse_kinemetic = Node(
+        package='zhbbot_control',
+        executable='zhbbot_inverse_kinematic.py',
+        name='ZhbbotIKNode',
+    )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -117,31 +119,15 @@ def generate_launch_description():
         velocity_controllers,
         # Kinematics
         zhbbot_forward_kinemetic,
-        # zhbbot_inverse_kinemetic,
+        zhbbot_inverse_kinemetic,
 
         # EKF
         ekf_filter_node_odom,
         ekf_filter_node_map,
         # navsat_transform,
 
-    # SLAM Toolbox and Navigation
-        DeclareLaunchArgument(
-            'map',
-            default_value=slam_map_file,
-            description='Full path to map file to load'),
-
-        DeclareLaunchArgument(
-            'params',
-            default_value=nav2_param_file,
-            description='Full path to param file to load'),
-
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                [nav2_launch_file_path, '/bringup_launch.py']),
-            launch_arguments={
-                'map': slam_map_file,
-                'use_sim_time': use_sim_time,
-                'params_file': nav2_param_file}.items(),
-        )
+        zhbbot_handler,
+        zhbbot_vff,
+        zhbbot_dwa,
 
     ])

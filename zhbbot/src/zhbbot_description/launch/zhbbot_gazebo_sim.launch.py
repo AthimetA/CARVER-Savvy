@@ -37,19 +37,6 @@ def generate_launch_description():
                         [FindPackageShare(package_name), gazebo_launch_subpath])),
                 )
     
-    # ***Rviz*** #
-    rviz_config_file = os.path.join(
-        get_package_share_directory(package_name),
-        'rviz',
-        'navigation.rviz')
-    
-    rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='screen',
-        arguments=['-d', rviz_config_file])
-    
     # ***** JOYSTICK ***** #
     joy = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -76,8 +63,6 @@ def generate_launch_description():
         
         # Gazebo
         gazebo,
-        # Rviz
-        rviz_node,
         # Joystick
         joy,
         # Twist Mux
