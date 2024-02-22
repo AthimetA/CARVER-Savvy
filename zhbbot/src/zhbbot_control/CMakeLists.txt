@@ -35,9 +35,6 @@ install(PROGRAMS
   # Local Planer
   scripts/zhbbot_local_planer_vff_avoidance.py
   scripts/zhbbot_local_planer_dwa.py
-  # Test Node
-  scripts/hest_node.py
-  scripts/test_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
