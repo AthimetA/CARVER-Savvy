@@ -42,7 +42,7 @@ def generate_launch_description():
     # Inverse Kinematics Node
     zhbbot_inverse_kinemetic = Node(
         package='zhbbot_control',
-        executable='zhbbot_inverse_kinemetic.py',
+        executable='zhbbot_inverse_kinematic.py',
         name='ZhbbotIKNode',
     )
 

@@ -30,8 +30,8 @@ install(PROGRAMS
   # Control
   scripts/zhbbot_handler.py
   # Kinemetic
-  scripts/zhbbot_forward_kinemetic.py
-  scripts/zhbbot_inverse_kinemetic.py
+  scripts/zhbbot_forward_kinematic.py
+  scripts/zhbbot_inverse_kinematic.py
   # Local Planer
   scripts/zhbbot_local_planer_vff_avoidance.py
   scripts/zhbbot_local_planer_dwa.py

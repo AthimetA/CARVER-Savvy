@@ -45,15 +45,8 @@ def generate_launch_description():
     # Forward Kinematics Node
     zhbbot_forward_kinemetic = Node(
         package='zhbbot_control',
-        executable='zhbbot_forward_kinemetic.py',
+        executable='zhbbot_forward_kinematic.py',
         name='zhbbot_forward_kinemetic',
-    )
-
-    # Inverse Kinematics Node
-    zhbbot_inverse_kinemetic = Node(
-        package='zhbbot_control',
-        executable='zhbbot_inverse_kinemetic.py',
-        name='ZhbbotIKNode',
     )
 
     # Robot Localization
