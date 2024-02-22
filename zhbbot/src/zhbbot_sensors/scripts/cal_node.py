@@ -25,7 +25,7 @@ class CalibrationSensor(Node):
         self.isCalibrated = False
 
         # YAML save path
-        calibration_gen_path = get_package_share_directory('calibration_gen')
+        calibration_gen_path = get_package_share_directory('zhbbot_sensors')
         self.path = os.path.join(calibration_gen_path, 'config', 'calibration.yaml')
         
     def sensor_callback(self,msg):

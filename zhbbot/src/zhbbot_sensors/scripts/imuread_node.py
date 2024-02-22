@@ -13,7 +13,7 @@ class IMUSerialReader(Node):
     def __init__(self):
         super().__init__('imu_serial_reader')
         # if config file exists, run in calibration mode
-        self.config_path = '/home/athimet/FRA532_Mobile_Robot/EX1/src/calibration_gen/config/imu_calibration.yaml'
+        self.config_path = '/home/athimet/FRA532_Mobile_Robot/zhbbot/src/zhbbot_sensors/config/imu_calibration.yaml'
         if os.path.exists(self.config_path):
             with open(self.config_path, 'r') as f:
                 config = yaml.load(f, Loader=yaml.FullLoader)

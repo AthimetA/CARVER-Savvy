@@ -17,20 +17,21 @@ class CalibrationSensor(Node):
         super().__init__('calibration_sensor')
         
         # establish timer
-        self.timer_period = 0.1
+        self.timer_period = 1.0
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
         self.sensor_subscriber = self.create_subscription(Imu,'/imu_data',self.sensor_callback,10)
 
         # Calibration process
         self.angular_velocity_list = []
         self.linear_acceleration_list = []
         self.n = 0
-        self.max_n = (1/0.02) * 10
+        self.max_n = (1/0.02) * 100
         self.isCalibrated = False
 
         # YAML save path
-        self.path = '/home/athimet/FRA532_Mobile_Robot/EX1/src/calibration_gen/config/imu_calibration.yaml'
+        self.path = '/home/athimet/FRA532_Mobile_Robot/zhbbot/src/zhbbot_sensors/config/imu_calibration.yaml'
         
-    def sensor_callback(self,msg):
+    def sensor_callback(self,msg: Imu):
         # process the data
         angular_velocity = np.array([msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z])
         linear_acceleration = np.array([msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z])
@@ -64,7 +65,7 @@ class CalibrationSensor(Node):
             pass
 
     def timer_callback(self):
-        pass
+        self.get_logger().info('Timer callback')
     
 def main(args=None):
     rclpy.init(args=args)
