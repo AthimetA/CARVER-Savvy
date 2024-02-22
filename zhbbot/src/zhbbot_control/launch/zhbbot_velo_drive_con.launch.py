@@ -20,7 +20,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
     # Package name
-    package_name = 'zhbbot_description'
+    description_package_name = 'zhbbot_description'
     launch_file_subfolder = 'launch'
     # File names
     gazebo_launch_file_name = 'zhbbot_gazebo_sim.launch.py'
@@ -32,7 +32,7 @@ def generate_launch_description():
     gazebo = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     PathJoinSubstitution(
-                        [FindPackageShare(package_name), gazebo_launch_subpath])),
+                        [FindPackageShare(description_package_name), gazebo_launch_subpath])),
                 )
 
     # Velocity Controller
@@ -85,22 +85,29 @@ def generate_launch_description():
     #                     ('odometry/filtered', 'odometry/global')]           
     #        )     
 
+    control_package_name = 'zhbbot_control'
+    control_package_dir = get_package_share_directory(control_package_name)
+
+
+    # Read config file
+    controller_config_file = os.path.join(control_package_dir, 'config', 'zhbbot_control_params.yaml')
+
+    with open(controller_config_file, 'r') as file:
+        controller_config = yaml.safe_load(file)
+        local_planner_name = controller_config['zhbbot_local_planer_name'][controller_config['zhbbot_selceted_local_planer']]
+        local_planner_python_file = controller_config['zhbbot_local_planner_python_file'][controller_config['zhbbot_selceted_local_planer']]
+
+    zhbbot_local_planer = Node(
+        package='zhbbot_control',
+        executable=local_planner_python_file,
+        name=local_planner_name,
+    )
+
     zhbbot_handler = Node(
         package='zhbbot_control',
         executable='zhbbot_handler.py',
         name='zhbbotHandlerNode',
-    )
-
-    zhbbot_vff = Node(
-        package='zhbbot_control',
-        executable='zhbbot_local_planer_vff_avoidance.py',
-        name='ZhbbotVFFNode',
-    )
-
-    zhbbot_dwa = Node(
-        package='zhbbot_control',
-        executable='zhbbot_local_planer_dwa.py',
-        name='ZhbbotDWANode',
+        arguments=[local_planner_name],
     )
 
     # Inverse Kinematics Node
@@ -127,7 +134,5 @@ def generate_launch_description():
         # navsat_transform,
 
         zhbbot_handler,
-        zhbbot_vff,
-        zhbbot_dwa,
-
+        zhbbot_local_planer
     ])

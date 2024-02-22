@@ -10,6 +10,7 @@ from nav_msgs.msg import Odometry, Path
 import tf_transformations
 import math
 import numpy as np
+import sys
 
 from zhbbot_interfaces.srv import ZhbbotSendPath , ZhbbotUserSetgoal, ZhbbotSetNodeStaus
 
@@ -76,8 +77,14 @@ class ZhbbotHandler(Node):
         '''
         # Node status
         self.node_status = "SLEEP"
-        # self.selected_local_planner = "ZhbbotVFFNode"
-        self.selected_local_planner = "ZhbbotDWANode"
+
+        # Read the local planner from the parameter yaml file
+        if len(sys.argv)>=2: 
+            self.selected_local_planner = sys.argv[1]
+        else:
+            # Default local planner
+            self.selected_local_planner = "ZhbbotVFFNode"
+
         self.slave_node_name = ["ZhbbotIKNode", self.selected_local_planner]
         self.slave_node_status = {slave_node: "DISABLED" for slave_node in self.slave_node_name}
         self.node_status_client = {slave_node: self.create_client(ZhbbotSetNodeStaus,
