@@ -17,7 +17,7 @@ void setup() {
   Serial.println();
   Serial.println("Gyroscope in degrees/second");
   Serial.println("X\tY\tZ");
-  Serial.println("Hi this is edited by me");
+  Serial.println("Hi this is edited by me2222");
 }
 
 long pre_millis = 0;
