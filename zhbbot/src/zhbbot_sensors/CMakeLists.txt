@@ -32,6 +32,7 @@ install(PROGRAMS
   scripts/cal_node.py
   scripts/imuread_node.py
   scripts/signal_generate.py
+  scripts/t.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
