@@ -1,1 +1,0 @@
-/home/athimeta/CARVER-Savvy/pmzb/build/pmzbbot_interfaces/rosidl_typesupport_fastrtps_cpp/pmzbbot_interfaces/srv/detail/pmzbbot_set_node_staus__rosidl_typesupport_fastrtps_cpp.hpp
