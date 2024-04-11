@@ -1,0 +1,28 @@
+SensorGlobal:
+  TIMER_FREQUENCY: 15
+  IMU_TOPIC_NAME: "/pmzb_uros/imu"
+  WHEEL_VELOCITY_TOPIC_NAME: "/pmzb_uros/wheel_vel"
+
+  IMU_CALIBRATION_FILE : "calibration/imu_calibration_result.yaml"
+  WHEEL_VELOCITY_CALIBRATION_FILE : "calibration/wheel_velocity_calibration_result.yaml"
+
+PMZBRosBridge:
+
+  # Robot Parameters
+  WHEEL_RADIUS: 0.034
+  BASE_WIDTH: 0.161
+
+  # ROS Topics
+  IMU_PUB_TOPIC_NAME: "/pmzb_ros/imu"
+  WHEEL_ODOMETRY_PUB_TOPIC_NAME: "/pmzb_ros/wheel_odom"
+
+  # Frame Calulations parameters
+  IMU_FRAME_ID: "imu_link"
+  ODOM_FRAME_ID: "odom"
+  BASE_FRAME_ID: "base_link"
+
+PMZBCalibrationSensor:
+
+  MAX_CALIBRATION_ITERATIONS: 1000
+
+  NODE_CALIBRATION_SERVICE_NAME: "pmzbbot_begin_calibration"
