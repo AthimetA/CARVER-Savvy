@@ -37,8 +37,9 @@ find_package(rosidl_default_generators REQUIRED)
 # find_package(nav_msgs)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/Goalreachawbu.srv"
-  "srv/RobotSentgoalawbu.srv"
+  "srv/DrlStep.srv"
+  "srv/Goal.srv"
+  "srv/RingGoal.srv"
   # DEPENDENCIES std_msgs
   # DEPENDENCIES nav_msgs
 )
