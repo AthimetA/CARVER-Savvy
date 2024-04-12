@@ -54,8 +54,7 @@ endif()
 add_library(awbu_interfaces::awbu_interfaces__rosidl_generator_py SHARED IMPORTED)
 
 set_target_properties(awbu_interfaces::awbu_interfaces__rosidl_generator_py PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "/home/athimeta/miniconda3/envs/pyrl/lib/python3.10/site-packages/numpy/core/include"
-  INTERFACE_LINK_LIBRARIES "awbu_interfaces::awbu_interfaces__rosidl_generator_c;/home/athimeta/miniconda3/envs/pyrl/lib/libpython3.10.so;awbu_interfaces::awbu_interfaces__rosidl_typesupport_c"
+  INTERFACE_LINK_LIBRARIES "awbu_interfaces::awbu_interfaces__rosidl_generator_c;/usr/lib/x86_64-linux-gnu/libpython3.10.so;awbu_interfaces::awbu_interfaces__rosidl_typesupport_c"
 )
 
 if(CMAKE_VERSION VERSION_LESS 2.8.12)

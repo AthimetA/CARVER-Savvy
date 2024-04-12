@@ -1,9 +1,6 @@
 source;share/carverabwu_description/hook/cmake_prefix_path.ps1
 source;share/carverabwu_description/hook/cmake_prefix_path.dsv
 source;share/carverabwu_description/hook/cmake_prefix_path.sh
-source;share/carverabwu_description/hook/pythonpath.ps1
-source;share/carverabwu_description/hook/pythonpath.dsv
-source;share/carverabwu_description/hook/pythonpath.sh
 source;share/carverabwu_description/local_setup.bash
 source;share/carverabwu_description/local_setup.dsv
 source;share/carverabwu_description/local_setup.ps1
