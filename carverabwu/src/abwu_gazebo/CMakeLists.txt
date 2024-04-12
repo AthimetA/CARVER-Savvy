@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(testbot_description)
+project(abwu_gazebo)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -34,7 +34,10 @@ install(PROGRAMS
 ################ INSTALL LAUNCH, ETC #################
 install(DIRECTORY
   # add directories here
-  description
+  launch
+  config
+  worlds
+  maps
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

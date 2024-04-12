@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="testbot_control" params="">
+    <!-- ===== Gazebo ROS2_CONTROL plugin ===== -->
+      <gazebo>
+          <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+            <robot_sim_type>gazebo_ros2_control/GazeboSystem</robot_sim_type>
+            <parameters>$(find testbot_description)/config/controller.yaml</parameters>
+          </plugin>
+      </gazebo>
+
+    <!-- Ground truth pose -->
+      <gazebo>
+          <plugin name="groud_truth_pose" filename="libgazebo_ros_p3d.so">
+              <always_on>true</always_on>
+              <update_rate>50.0</update_rate>
+              <body_name>base_footprint</body_name>
+              <topic_name>odom</topic_name>
+              <gaussian_noise>0.00</gaussian_noise>
+              <frame_name>world</frame_name>
+              <tf_frame_name>world</tf_frame_name>
+              <tf_prefix>odom_groud_truth_pose</tf_prefix>
+              <xyz_offset>0 0 0</xyz_offset>
+              <rpy_offset>0 0 0</rpy_offset>
+              <ros>
+                  <remapping>/odom:=odom_groud_truth_pose</remapping>
+              </ros>
+          </plugin>
+      </gazebo>
+
+    <!-- Laser sensor -->
+      <gazebo reference="lidar_link">
+          <sensor name="laser" type="ray">
+              <pose> 0 0 0 0 0 0 </pose>
+              <visualize>true</visualize>
+              <update_rate>5</update_rate>
+              <ray>
+                  <scan>
+                      <horizontal>
+                          <samples>360</samples>
+                          <min_angle>-3.14</min_angle>
+                          <max_angle>3.14</max_angle>
+                      </horizontal>
+                  </scan>
+                  <range>
+                      <min>0.25</min>
+                      <max>20</max>
+                  </range>
+              </ray>
+              <plugin name="laser_controller" filename="libgazebo_ros_ray_sensor.so">
+                  <ros>
+                      <argument>~/out:=scan</argument>
+                  </ros>
+                  <output_type>sensor_msgs/LaserScan</output_type>
+                  <frame_name>lidar_link</frame_name>
+              </plugin>
+          </sensor>
+      </gazebo>
+
+    <!-- ========== ROS2 CONTROL ========== -->
+      <ros2_control name="GazeboSystem" type="system">
+
+        <hardware>
+            <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+        </hardware>
+
+        <joint name="left_wheel_joint">
+            <command_interface name="velocity">
+                <param name="min">-10</param>
+                <param name="max">10</param>
+            </command_interface>
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="effort"/>
+        </joint>
+
+        <joint name="right_wheel_joint">
+            <command_interface name="velocity">
+                <param name="min">-10</param>
+                <param name="max">10</param>
+            </command_interface>
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="effort"/>
+        </joint>
+
+      </ros2_control>
+
+  </xacro:macro>
+
+</robot>

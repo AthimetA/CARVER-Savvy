@@ -35,6 +35,8 @@ install(PROGRAMS
 install(DIRECTORY
   # add directories here
   description
+  meshes
+  config
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()
