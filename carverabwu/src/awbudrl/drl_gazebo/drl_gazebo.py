@@ -30,7 +30,7 @@ import rclpy
 from rclpy.qos import QoSProfile
 from rclpy.node import Node
 
-from turtlebot3_msgs.srv import RingGoal
+from awbu_interfaces.srv import RingGoal
 import xml.etree.ElementTree as ET
 from ..drl_environment.drl_environment import ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS
 from ..common.settings import ENABLE_TRUE_RANDOM_GOALS

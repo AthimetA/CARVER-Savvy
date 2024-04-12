@@ -26,7 +26,7 @@ from geometry_msgs.msg import Pose, Twist
 from rosgraph_msgs.msg import Clock
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
-# from turtlebot3_msgs.srv import DrlStep, Goal, RingGoal
+from awbu_interfaces.srv import DrlStep, Goal, RingGoal
 
 import rclpy
 from rclpy.node import Node
@@ -97,12 +97,12 @@ class DRLEnvironment(Node):
         self.scan_sub = self.create_subscription(LaserScan, self.scan_topic, self.scan_callback, qos_profile=qos_profile_sensor_data)
         self.clock_sub = self.create_subscription(Clock, '/clock', self.clock_callback, qos_profile=qos_clock)
         self.obstacle_odom_sub = self.create_subscription(Odometry, 'obstacle/odom', self.obstacle_odom_callback, qos)
-        # # clients
-        # self.task_succeed_client = self.create_client(RingGoal, 'task_succeed')
-        # self.task_fail_client = self.create_client(RingGoal, 'task_fail')
-        # # servers
-        # self.step_comm_server = self.create_service(DrlStep, 'step_comm', self.step_comm_callback)
-        # self.goal_comm_server = self.create_service(Goal, 'goal_comm', self.goal_comm_callback)
+        # clients
+        self.task_succeed_client = self.create_client(RingGoal, 'task_succeed')
+        self.task_fail_client = self.create_client(RingGoal, 'task_fail')
+        # servers
+        self.step_comm_server = self.create_service(DrlStep, 'step_comm', self.step_comm_callback)
+        self.goal_comm_server = self.create_service(Goal, 'goal_comm', self.goal_comm_callback)
 
     """*******************************************************************************
     ** Callback functions and relevant functions
