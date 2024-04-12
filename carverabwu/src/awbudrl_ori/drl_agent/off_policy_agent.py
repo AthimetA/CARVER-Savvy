@@ -18,7 +18,7 @@ from abc import ABC, abstractmethod
 import torch
 import torch.nn.functional as torchf
 
-from awbudrl.drl_environment.reward import REWARD_FUNCTION
+from awbudrl_ori.drl_environment.reward import REWARD_FUNCTION
 from ..common.settings import ENABLE_BACKWARD, ENABLE_STACKING, ACTION_SIZE, HIDDEN_SIZE, BATCH_SIZE, BUFFER_SIZE, DISCOUNT_FACTOR, \
                                  LEARNING_RATE, TAU, STEP_TIME, EPSILON_DECAY, EPSILON_MINIMUM, STACK_DEPTH, FRAME_SKIP
 from ..drl_environment.drl_environment import NUM_SCAN_SAMPLES

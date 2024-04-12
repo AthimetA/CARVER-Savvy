@@ -4,7 +4,7 @@ import copy
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from awbudrl.drl_environment.reward import REWARD_FUNCTION
+from awbudrl_ori.drl_environment.reward import REWARD_FUNCTION
 from ..common.settings import ENABLE_BACKWARD, ENABLE_STACKING
 
 from ..common.ounoise import OUNoise

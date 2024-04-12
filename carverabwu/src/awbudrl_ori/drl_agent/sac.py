@@ -7,7 +7,7 @@ import math
 import numpy
 
 from ..drl_environment.drl_environment import NUM_SCAN_SAMPLES
-from awbudrl.drl_environment.reward import REWARD_FUNCTION
+from awbudrl_ori.drl_environment.reward import REWARD_FUNCTION
 from ..common.settings import ENABLE_BACKWARD, ENABLE_STACKING
 
 LINEAR = 0
