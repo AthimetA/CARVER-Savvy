@@ -1,7 +1,0 @@
-twist_mux:
-  ros__parameters:
-    topics:
-      pmzb_cmd:
-        topic   : /pmzb_cmd_vel
-        timeout : 0.5
-        priority: 15

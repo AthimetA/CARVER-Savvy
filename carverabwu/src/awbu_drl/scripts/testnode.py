@@ -1,4 +1,13 @@
 #!/usr/bin/python3
+import sys
+import os
+sys.path.append('/home/athimeta/CARVER-Savvy/')
+
+from testlib.common.t import test2
+from testlib.c1.tc1 import testc1
+
+testc1()
+test2()
 
 import numpy as np
 import rclpy
@@ -14,11 +23,8 @@ import gymnasium as gym
 import stable_baselines3 as sb3
 
 # Import custom libraries
-import sys
-sys.path.append('/home/athimeta/CARVER-Savvy/carverabwu/src/awbu_drl/')
 
-from awbudrl_lib.common.t import test
-from awbudrl_lib.common.utilities import *
+from AwbuDRL.common.utilities import *
 
 class TestNode(Node):
     def __init__(self):
@@ -37,7 +43,7 @@ class TestNode(Node):
 
     def timer_callback(self):
         # self.get_logger().info('Timer callback triggered')
-        test()
+        check_gpu()
 
 
 def main(args=None):

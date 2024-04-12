@@ -1,8 +1,0 @@
-source;share/awbudrl_ori/hook/cmake_prefix_path.ps1
-source;share/awbudrl_ori/hook/cmake_prefix_path.dsv
-source;share/awbudrl_ori/hook/cmake_prefix_path.sh
-source;share/awbudrl_ori/local_setup.bash
-source;share/awbudrl_ori/local_setup.dsv
-source;share/awbudrl_ori/local_setup.ps1
-source;share/awbudrl_ori/local_setup.sh
-source;share/awbudrl_ori/local_setup.zsh

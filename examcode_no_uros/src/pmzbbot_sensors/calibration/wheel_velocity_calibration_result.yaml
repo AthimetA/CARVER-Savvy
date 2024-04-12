@@ -1,6 +1,0 @@
-left_wheel_velocity_cov: 0.010919841788538802
-left_wheel_velocity_mean:
-- 3.0446054129600526
-right_wheel_velocity_cov: 0.010431528780115867
-right_wheel_velocity_mean:
-- 3.0447972593307493

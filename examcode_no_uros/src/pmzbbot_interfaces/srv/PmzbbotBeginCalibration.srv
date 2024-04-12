@@ -1,5 +1,0 @@
-bool imu_calibration
-bool wheel_calibration
----
-string node_name
-string call_back_status
