@@ -36,6 +36,8 @@ install(DIRECTORY
   # add directories here
   launch
   config
+  maps
+  rviz
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()
