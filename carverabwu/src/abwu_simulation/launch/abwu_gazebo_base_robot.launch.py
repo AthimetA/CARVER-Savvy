@@ -98,6 +98,29 @@ def generate_launch_description():
         parameters=[twist_mux_config, {'use_sim_time': use_sim_time}],
         remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
         )
+    
+    # Robot Localization
+    robot_localization_dir = get_package_share_directory(package_name)
+    parameters_file_dir = os.path.join(robot_localization_dir, 'config')
+    parameters_file_path = os.path.join(parameters_file_dir, 'abwu_map_ekf.yaml')
+    os.environ['FILE_PATH'] = str(parameters_file_dir)
+    
+    ekf_filter_node_odom = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node_odom',
+	        output='screen',
+            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
+            remappings=[('odometry/filtered', 'odometry/local')]           
+           )
+    ekf_filter_node_map = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node_map',
+	        output='screen',
+            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
+            remappings=[('odometry/filtered', 'odometry/global')]
+           ) 
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -115,6 +138,8 @@ def generate_launch_description():
                 on_exit = [
                     joint_state_broadcaster_spawner,
                     diff_drive_controllers,
+                    ekf_filter_node_odom,
+                    ekf_filter_node_map
                 ]
             )
         ),

@@ -73,56 +73,37 @@ def generate_launch_description():
         get_package_share_directory('nav2_bringup'),
         'launch')
     
-    # Robot Localization
-    robot_localization_dir = get_package_share_directory(package_name)
-    parameters_file_dir = os.path.join(robot_localization_dir, 'config')
-    parameters_file_path = os.path.join(parameters_file_dir, 'abwu_map_ekf.yaml')
-    os.environ['FILE_PATH'] = str(parameters_file_dir)
-    
-    ekf_filter_node_odom = Node(
-            package='robot_localization', 
-            executable='ekf_node', 
-            name='ekf_filter_node_odom',
-	        output='screen',
-            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
-            remappings=[('odometry/filtered', 'odometry/local')]           
-           )
-    ekf_filter_node_map = Node(
-            package='robot_localization', 
-            executable='ekf_node', 
-            name='ekf_filter_node_map',
-	        output='screen',
-            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
-            remappings=[('odometry/filtered', 'odometry/global')]
-           ) 
+    # SLAM Toolbox and Navigation
+    DeclareLaunchArgument(
+        'map',
+        default_value=slam_map_file,
+        description='Full path to map file to load'),
+
+    DeclareLaunchArgument(
+        'params',
+        default_value=nav2_param_file,
+        description='Full path to param file to load'),
+
+    nav2 = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [nav2_launch_file_path, '/bringup_launch.py']),
+        launch_arguments={
+            'map': slam_map_file,
+            'use_sim_time': use_sim_time,
+            'params_file': nav2_param_file}.items(),
+    )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
         # Gazebo
         gazebo,
-        ekf_filter_node_odom,
-        ekf_filter_node_map,
-
 
         # SLAM Toolbox and Navigation
-        DeclareLaunchArgument(
-            'map',
-            default_value=slam_map_file,
-            description='Full path to map file to load'),
+        nav2,
 
-        DeclareLaunchArgument(
-            'params',
-            default_value=nav2_param_file,
-            description='Full path to param file to load'),
+        # Rviz
+        rviz_node
+        
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                [nav2_launch_file_path, '/bringup_launch.py']),
-            launch_arguments={
-                'map': slam_map_file,
-                'use_sim_time': use_sim_time,
-                'params_file': nav2_param_file}.items(),
-        ),
-        rviz_node,
     ])
