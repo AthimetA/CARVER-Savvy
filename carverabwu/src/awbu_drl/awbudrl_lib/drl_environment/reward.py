@@ -1,4 +1,8 @@
-from ..common.settings import REWARD_FUNCTION, COLLISION_OBSTACLE, COLLISION_WALL, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM
+#!/usr/bin/python3
+import sys
+sys.path.append('/home/athimeta/CARVER-Savvy/carverabwu/src/awbu_drl/')
+
+from awbudrl_lib.common.settings import REWARD_FUNCTION, COLLISION_OBSTACLE, COLLISION_WALL, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM
 
 goal_dist_initial = 0
 
