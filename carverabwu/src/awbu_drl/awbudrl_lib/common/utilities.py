@@ -19,11 +19,11 @@ from settings import REWARD_FUNCTION, COLLISION_OBSTACLE, COLLISION_WALL, TUMBLE
 
 import xml.etree.ElementTree as ET
 
-try:
-    with open('/tmp/drlnav_current_stage.txt', 'r') as f:
-        stage = int(f.read())
-except FileNotFoundError:
-    print("\033[1m" + "\033[93m" + "Make sure to launch the gazebo simulation node first!" + "\033[0m}")
+# try:
+#     with open('/tmp/drlnav_current_stage.txt', 'r') as f:
+#         stage = int(f.read())
+# except FileNotFoundError:
+#     print("\033[1m" + "\033[93m" + "Make sure to launch the gazebo simulation node first!" + "\033[0m}")
 
 def check_gpu():
     print("gpu torch available: ", torch.cuda.is_available())

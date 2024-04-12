@@ -17,8 +17,8 @@ import stable_baselines3 as sb3
 import sys
 sys.path.append('/home/athimeta/CARVER-Savvy/carverabwu/src/awbu_drl/')
 
-from awbudel_lib.common.t import test
-from awbudel_lib.common.utilities import *
+from awbudrl_lib.common.t import test
+from awbudrl_lib.common.utilities import *
 
 class TestNode(Node):
     def __init__(self):

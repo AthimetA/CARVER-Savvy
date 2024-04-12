@@ -27,8 +27,8 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  awbudel_lib/common/utilities.py
-  awbudel_lib/common/settings.py
+  awbudrl_lib/common/utilities.py
+  awbudrl_lib/common/settings.py
   scripts/testnode.py
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -36,7 +36,7 @@ install(PROGRAMS
 ################ INSTALL LAUNCH, ETC #################
 install(DIRECTORY
   # add directories here
-  awbudel_lib
+  awbudrl_lib
   scripts
   config
   DESTINATION share/${PROJECT_NAME})
