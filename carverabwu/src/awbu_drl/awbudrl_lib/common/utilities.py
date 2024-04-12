@@ -1,6 +1,9 @@
 #!/usr/bin/python3
+import sys
+import os
+path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(path)
 
-# Global imports
 from queue import Empty
 from awbu_interfaces.srv import DrlStep
 from awbu_interfaces.srv import Goal
@@ -10,11 +13,7 @@ import time
 import rclpy
 import torch
 import numpy
-# Local import
-import sys
-import os
-path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(path)
+
 from settings import REWARD_FUNCTION, COLLISION_OBSTACLE, COLLISION_WALL, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM
 
 import xml.etree.ElementTree as ET
