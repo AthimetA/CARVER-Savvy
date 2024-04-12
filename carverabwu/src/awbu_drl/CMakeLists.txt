@@ -38,6 +38,7 @@ install(DIRECTORY
   # add directories here
   awbudel_lib
   scripts
+  config
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()
