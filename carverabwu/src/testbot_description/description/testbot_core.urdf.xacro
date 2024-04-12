@@ -27,18 +27,18 @@
         <!-- BASE_FOOTPRINT LINK -->
 
         <!-- For Velocity Controller -->
-        <joint name="base_footprint_joint" type="fixed">
+        <!-- <joint name="base_footprint_joint" type="fixed">
             <parent link="base_footprint"/>
             <child link="base_link"/>
             <origin xyz="0 0 0" rpy="0 0 0"/>
-        </joint>
+        </joint> -->
 
         <!-- For Differantial Drive Controller -->
-        <!-- <joint name="base_footprint_joint" type="fixed">
+        <joint name="base_footprint_joint" type="fixed">
             <parent link="base_link"/>
             <child link="base_footprint"/>
             <origin xyz="0 0 0" rpy="0 0 0"/>
-        </joint> -->
+        </joint>
 
         <!-- <origin xyz="0 0 ${-wheel_radius + wheel_offset_z}" rpy="0 0 0"/> -->
 

@@ -16,10 +16,12 @@ import yaml
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
 def generate_launch_description():
 
+    package_name = 'abwu_simulation'
+
     # Use sim time
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     
-    package_name = 'abwu_gazebo'
+    meta_package_name = 'abwu_gazebo'
     launch_file_subfolder = 'launch'
 
     # File names
@@ -32,7 +34,7 @@ def generate_launch_description():
     gazebo = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     PathJoinSubstitution(
-                        [FindPackageShare(package_name), gazebo_launch_subpath])),
+                        [FindPackageShare(meta_package_name), gazebo_launch_subpath])),
                 )
     
     robot_name = 'testbot'
@@ -56,14 +58,15 @@ def generate_launch_description():
     # SPAWN ROBOT TO GAZEBO:
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description',
-                                   '-entity', 'zhbbot',
+                                   '-entity', 'abwubot',
                                    '-x', '0.0',
                                     '-y', '0.0',
                                     '-z', '0.0',
                                     '-R', '0.0',
                                     '-P', '0.0',
                                     '-Y', '0.0',],
-                        output='screen')
+                        output='screen',
+                        )
 
     # ***** CONTROLLERS ***** #
     # Joint state broadcaster:
@@ -75,20 +78,50 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}]
     )
 
+    # Diff Drive Controller
+    diff_drive_controllers = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["diff_cont", "-c", "/controller_manager"],
+    )
+
+    # # Velocity Controller
+    # velocity_controllers = Node(
+    #     package="controller_manager",
+    #     executable="spawner",
+    #     arguments=["velocity_cont", "-c", "/controller_manager"],
+    # )
+
+    # Twist Mux
+    twist_mux_config = os.path.join(
+        get_package_share_directory(package_name),
+        'config',
+        'twist_mux.yaml')
+    
+    twist_mux_node = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        name='twist_mux',
+        parameters=[twist_mux_config, {'use_sim_time': use_sim_time}],
+        remappings=[('/cmd_vel_out','/diff_cont/cmd_vel_unstamped')]
+        )
+
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
         # Gazebo
         gazebo,
+        twist_mux_node,
         # Robot
         node_robot_state_publisher,
         spawn_entity,
-
+        # Controllers
         RegisterEventHandler(
             OnProcessExit(
                 target_action = spawn_entity,
                 on_exit = [
                     joint_state_broadcaster_spawner,
+                    diff_drive_controllers,
                 ]
             )
         ),
