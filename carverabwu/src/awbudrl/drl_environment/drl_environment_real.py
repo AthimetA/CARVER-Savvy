@@ -24,7 +24,7 @@ import copy
 from geometry_msgs.msg import Pose, Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
-from turtlebot3_msgs.srv import DrlStep, Goal
+from awbu_interfaces.srv import DrlStep, Goal
 
 import rclpy
 from rclpy.node import Node
