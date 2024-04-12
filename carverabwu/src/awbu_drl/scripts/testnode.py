@@ -3,12 +3,6 @@ import sys
 import os
 sys.path.append('/home/athimeta/CARVER-Savvy/')
 
-from testlib.common.t import test2
-from testlib.c1.tc1 import testc1
-
-testc1()
-test2()
-
 import numpy as np
 import rclpy
 from rclpy.node import Node
