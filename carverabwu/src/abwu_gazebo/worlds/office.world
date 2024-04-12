@@ -1891,10 +1891,10 @@
       <static>1</static>
     </model>
     <state world_name='default'>
-      <sim_time>1577 796000000</sim_time>
-      <real_time>780 678599079</real_time>
-      <wall_time>1712912981 728001119</wall_time>
-      <iterations>779870</iterations>
+      <sim_time>1600 942000000</sim_time>
+      <real_time>23 181585732</real_time>
+      <wall_time>1712917937 217123849</wall_time>
+      <iterations>23146</iterations>
       <model name='ground_plane'>
         <pose>0 0 0 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -2018,23 +2018,23 @@
         </link>
       </model>
       <model name='unit_box'>
-        <pose>-3.01959 -6.39967 0.5 0 -0 5e-06</pose>
+        <pose>-3.01959 -6.39968 0.499995 -1e-05 -0 5e-06</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>-3.01959 -6.39967 0.5 0 -0 5e-06</pose>
+          <pose>-3.01959 -6.39968 0.499995 -1e-05 -0 5e-06</pose>
           <velocity>0 0 0 0 -0 0</velocity>
-          <acceleration>-0.004657 -9.78112 9.78158 0.712678 -0.009311 -4.3e-05</acceleration>
-          <wrench>-0.004657 -9.78112 9.78158 0 -0 0</wrench>
+          <acceleration>0.004709 0.011055 -9.78158 -0.022108 0.009414 1e-06</acceleration>
+          <wrench>0.004709 0.011055 -9.78158 0 -0 0</wrench>
         </link>
       </model>
       <model name='unit_box_0'>
-        <pose>-6.33898 -9.28841 0.5 0 0 -5e-06</pose>
+        <pose>-6.33899 -9.28841 0.5 -0 -0 -5e-06</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>-6.33898 -9.28841 0.5 0 0 -5e-06</pose>
+          <pose>-6.33899 -9.28841 0.5 -0 -0 -5e-06</pose>
           <velocity>0 0 0 0 -0 0</velocity>
-          <acceleration>-9.78197 0.006244 9.78231 -0.012528 -0.714369 -6.1e-05</acceleration>
-          <wrench>-9.78197 0.006244 9.78231 0 -0 0</wrench>
+          <acceleration>-0.004758 -9.78112 9.78158 0.712677 -0.009512 -4.3e-05</acceleration>
+          <wrench>-0.004758 -9.78112 9.78158 0 -0 0</wrench>
         </link>
       </model>
       <light name='sun'>
@@ -2043,7 +2043,7 @@
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>-0.822975 0.593817 0.874858 0 0.674572 -1.01508</pose>
+        <pose>-10.9206 12.2952 12.3287 0 0.674572 -1.01508</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>

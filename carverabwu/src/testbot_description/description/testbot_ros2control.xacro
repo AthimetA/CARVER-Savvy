@@ -15,7 +15,7 @@
           <plugin name="groud_truth_pose" filename="libgazebo_ros_p3d.so">
               <always_on>true</always_on>
               <update_rate>50.0</update_rate>
-              <body_name>base_footprint</body_name>
+              <body_name>base_link</body_name>
               <topic_name>odom</topic_name>
               <gaussian_noise>0.00</gaussian_noise>
               <frame_name>world</frame_name>
