@@ -26,6 +26,7 @@ diff_cont:
     wheel_radius: 0.075
 
     use_stamped_vel: false
+    enable_odom_tf: true
 
 velocity_cont:
   ros__parameters:

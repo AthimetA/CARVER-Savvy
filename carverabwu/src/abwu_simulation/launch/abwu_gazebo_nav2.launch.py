@@ -104,7 +104,7 @@ def generate_launch_description():
         ekf_filter_node_odom,
         ekf_filter_node_map,
 
-        rviz_node,
+
         # SLAM Toolbox and Navigation
         DeclareLaunchArgument(
             'map',
@@ -123,6 +123,6 @@ def generate_launch_description():
                 'map': slam_map_file,
                 'use_sim_time': use_sim_time,
                 'params_file': nav2_param_file}.items(),
-        )
-
+        ),
+        rviz_node,
     ])
