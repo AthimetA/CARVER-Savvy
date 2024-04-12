@@ -3,7 +3,7 @@ import numpy as np
 
 import matplotlib
 import matplotlib.pyplot as plt
-from turtlebot3_drl.drl_environment.reward import SUCCESS
+from awbudrl.drl_environment.reward import SUCCESS
 from .settings import GRAPH_DRAW_INTERVAL, GRAPH_AVERAGE_REWARD
 from matplotlib.ticker import MaxNLocator
 

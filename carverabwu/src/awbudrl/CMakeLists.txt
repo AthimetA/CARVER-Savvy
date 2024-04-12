@@ -41,6 +41,13 @@ install(PROGRAMS
   drl_environment/drl_environment.py
   # drl_gazebo
   drl_gazebo/drl_gazebo.py
+  # drl_agent
+  drl_agent/ddpg.py
+  drl_agent/dqn.py
+  drl_agent/drl_agent.py
+  drl_agent/off_policy_agent.py
+  drl_agent/sac.py
+  drl_agent/td3.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -51,6 +58,7 @@ install(DIRECTORY
   common
   drl_environment
   drl_gazebo
+  drl_agent
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

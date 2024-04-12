@@ -1,6 +1,6 @@
 from queue import Empty
-from turtlebot3_msgs.srv import DrlStep
-from turtlebot3_msgs.srv import Goal
+from awbu_interfaces.srv import DrlStep
+from awbu_interfaces.srv import Goal
 from std_srvs.srv import Empty
 import os
 import time
