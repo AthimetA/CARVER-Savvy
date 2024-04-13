@@ -25,7 +25,7 @@ def generate_launch_description():
 
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
-    world_file_name = "abwu_drl_base.world"
+    world_file_name = "testworld.world"
     world_file_path = os.path.join(
         get_package_share_directory(world_package_name),
         'worlds',
