@@ -11,23 +11,30 @@ from settings.constparams import REWARD_FUNCTION, COLLISION_OBSTACLE, COLLISION_
 
 import xml.etree.ElementTree as ET
 
+# ============================UNUSED============================
 # try:
 #     with open('/tmp/drlnav_current_stage.txt', 'r') as f:
 #         stage = int(f.read())
 # except FileNotFoundError:
 #     print("\033[1m" + "\033[93m" + "Make sure to launch the gazebo simulation node first!" + "\033[0m}")
 
-# def check_gpu():
-#     print("gpu torch available: ", torch.cuda.is_available())
-#     if (torch.cuda.is_available()):
-#         print("device name: ", torch.cuda.get_device_name(0))
-#     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# def get_scan_count():
+#     tree = ET.parse(os.getenv('DRLNAV_BASE_PATH') + '/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf')
+
+#     root = tree.getroot()
+#     for link in root.find('model').findall('link'):
+#         if link.get('name') == 'base_scan':
+#             return int(link.find('sensor').find('ray').find('scan').find('horizontal').find('samples').text)
+
+# ============================MODIFIED============================
 
 def check_gpu():
     if (torch.cuda.is_available()):
         return f"CUDA available: {torch.cuda.get_device_name(0)}"
     else:
         return "CUDA not available: CPU used"
+
+# ===========================UNMODIFIED=============================
 
 def step(agent_self, action, previous_action):
     req = DrlStep.Request()
@@ -139,14 +146,6 @@ def euler_from_quaternion(quat):
     yaw = numpy.arctan2(siny_cosp, cosy_cosp)
 
     return roll, pitch, yaw
-
-def get_scan_count():
-    tree = ET.parse(os.getenv('DRLNAV_BASE_PATH') + '/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf')
-
-    root = tree.getroot()
-    for link in root.find('model').findall('link'):
-        if link.get('name') == 'base_scan':
-            return int(link.find('sensor').find('ray').find('scan').find('horizontal').find('samples').text)
 
 def get_simulation_speed(stage):
     tree = ET.parse(os.getenv('DRLNAV_BASE_PATH') + '/src/turtlebot3_simulations/turtlebot3_gazebo/worlds/turtlebot3_drl_stage' + str(stage) + '/burger.model')

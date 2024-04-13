@@ -11,6 +11,11 @@ MODEL_STORE_INTERVAL     = 100      # Store the model weights every N episodes
 GRAPH_DRAW_INTERVAL      = 10       # Draw the graph every N episodes (drawing too often will slow down training)
 GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N episodes
 
+# ===================================================================== #
+#                             ROBOTS PARAMS                             #
+# ===================================================================== #
+NUM_SCAN_SAMPLES = 360
+
 
 # ===================================================================== #
 #                         ENVIRONMENT SETTINGS                          #
@@ -18,25 +23,31 @@ GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N epis
 
 # --- SIMULATION ENVIRONMENT SETTINGS ---
 REWARD_FUNCTION = "A"           # Defined in reward.py
-EPISODE_TIMEOUT_SECONDS = 50    # Number of seconds after which episode timeout occurs
 
+# Sensor and Topic
 TOPIC_SCAN = 'scan'
 TOPIC_VELO = 'cmd_vel'
 TOPIC_ODOM = 'odom'
-
-EPISODE_TIMEOUT_SECONDS     = 50    # Number of seconds after which episode timeout occurs
-ARENA_LENGTH                = 4.2   # meters
-ARENA_WIDTH                 = 4.2   # meters
-SPEED_LINEAR_MAX            = 0.22  # m/s
-SPEED_ANGULAR_MAX           = 2.0   # rad/s
-
+TOPIC_GOAL = 'goal_pose'
 LIDAR_DISTANCE_CAP          = 3.5   # meters
 THRESHOLD_COLLISION         = 0.13  # meters
 THREHSOLD_GOAL              = 0.20  # meters
+ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
+LINEAR_VELOCITY_NOISE       = 0     # 0 = no noise, 1 = noise enabled
+ANGULAR_VELOCITY_NOISE      = 1     # 0 = no noise, 1 = noise enabled
 
+# Arena
+ARENA_LENGTH                = 4.2   # meters
+ARENA_WIDTH                 = 4.2   # meters
+
+# General
+EPISODE_TIMEOUT_SECONDS     = 50    # Number of seconds after which episode timeout occurs
+SPEED_LINEAR_MAX            = 0.22  # m/s
+SPEED_ANGULAR_MAX           = 2.0   # rad/s
+
+# Obstacles
 OBSTACLE_RADIUS             = 0.16  # meters
 MAX_NUMBER_OBSTACLES        = 6
-ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
 
 # --- REAL ROBOT ENVIRONMENT SETTINGS ---
 REAL_TOPIC_SCAN  = 'scan'

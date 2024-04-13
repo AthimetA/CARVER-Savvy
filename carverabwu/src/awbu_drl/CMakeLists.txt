@@ -28,6 +28,7 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/testnode.py
+  scripts/drl_gazebo.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -35,6 +36,10 @@ install(PROGRAMS
 install(DIRECTORY
   # add directories here
   scripts
+  scripts/common
+  scripts/drl_gazebo
+  scripts/settings
+  scripts/drl_environment
   config
   launch
   DESTINATION share/${PROJECT_NAME})

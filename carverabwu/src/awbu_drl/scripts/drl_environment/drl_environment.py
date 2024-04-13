@@ -18,15 +18,32 @@ from rclpy.qos import QoSProfile, qos_profile_sensor_data
 
 import reward as rw
 from common import utilities as util
-from settings.constparams import ENABLE_BACKWARD, EPISODE_TIMEOUT_SECONDS, ENABLE_MOTOR_NOISE, UNKNOWN, SUCCESS, COLLISION_WALL, COLLISION_OBSTACLE, TIMEOUT, TUMBLE, \
-                                TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, ARENA_LENGTH, ARENA_WIDTH, MAX_NUMBER_OBSTACLES, OBSTACLE_RADIUS, LIDAR_DISTANCE_CAP, \
-                                    SPEED_LINEAR_MAX, SPEED_ANGULAR_MAX, THRESHOLD_COLLISION, THREHSOLD_GOAL, ENABLE_DYNAMIC_GOALS
+
+# GENERAL SETTINGS
+from settings.constparams import ENABLE_BACKWARD, ENABLE_DYNAMIC_GOALS
+# ENVIRONMENT SETTINGS 
+# Sensor
+from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_GOAL,\
+                                 LIDAR_DISTANCE_CAP, THRESHOLD_COLLISION, THREHSOLD_GOAL,\
+                                 ENABLE_MOTOR_NOISE
+# Simulation Environment Settings
+# Arena dimensions
+from settings.constparams import ARENA_LENGTH, ARENA_WIDTH
+# Obstacle settings
+from settings.constparams import MAX_NUMBER_OBSTACLES, OBSTACLE_RADIUS 
+# General
+from settings.constparams import EPISODE_TIMEOUT_SECONDS, SPEED_LINEAR_MAX, SPEED_ANGULAR_MAX,\
+                                 LINEAR_VELOCITY_NOISE, ANGULAR_VELOCITY_NOISE
+
+# DRL ALGORITHM SETTINGS
+from settings.constparams import UNKNOWN, SUCCESS, COLLISION_WALL, COLLISION_OBSTACLE, TIMEOUT, TUMBLE
+
+# Robot specific settings
+from settings.constparams import NUM_SCAN_SAMPLES
 
 # Automatically retrievew from Gazebo model configuration (40 by default).
 # Can be set manually if needed.
-NUM_SCAN_SAMPLES = util.get_scan_count()
-LINEAR = 0
-ANGULAR = 1
+
 MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
 class DRLEnvironment(Node):
     def __init__(self):
@@ -34,20 +51,22 @@ class DRLEnvironment(Node):
         with open('/tmp/drlnav_current_stage.txt', 'r') as f:
             self.stage = int(f.read())
         print(f"running on stage: {self.stage}")
+        # ------------ Initialize variables ----------
+        # Episode
         self.episode_timeout = EPISODE_TIMEOUT_SECONDS
-
+        # Topics
         self.scan_topic = TOPIC_SCAN
         self.velo_topic = TOPIC_VELO
         self.odom_topic = TOPIC_ODOM
-        self.goal_topic = 'goal_pose'
-
-        self.goal_x, self.goal_y = 0.0, 0.0
-        self.robot_x, self.robot_y = 0.0, 0.0
-        self.robot_x_prev, self.robot_y_prev = 0.0, 0.0
-        self.robot_heading = 0.0
-        self.total_distance = 0.0
-        self.robot_tilt = 0.0
-
+        self.goal_topic = TOPIC_GOAL
+        # Robot variables
+        self.goal_x, self.goal_y = 0.0, 0.0 # goal position
+        self.robot_x, self.robot_y = 0.0, 0.0 # robot position
+        self.robot_x_prev, self.robot_y_prev = 0.0, 0.0 # robot previous position
+        self.robot_heading = 0.0 # robot heading angle
+        self.total_distance = 0.0 # total distance traveled
+        self.robot_tilt = 0.0 # robot orientation angle
+        # Episode variables
         self.done = False
         self.succeed = UNKNOWN
         self.episode_deadline = np.inf
@@ -231,15 +250,15 @@ class DRLEnvironment(Node):
             return self.initalize_episode(response)
 
         if ENABLE_MOTOR_NOISE:
-            request.action[LINEAR] += numpy.clip(numpy.random.normal(0, 0.05), -0.1, 0.1)
-            request.action[ANGULAR] += numpy.clip(numpy.random.normal(0, 0.05), -0.1, 0.1)
+            request.action[LINEAR_VELOCITY_NOISE] += numpy.clip(numpy.random.normal(0, 0.05), -0.1, 0.1)
+            request.action[ANGULAR_VELOCITY_NOISE] += numpy.clip(numpy.random.normal(0, 0.05), -0.1, 0.1)
 
         # Un-normalize actions
         if ENABLE_BACKWARD:
-            action_linear = request.action[LINEAR] * SPEED_LINEAR_MAX
+            action_linear = request.action[LINEAR_VELOCITY_NOISE] * SPEED_LINEAR_MAX
         else:
-            action_linear = (request.action[LINEAR] + 1) / 2 * SPEED_LINEAR_MAX
-        action_angular = request.action[ANGULAR] * SPEED_ANGULAR_MAX
+            action_linear = (request.action[LINEAR_VELOCITY_NOISE] + 1) / 2 * SPEED_LINEAR_MAX
+        action_angular = request.action[ANGULAR_VELOCITY_NOISE] * SPEED_ANGULAR_MAX
 
         # Publish action cmd
         twist = Twist()
@@ -248,7 +267,7 @@ class DRLEnvironment(Node):
         self.cmd_vel_pub.publish(twist)
 
         # Prepare repsonse
-        response.state = self.get_state(request.previous_action[LINEAR], request.previous_action[ANGULAR])
+        response.state = self.get_state(request.previous_action[LINEAR_VELOCITY_NOISE], request.previous_action[ANGULAR_VELOCITY_NOISE])
         response.reward = rw.get_reward(self.succeed, action_linear, action_angular, self.goal_distance,
                                             self.goal_angle, self.obstacle_distance)
         response.done = self.done
@@ -264,7 +283,7 @@ class DRLEnvironment(Node):
             self.reset_deadline = True
         if self.local_step % 200 == 0:
             print(f"Rtot: {response.reward:<8.2f}GD: {self.goal_distance:<8.2f}GA: {math.degrees(self.goal_angle):.1f}°\t", end='')
-            print(f"MinD: {self.obstacle_distance:<8.2f}Alin: {request.action[LINEAR]:<7.1f}Aturn: {request.action[ANGULAR]:<7.1f}")
+            print(f"MinD: {self.obstacle_distance:<8.2f}Alin: {request.action[LINEAR_VELOCITY_NOISE]:<7.1f}Aturn: {request.action[ANGULAR_VELOCITY_NOISE]:<7.1f}")
         return response
 
 def main(args=sys.argv[1:]):
