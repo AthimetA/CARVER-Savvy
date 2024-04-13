@@ -36,6 +36,7 @@ install(DIRECTORY
   # add directories here
   scripts
   config
+  launch
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

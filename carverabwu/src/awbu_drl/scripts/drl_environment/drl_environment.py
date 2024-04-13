@@ -1,26 +1,10 @@
-#
 #!/usr/bin/env python3
-# Copyright 2019 ROBOTIS CO., LTD.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Authors: Ryan Shim, Gilbert, Tomas
 
 import math
 import numpy
 import sys
 import copy
-from numpy.core.numeric import Infinity
+import numpy as np
 
 from geometry_msgs.msg import Pose, Twist
 from rosgraph_msgs.msg import Clock
@@ -33,8 +17,8 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, qos_profile_sensor_data
 
 import reward as rw
-from ..common import utilities as util
-from ..common.settings import ENABLE_BACKWARD, EPISODE_TIMEOUT_SECONDS, ENABLE_MOTOR_NOISE, UNKNOWN, SUCCESS, COLLISION_WALL, COLLISION_OBSTACLE, TIMEOUT, TUMBLE, \
+from common import utilities as util
+from settings.constparams import ENABLE_BACKWARD, EPISODE_TIMEOUT_SECONDS, ENABLE_MOTOR_NOISE, UNKNOWN, SUCCESS, COLLISION_WALL, COLLISION_OBSTACLE, TIMEOUT, TUMBLE, \
                                 TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, ARENA_LENGTH, ARENA_WIDTH, MAX_NUMBER_OBSTACLES, OBSTACLE_RADIUS, LIDAR_DISTANCE_CAP, \
                                     SPEED_LINEAR_MAX, SPEED_ANGULAR_MAX, THRESHOLD_COLLISION, THREHSOLD_GOAL, ENABLE_DYNAMIC_GOALS
 
@@ -66,11 +50,11 @@ class DRLEnvironment(Node):
 
         self.done = False
         self.succeed = UNKNOWN
-        self.episode_deadline = Infinity
+        self.episode_deadline = np.inf
         self.reset_deadline = False
         self.clock_msgs_skipped = 0
 
-        self.obstacle_distances = [Infinity] * MAX_NUMBER_OBSTACLES
+        self.obstacle_distances = [np.inf] * MAX_NUMBER_OBSTACLES
 
         self.new_goal = False
         self.goal_angle = 0.0
@@ -183,7 +167,7 @@ class DRLEnvironment(Node):
 
     def stop_reset_robot(self, success):
         self.cmd_vel_pub.publish(Twist()) # stop robot
-        self.episode_deadline = Infinity
+        self.episode_deadline = np.inf
         self.done = True
         req = RingGoal.Request()
         req.robot_pose_x = self.robot_x

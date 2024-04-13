@@ -1,7 +1,4 @@
 #!/usr/bin/python3
-import sys
-import os
-sys.path.append('/home/athimeta/CARVER-Savvy/')
 
 import numpy as np
 import rclpy
@@ -16,15 +13,14 @@ import gymnasium as gym
 
 import stable_baselines3 as sb3
 
-# Import custom libraries
-
-from AwbuDRL.common.utilities import *
+from common.utilities import check_gpu
+from common.testcon import testprint
 
 class TestNode(Node):
     def __init__(self):
         # Initialize the node with the name 'TestNodeA'
         super().__init__('TestNodeA')
-        self.timer_period = 0.1
+        self.timer_period = 1.0
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
         self.get_logger().info('Test node initialized')
@@ -33,11 +29,12 @@ class TestNode(Node):
         #     self.get_logger().info('Torch GPU available: {}'.format(th.cuda.get_device_name()))
         # else:
         #     self.get_logger().info('Torch GPU not available')
-        check_gpu()
+        self.get_logger().info('Torch GPU available: {}'.format(th.cuda.get_device_name()))
 
     def timer_callback(self):
-        # self.get_logger().info('Timer callback triggered')
-        check_gpu()
+        self.get_logger().info('====================')
+        self.get_logger().info(f'Test: {check_gpu()}')
+        self.get_logger().info('Timer callback triggered')
 
 
 def main(args=None):
