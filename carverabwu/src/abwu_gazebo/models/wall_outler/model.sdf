@@ -2,8 +2,8 @@
 <sdf version='1.7'>
   <model name='wall_outler'>
     <pose>0 0 0 0 -0 0</pose>
-    <link name='Wall_18'>
-      <collision name='Wall_18_Collision'>
+    <link name='Wall_1'>
+      <collision name='Wall_1_Collision'>
         <geometry>
           <box>
             <size>15 0.15 2.5</size>
@@ -11,7 +11,7 @@
         </geometry>
         <pose>0 0 1.25 0 -0 0</pose>
       </collision>
-      <visual name='Wall_18_Visual'>
+      <visual name='Wall_1_Visual'>
         <pose>0 0 1.25 0 -0 0</pose>
         <geometry>
           <box>
@@ -31,8 +31,8 @@
       </visual>
       <pose>-0 -7.425 0 0 -0 0</pose>
     </link>
-    <link name='Wall_19'>
-      <collision name='Wall_19_Collision'>
+    <link name='Wall_2'>
+      <collision name='Wall_2_Collision'>
         <geometry>
           <box>
             <size>15 0.15 2.5</size>
@@ -40,7 +40,7 @@
         </geometry>
         <pose>0 0 1.25 0 -0 0</pose>
       </collision>
-      <visual name='Wall_19_Visual'>
+      <visual name='Wall_2_Visual'>
         <pose>0 0 1.25 0 -0 0</pose>
         <geometry>
           <box>
@@ -60,8 +60,8 @@
       </visual>
       <pose>7.425 -0 0 0 -0 1.5708</pose>
     </link>
-    <link name='Wall_20'>
-      <collision name='Wall_20_Collision'>
+    <link name='Wall_3'>
+      <collision name='Wall_3_Collision'>
         <geometry>
           <box>
             <size>15 0.15 2.5</size>
@@ -69,7 +69,7 @@
         </geometry>
         <pose>0 0 1.25 0 -0 0</pose>
       </collision>
-      <visual name='Wall_20_Visual'>
+      <visual name='Wall_3_Visual'>
         <pose>0 0 1.25 0 -0 0</pose>
         <geometry>
           <box>
@@ -89,8 +89,8 @@
       </visual>
       <pose>-0 7.425 0 0 -0 3.14159</pose>
     </link>
-    <link name='Wall_21'>
-      <collision name='Wall_21_Collision'>
+    <link name='Wall_4'>
+      <collision name='Wall_4_Collision'>
         <geometry>
           <box>
             <size>15 0.15 2.5</size>
@@ -98,7 +98,7 @@
         </geometry>
         <pose>0 0 1.25 0 -0 0</pose>
       </collision>
-      <visual name='Wall_21_Visual'>
+      <visual name='Wall_4_Visual'>
         <pose>0 0 1.25 0 -0 0</pose>
         <geometry>
           <box>

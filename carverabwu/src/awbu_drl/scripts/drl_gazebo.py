@@ -250,19 +250,24 @@ class DRLGazebo(Node):
     '''
 
     def get_obstacle_coordinates(self):
-        tree = ET.parse(os.getenv('DRLNAV_BASE_PATH') + '/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_drl_world/inner_walls/model.sdf')
+        path = os.environ['SIM_MODEL_PATH'] + 'wall_outler/model.sdf'
+        tree = ET.parse(path)
         root = tree.getroot()
         obstacle_coordinates = []
         for wall in root.find('model').findall('link'):
             pose = wall.find('pose').text.split(" ")
             size = wall.find('collision').find('geometry').find('box').find('size').text.split()
-            rotation = float(pose[-1])
             pose_x = float(pose[0])
             pose_y = float(pose[1])
-            if rotation == 0:
+            # Check if the wall is rotated
+            # If the wall is rotated the size is swapped for x and y
+            # rotation = 0 means horizontal wall
+            # rotation != 0 means vertical wall
+            rotation = float(pose[-1])
+            if rotation == 0: # if the wall is not rotated the size is correct
                 size_x = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
                 size_y = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
-            else:
+            else: # if the wall is rotated the size is swapped for x and y
                 size_x = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
                 size_y = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
             point_1 = [pose_x + size_x / 2, pose_y + size_y / 2]
@@ -271,7 +276,8 @@ class DRLGazebo(Node):
             point_4 = [point_1[0] - size_x, point_1[1] ]
             wall_points = [point_1, point_2, point_3, point_4]
             obstacle_coordinates.append(wall_points)
-        return obstacle_coordinates
+            wall_name = wall.get('name')
+            print(f'WALL: {wall_name} pose: {pose}, size: {size}')
 
 
 

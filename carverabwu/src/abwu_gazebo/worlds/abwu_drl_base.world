@@ -25,13 +25,13 @@
       <uri>model://wall_outler</uri>
     </include>
 
-    <include>
+    <!-- <include>
       <uri>model://pillar1</uri>
     </include>
 
     <include>
       <uri>model://pillar2</uri>
-    </include>
+    </include> -->
 
 
   </world>
