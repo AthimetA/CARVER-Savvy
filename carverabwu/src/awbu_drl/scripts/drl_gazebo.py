@@ -261,10 +261,8 @@ class DRLGazebo(Node):
             pose_y = float(pose[1])
             # Check if the wall is rotated
             # If the wall is rotated the size is swapped for x and y
-            # rotation = 0 means horizontal wall
-            # rotation != 0 means vertical wall
             rotation = float(pose[-1])
-            if rotation == 0: # if the wall is not rotated the size is correct
+            if rotation == 0 or rotation == 3.14159: # if the wall is not rotated the size is correct
                 size_x = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
                 size_y = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
             else: # if the wall is rotated the size is swapped for x and y
