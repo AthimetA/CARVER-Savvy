@@ -2,7 +2,7 @@
 <sdf version='1.7'>
   <model name='pillar1'>
 
-    <pose>-2.358 0.273313 0 0 -0 0</pose>
+    <pose>-3 4 0 0 -0 0</pose>
 
     <link name='Wall_10'>
       <collision name='Wall_10_Collision'>
