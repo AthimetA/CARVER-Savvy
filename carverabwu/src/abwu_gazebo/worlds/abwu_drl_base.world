@@ -15,7 +15,7 @@
     <!-- A camera -->
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>-14.0387 17.1777 16.7825 -0 0.609801 -0.999033</pose>
+        <pose>0 0 27.8175 3.14159 1.57079 3.14159</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -25,13 +25,13 @@
       <uri>model://wall_outler</uri>
     </include>
 
-    <!-- <include>
+    <include>
       <uri>model://pillar1</uri>
     </include>
 
     <include>
       <uri>model://pillar2</uri>
-    </include> -->
+    </include>
 
 
   </world>

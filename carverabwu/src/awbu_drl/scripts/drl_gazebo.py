@@ -28,7 +28,7 @@ class DRLGazebo(Node):
         ** Initialise variables
         ************************************************************"""
 
-        self._entity_dir_path = os.environ['GAZEBO_MODEL_PATH'] + '/goal_box'
+        self._entity_dir_path = os.environ['SIM_MODEL_PATH'] + '/goal_box'
         self.get_logger().info("Goal entity directory path: " + self._entity_dir_path)
         self._entity_path = os.path.join(self._entity_dir_path, 'model.sdf')
         self.entity = open(self._entity_path, 'r').read()
@@ -36,14 +36,14 @@ class DRLGazebo(Node):
 
         self.get_logger().info("DRL Gazebo node has been started.")
         self.get_logger().info("Goal entity path: " + self._entity_path)
-        self.get_logger().info("Goal entity Object: " + self.entity)
+        # self.get_logger().info("Goal entity Object: " + self.entity)
 
         # with open('/tmp/drlnav_current_stage.txt', 'r') as f:
         #     self.stage = int(f.read())
         # print(f"running on stage: {self.stage}, dynamic goals enabled: {ENABLE_DYNAMIC_GOALS}")
 
         self.prev_x, self.prev_y = -1, -1
-        self.goal_x, self.goal_y = 1.0, 1.0
+        self.goal_x, self.goal_y = 0.0, 0.0
 
         """************************************************************
         ** Initialise ROS publishers, subscribers and clients
@@ -103,31 +103,19 @@ class DRLGazebo(Node):
     
     '''
 
-    def task_succeed_callback(self, request, response):
+    def task_succeed_callback(self, request: RingGoal.Request, response: RingGoal.Response)->RingGoal.Response:
         self.delete_entity()
-        if ENABLE_TRUE_RANDOM_GOALS:
-            self.generate_random_goal()
-            print(f"success: generate (random) a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
-        elif ENABLE_DYNAMIC_GOALS:
-            self.generate_dynamic_goal_pose(request.robot_pose_x, request.robot_pose_y, request.radius)
-            print(f"success: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}, radius: {request.radius:.2f}")
-        else:
-            self.generate_goal_pose()
-            print(f"success: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
+        self.generate_goal_pose(robot_x=request.robot_pose_x, robot_y=request.robot_pose_y, radius=request.radius)
+        self.publish_callback()
+        self.get_logger().info(f"success: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
         return response
 
-    def task_fail_callback(self, request, response):
+    def task_fail_callback(self, request: RingGoal.Request, response: RingGoal.Response)->RingGoal.Response:
         self.delete_entity()
         self.reset_simulation()
-        if ENABLE_TRUE_RANDOM_GOALS:
-            self.generate_random_goal()
-            print(f"fail: reset the environment, (random) goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
-        elif ENABLE_DYNAMIC_GOALS:
-            self.generate_dynamic_goal_pose(request.robot_pose_x, request.robot_pose_y, request.radius)
-            print(f"fail: reset the environment, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}, radius: {request.radius:.2f}")
-        else:
-            self.generate_goal_pose()
-            print(f"fail: reset the environment, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
+        self.generate_goal_pose(robot_x=request.robot_pose_x, robot_y=request.robot_pose_y, radius=request.radius)
+        self.publish_callback()
+        self.get_logger().info(f"fail: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
         return response
 
 
@@ -140,9 +128,10 @@ class DRLGazebo(Node):
     def init_drl(self)->None:
         self.delete_entity()
         self.reset_simulation()
+        time.sleep(0.25)
         self.publish_callback()
-        print("Init, goal pose:", self.goal_x, self.goal_y)
-        time.sleep(1)
+        self.get_logger().info(f"DRL Gazebo node has been initialized, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
+        time.sleep(0.25)
 
     def publish_callback(self)->None:
         # Publish goal pose
@@ -150,14 +139,15 @@ class DRLGazebo(Node):
         goal_pose.position.x = self.goal_x
         goal_pose.position.y = self.goal_y
         self.goal_pose_pub.publish(goal_pose)
+        self.get_logger().info(f"Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
         self.spawn_entity()
 
     def goal_is_valid(self, goal_x: float, goal_y: float)->bool:
         if goal_x > ARENA_LENGTH/2 or goal_x < -ARENA_LENGTH/2 or goal_y > ARENA_WIDTH/2 or goal_y < -ARENA_WIDTH/2:
             return False
         for obstacle in self.obstacle_coordinates:
-            if goal_x < obstacle[0][0] and goal_x > obstacle[2][0]:
-                if goal_y < obstacle[0][1] and goal_y > obstacle[2][1]:
+            # Obstacle is defined by 4 points [top_right, bottom_right, bottom_left, top_left] with [x, y] coordinates
+            if goal_x < obstacle[0][0] and goal_x > obstacle[2][0] and goal_y < obstacle[0][1] and goal_y > obstacle[2][1]: # check if goal is inside the obstacle
                     return False
         return True
     
@@ -166,82 +156,42 @@ class DRLGazebo(Node):
     Goal generation functions
     
     '''
-
-    def generate_random_goal(self)->None:
-        self.prev_x = self.goal_x
+    def generate_goal_pose(self, robot_x: float, robot_y: float, radius: float)->None:
+        MAX_ITERATIONS = 100
+        GOAL_SEPARATION_DISTANCE = 5.0
+        DYNAMIC_GOAL_RADIUS = float(radius) if radius > GOAL_SEPARATION_DISTANCE else GOAL_SEPARATION_DISTANCE
+        PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1], [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1]]
         self.prev_y = self.goal_y
-        tries = 0
-        while (((abs(self.prev_x - self.goal_x) + abs(self.prev_y - self.goal_y)) < 4) or (not self.goal_is_valid(self.goal_x, self.goal_y))):
-            self.goal_x = random.randrange(-25, 25) / 10.0
-            self.goal_y = random.randrange(-25, 25) / 10.0
-            tries += 1
-            if tries > 200:
-                print("ERROR: cannot find valid new goal, resestting!")
-                self.delete_entity()
-                self.reset_simulation()
-                self.generate_goal_pose()
-                break
-        self.publish_callback()
-    
-    def generate_dynamic_goal_pose(self, robot_pose_x, robot_pose_y, radius):
-        tries = 0
-        while(True):
-            ring_position = random.uniform(0, 1)
-            origin = radius + numpy.random.normal(0, 0.1) # in meters
-            goal_offset_x = math.cos(2 * math.pi * ring_position) * origin
-            goal_offset_y = math.sin(2 * math.pi * ring_position) * origin
-            goal_x = robot_pose_x + goal_offset_x
-            goal_y = robot_pose_y + goal_offset_y
-            if self.goal_is_valid(goal_x, goal_y):
-                self.goal_x = goal_x
-                self.goal_y = goal_y
-                break
-            if tries > 100:
-                print("Error! couldn't find valid goal position, resetting..")
-                self.delete_entity()
-                self.reset_simulation()
-                self.generate_goal_pose()
-                return
-            tries += 1
-        self.publish_callback()
-
-
-    def generate_goal_pose(self):
-        self.prev_x = self.goal_x
-        self.prev_y = self.goal_y
-        tries = 0
-
-        while ((abs(self.prev_x - self.goal_x) + abs(self.prev_y - self.goal_y)) < 2):
-            if self.stage == 11:
-                # --- Define static goal positions here ---
-                goal_pose_list = [[0.0, 0.0], [0.0, 6.5], [5.0, 5.5], [-2.5, -6.0], [3.0, -4.0], [6.0, -1.0]]
-                index = random.randrange(0, len(goal_pose_list))
-                self.goal_x = float(goal_pose_list[index][0])
-                self.goal_y = float(goal_pose_list[index][1])
-            elif self.stage == 8 or self.stage == 9 or self.stage == 12:
-                # --- Define static goal positions here ---
-                goal_pose_list = [[2.0, 2.0], [2.0, 1.5], [2.0, -0.5], [2.0, -1.0], [2.0, -2.0], [1.3, 1.0],
-                                    [1.0, 0.3], [1.0, -2.0], [0.3, -1.0],  [0.0, 2.0], [0.0, -1.0], [-1.0, 1.0],
-                                        [-1.0, -1.2], [-2.0, 1.0], [-2.2, 0.0], [-2.0, -2.2], [-2.4, 2.4]]
-                index = random.randrange(0, len(goal_pose_list))
-                self.goal_x = float(goal_pose_list[index][0])
-                self.goal_y = float(goal_pose_list[index][1])
-            elif self.stage not in [4, 5, 7]:
-                self.goal_x = random.randrange(-15, 16) / 10.0
-                self.goal_y = random.randrange(-15, 16) / 10.0
+        iterations = 0
+        while iterations < MAX_ITERATIONS:
+            iterations += 1 # Prevent infinite loop
+            if ENABLE_TRUE_RANDOM_GOALS:
+                # Random goal generation within the arena
+                goal_x = random.uniform(-ARENA_LENGTH/2, ARENA_LENGTH/2)
+                goal_y = random.uniform(-ARENA_WIDTH/2, ARENA_WIDTH/2)
+            elif ENABLE_DYNAMIC_GOALS:
+                # Dynamic goal generation within a radius of the robot position
+                goal_x = random.uniform(robot_x - DYNAMIC_GOAL_RADIUS, robot_x + DYNAMIC_GOAL_RADIUS)
+                goal_y = random.uniform(robot_y - DYNAMIC_GOAL_RADIUS, robot_y + DYNAMIC_GOAL_RADIUS)
             else:
-                # --- Define static goal positions here ---
-                goal_pose_list = [[1.0, 0.0], [2.0, -1.5], [0.0, -2.0], [2.0, 2.0], [0.8, 2.0],
-                                  [-1.9, 1.9], [-1.9,  0.2], [-1.9, -0.5], [-2.0, -2.0], [-0.5, -1.0],
-                                  [1.5, -1.0], [-0.5, 1.0], [-1.0, -2.0], [1.8, -0.2], [1.0, -1.9]]
-                index = random.randrange(0, len(goal_pose_list))
-                self.goal_x = float(goal_pose_list[index][0])
-                self.goal_y = float(goal_pose_list[index][1])
-            tries += 1
-            if tries > 100:
-                print("ERROR: distance between goals is small!")
-                break
-        self.publish_callback()
+                # Get the goal from the predefined list
+                index = random.randint(0, len(PREDEFINED_GOAL_LOCATIONS) - 1)
+                goal_x = PREDEFINED_GOAL_LOCATIONS[index][0]
+                goal_y = PREDEFINED_GOAL_LOCATIONS[index][1]
+
+            # Check if the goal is valid and far enough from the previous goal
+            if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_x)**2 + (goal_y - self.prev_y)**2) > GOAL_SEPARATION_DISTANCE:
+                    break
+            else:
+                continue 
+        if iterations >= MAX_ITERATIONS:
+            self.get_logger().info("Goal generation failed default to 0, 0")
+            goal_x = 0.0 # Default goal
+            goal_y = 0.0 # Default goal
+        # Set the goal pose
+        self.goal_x = goal_x
+        self.goal_y = goal_y
+    
 
     '''
     
@@ -250,10 +200,18 @@ class DRLGazebo(Node):
     '''
 
     def get_obstacle_coordinates(self):
-        path = os.environ['SIM_MODEL_PATH'] + 'wall_outler/model.sdf'
+        obstacle_name = ['wall_outler', 'pillar1', 'pillar2']
+        obstacle_coordinates = []
+        for name in obstacle_name:
+            obstacle_coordinates += self._sdf_obstacle_reader(name)
+        return obstacle_coordinates
+    
+    def _sdf_obstacle_reader(self, name: str)->list:
+        path = os.environ['SIM_MODEL_PATH'] + name + '/model.sdf'
         tree = ET.parse(path)
         root = tree.getroot()
         obstacle_coordinates = []
+        # Get the coordinates of the walls
         for wall in root.find('model').findall('link'):
             pose = wall.find('pose').text.split(" ")
             size = wall.find('collision').find('geometry').find('box').find('size').text.split()
@@ -262,22 +220,23 @@ class DRLGazebo(Node):
             # Check if the wall is rotated
             # If the wall is rotated the size is swapped for x and y
             rotation = float(pose[-1])
-            if rotation == 0 or rotation == 3.14159: # if the wall is not rotated the size is correct
+            if rotation == 0 or rotation == 3.14159:
                 size_x = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
                 size_y = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
-            else: # if the wall is rotated the size is swapped for x and y
+            else:
                 size_x = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
                 size_y = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
-            point_1 = [pose_x + size_x / 2, pose_y + size_y / 2]
-            point_2 = [point_1[0], point_1[1] - size_y]
-            point_3 = [point_1[0] - size_x, point_1[1] - size_y ]
-            point_4 = [point_1[0] - size_x, point_1[1] ]
-            wall_points = [point_1, point_2, point_3, point_4]
+            # Calculate the corners of the obstacle
+            step_x = size_x / 2
+            step_y = size_y / 2
+            top_left = [pose_x - step_x, pose_y + step_y]
+            top_right = [pose_x + step_x, pose_y + step_y]
+            bottom_right = [pose_x + step_x, pose_y - step_y]
+            bottom_left = [pose_x - step_x, pose_y - step_y]
+            # Create a list of the corners
+            wall_points = [top_right, bottom_right, bottom_left, top_left]
             obstacle_coordinates.append(wall_points)
-            wall_name = wall.get('name')
-            print(f'WALL: {wall_name} pose: {pose}, size: {size}')
-
-
+        return obstacle_coordinates
 
 def main():
     rclpy.init()
