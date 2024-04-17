@@ -77,9 +77,30 @@
                 <mesh filename="file://$(find zhbbot_description)/meshes/mir_100_base.stl"/>
             </geometry>
         </collision>
-        <xacro:inertial_box mass="100" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}">
+        <!-- <xacro:inertial_box mass="100" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}">
             <origin xyz="${chassis_length/2} 0 ${chassis_height/2}" rpy="0 0 0"/>
-        </xacro:inertial_box>
+        </xacro:inertial_box> -->
+        <inertial>
+                <origin
+                    xyz="${chassis_length/2} 0 ${chassis_height/2}"
+                    rpy="0 0 0" />
+                <mass
+                    value="1000" />
+                <inertia
+                    ixx="0.86919058"
+                    ixy="0.03016623"
+                    ixz="-0.00361722"
+                    iyy="1.19587445"
+                    iyz="0.01825918"
+                    izz="1.36842641" />
+                <!-- <inertia
+                    ixx="0.86919058"
+                    ixy="0.0"
+                    ixz="0.0"
+                    iyy="1.19587445"
+                    iyz="0.0"
+                    izz="1.36842641" /> -->
+            </inertial>
         </link>
         
         <!-- LEFT WHEEL -->
@@ -293,7 +314,7 @@
         <gazebo reference="lidar_link">
             <sensor name="laser" type="ray">
                 <pose> 0 0 0 0 0 0 </pose>
-                <visualize>true</visualize>
+                <visualize>false</visualize>
                 <update_rate>5</update_rate>
                 <ray>
                     <scan>

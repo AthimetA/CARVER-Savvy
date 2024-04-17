@@ -58,20 +58,10 @@
                     <mesh filename="file://$(find pmzbsavy_description)/meshes/URDF_SAVVY.STL"/>
                 </geometry>
             </collision>
-            <inertial>
-                <origin
-                    xyz="0.01046951 0.00650223 0.19582248"
-                    rpy="0 0 0" />
-                <mass
-                    value="38.3" />
-                <inertia
-                    ixx="0.86919058"
-                    ixy="0.03016623"
-                    ixz="-0.00361722"
-                    iyy="1.19587445"
-                    iyz="0.01825918"
-                    izz="1.36842641" />
-            </inertial>
+            <xacro:inertial_box mass="38.3" x="0.516" y="0.4876" z="0.295">
+            <origin xyz="0.0 0.0 0.2335" rpy="0 0 0"/>
+            </xacro:inertial_box>
+            
         </link>
         
         <!-- LEFT WHEEL -->
@@ -82,35 +72,22 @@
             <origin xyz="0 0.105525 0" rpy="-${pi/2} 0 0" />
             <axis xyz="0 0 1"/>
         </joint>
-        
+
         <link name="left_wheel">
-            <visual>
-                <origin xyz="0 0 0"/>
+        <visual>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Drivewheel.STL"/>
+                    <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
                 </geometry>
                 <material name="blue"/>
             </visual>
             <collision>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Drivewheel.STL"/>
+                    <sphere radius="${wheel_radius}"/>
                 </geometry>
             </collision>
-            <inertial>
-                <origin
-                    xyz="0 -2.666E-5 0.03"
-                    rpy="0 0 0" />
-                <mass
-                    value="0.45133" />
-                <inertia
-                    ixx="0.00042932"
-                    ixy="0.0"
-                    ixz="0.0"
-                    iyy="0.00042945"
-                    iyz="0.0"
-                    izz="0.00058797" />
-            </inertial>
+            <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}" radius="${wheel_radius}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_cylinder>
         </link>
 
         <gazebo reference="left_wheel">
@@ -128,32 +105,19 @@
 
         <link name="right_wheel">
             <visual>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Drivewheel.STL"/>
+                    <cylinder radius="${wheel_radius}" length="${wheel_thickness}"/>
                 </geometry>
                 <material name="blue"/>
             </visual>
             <collision>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Drivewheel.STL"/>
+                    <sphere radius="${wheel_radius}"/>
                 </geometry>
             </collision>
-            <inertial>
-                <origin
-                    xyz="0 -2.666E-5 0.03"
-                    rpy="0 0 0" />
-                <mass
-                    value="0.45133" />
-                <inertia
-                    ixx="0.00042932"
-                    ixy="0.0"
-                    ixz="0.0"
-                    iyy="0.00042945"
-                    iyz="0.0"
-                    izz="0.00058797" />
-            </inertial>
+            <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}" radius="${wheel_radius}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_cylinder>
         </link>
 
         <gazebo reference="right_wheel">
@@ -165,37 +129,24 @@
         <joint name="caster_wheel_f_r_joint" type="fixed">
             <parent link="base_link"/>
             <child link="caster_wheel_f_r"/>
-            <origin xyz="0.20490726 -0.135475 0.0824" rpy="0 0 0"/>
+            <origin xyz="0.20490726 -0.135475 0.0001" rpy="0 0 0"/>
         </joint>
 
         <link name="caster_wheel_f_r">
             <visual>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Castor_100.STL"/>
+                    <sphere radius="${caster_wheel_radius}"/>
                 </geometry>
                 <material name="white"/>
             </visual>
             <collision>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Castor_100.STL"/>
+                    <sphere radius="${caster_wheel_radius}"/>
                 </geometry>
             </collision>
-            <inertial>
-                <origin
-                    xyz="-0.03218009 0 -0.07621536"
-                    rpy="0 0 0" />
-                <mass
-                    value="0.32379" />
-                <inertia
-                    ixx="0.00032464"
-                    ixy="0.0"
-                    ixz="6.086E-5"
-                    iyy="0.00047939"
-                    iyz="0.0"
-                    izz="0.00026272" />
-            </inertial>
+            <xacro:inertial_sphere mass="${caster_wheel_mass}" radius="${caster_wheel_radius}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_sphere>
         </link>
 
         <gazebo reference="caster_wheel_f_r">
@@ -208,37 +159,24 @@
         <joint name="caster_wheel_f_l_joint" type="fixed">
             <parent link="base_link"/>
             <child link="caster_wheel_f_l"/>
-            <origin xyz="0.20490726 0.135475 0.0824" rpy="0 0 0"/>
+            <origin xyz="0.20490726 0.135475 0.0001" rpy="0 0 0"/>
         </joint>
 
         <link name="caster_wheel_f_l">
             <visual>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Castor_100.STL"/>
+                    <sphere radius="${caster_wheel_radius}"/>
                 </geometry>
                 <material name="white"/>
             </visual>
             <collision>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Castor_100.STL"/>
+                    <sphere radius="${caster_wheel_radius}"/>
                 </geometry>
             </collision>
-            <inertial>
-                <origin
-                    xyz="-0.03218009 0 -0.07621536"
-                    rpy="0 0 0" />
-                <mass
-                    value="0.32379" />
-                <inertia
-                    ixx="0.00032464"
-                    ixy="0.0"
-                    ixz="6.086E-5"
-                    iyy="0.00047939"
-                    iyz="0.0"
-                    izz="0.00026272" />
-            </inertial>
+            <xacro:inertial_sphere mass="${caster_wheel_mass}" radius="${caster_wheel_radius}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_sphere>
         </link>
         
         <gazebo reference="caster_wheel_f_l">
@@ -251,37 +189,24 @@
         <joint name="caster_wheel_r_r_joint" type="fixed">
             <parent link="base_link"/>
             <child link="caster_wheel_r_r"/>
-            <origin xyz="-0.14804637 -0.135525 0.0824" rpy="0 0 0"/>
+            <origin xyz="-0.14804637 -0.135475 0.0001" rpy="0 0 0"/>
         </joint>
 
         <link name="caster_wheel_r_r">
             <visual>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Castor_100.STL"/>
+                    <sphere radius="${caster_wheel_radius}"/>
                 </geometry>
                 <material name="white"/>
             </visual>
             <collision>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Castor_100.STL"/>
+                    <sphere radius="${caster_wheel_radius}"/>
                 </geometry>
             </collision>
-            <inertial>
-                <origin
-                    xyz="-0.03218009 0 -0.07621536"
-                    rpy="0 0 0" />
-                <mass
-                    value="0.32379" />
-                <inertia
-                    ixx="0.00032464"
-                    ixy="0.0"
-                    ixz="6.086E-5"
-                    iyy="0.00047939"
-                    iyz="0.0"
-                    izz="0.00026272" />
-            </inertial>
+            <xacro:inertial_sphere mass="${caster_wheel_mass}" radius="${caster_wheel_radius}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_sphere>
         </link>
 
         <gazebo reference="caster_wheel_r_r">
@@ -294,37 +219,24 @@
         <joint name="caster_wheel_r_l_joint" type="fixed">
             <parent link="base_link"/>
             <child link="caster_wheel_r_l"/>
-            <origin xyz="-0.14804637 0.135475 0.0824" rpy="0 0 0"/>
+            <origin xyz="-0.14804637 0.135475 0.0001" rpy="0 0 0"/>
         </joint>
 
         <link name="caster_wheel_r_l">
             <visual>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Castor_100.STL"/>
+                    <sphere radius="${caster_wheel_radius}"/>
                 </geometry>
                 <material name="white"/>
             </visual>
             <collision>
-                <origin xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/Castor_100.STL"/>
+                    <sphere radius="${caster_wheel_radius}"/>
                 </geometry>
             </collision>
-            <inertial>
-                <origin
-                    xyz="-0.03218009 0 -0.07621536"
-                    rpy="0 0 0" />
-                <mass
-                    value="0.32379" />
-                <inertia
-                    ixx="0.00032464"
-                    ixy="0.0"
-                    ixz="6.086E-5"
-                    iyy="0.00047939"
-                    iyz="0.0"
-                    izz="0.00026272" />
-            </inertial>
+            <xacro:inertial_sphere mass="${caster_wheel_mass}" radius="${caster_wheel_radius}">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </xacro:inertial_sphere>
         </link>
 
         <gazebo reference="caster_wheel_r_l">
