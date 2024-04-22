@@ -112,9 +112,9 @@ class DRLEnvironment(Node):
         self.temp_i = 0 
     
     def timer_callback(self):
-        self.get_logger().info(f"Local step: {self.local_step} | Time: {self.time_sec} | Deadline: {self.episode_deadline}")
-        self.get_logger().info(f"Robot: ({self.robot_x:.2f}, {self.robot_y:.2f}) tilt: {self.robot_tilt:.2f}")
-        self.get_logger().info(f"State: {self.get_state(self.temp_i, self.temp_i)}")
+        # self.get_logger().info(f"Local step: {self.local_step} | Time: {self.time_sec} | Deadline: {self.episode_deadline}")
+        # self.get_logger().info(f"Robot: ({self.robot_x:.2f}, {self.robot_y:.2f}) tilt: {self.robot_tilt:.2f}")
+        # self.get_logger().info(f"State: {self.get_state(self.temp_i, self.temp_i)}")
         self.temp_i += 1
 
     """*******************************************************************************

@@ -28,11 +28,6 @@ def generate_launch_description():
         'config',
         'gazebo_params.yaml')
 
-    if not os.path.exists(gazebo_params_file):
-        print(f"File '{gazebo_params_file}' does not exist")
-    else:
-        print(f"File '{gazebo_params_file}' exists")
-
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
     world_file_name = "abwu_drl_base.world"
