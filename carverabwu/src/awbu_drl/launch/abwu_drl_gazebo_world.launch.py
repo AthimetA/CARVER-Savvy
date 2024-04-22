@@ -23,6 +23,16 @@ def generate_launch_description():
 
     world_package_name = 'abwu_gazebo'
 
+    gazebo_params_file = os.path.join(
+        get_package_share_directory(world_package_name),
+        'config',
+        'gazebo_params.yaml')
+
+    if not os.path.exists(gazebo_params_file):
+        print(f"File '{gazebo_params_file}' does not exist")
+    else:
+        print(f"File '{gazebo_params_file}' exists")
+
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
     world_file_name = "abwu_drl_base.world"
@@ -41,7 +51,10 @@ def generate_launch_description():
             ])
         ]),
         # launch_arguments={'world': world_file_path}.items()
-        launch_arguments={'world': world_file_path, 'pause': pause}.items()
+        launch_arguments={'world': world_file_path,
+                           'pause': pause,
+                            'params_file': gazebo_params_file,
+                        }.items()
     )
 
     # gzclient

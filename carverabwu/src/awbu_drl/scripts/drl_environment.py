@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import math
 import numpy
 import sys
@@ -14,7 +13,7 @@ from awbu_interfaces.srv import DrlStep, Goal, RingGoal
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, qos_profile_sensor_data
+from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
 
 import reward as rw
 from common import utilities as util
@@ -48,9 +47,6 @@ MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
 class DRLEnvironment(Node):
     def __init__(self):
         super().__init__('drl_environment')
-        with open('/tmp/drlnav_current_stage.txt', 'r') as f:
-            self.stage = int(f.read())
-        print(f"running on stage: {self.stage}")
         # ------------ Initialize variables ----------
         # Episode
         self.episode_timeout = EPISODE_TIMEOUT_SECONDS
@@ -91,7 +87,11 @@ class DRLEnvironment(Node):
         ** Initialise ROS publishers and subscribers
         ************************************************************"""
         qos = QoSProfile(depth=10)
-        qos_clock = QoSProfile(depth=1)
+        qos_clock = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST
+        )
         # publishers
         self.cmd_vel_pub = self.create_publisher(Twist, self.velo_topic, qos)
         # subscribers
@@ -107,21 +107,31 @@ class DRLEnvironment(Node):
         self.step_comm_server = self.create_service(DrlStep, 'step_comm', self.step_comm_callback)
         self.goal_comm_server = self.create_service(Goal, 'goal_comm', self.goal_comm_callback)
 
+        # Timer
+        self.create_timer(1.0, self.timer_callback)
+        self.temp_i = 0 
+    
+    def timer_callback(self):
+        self.get_logger().info(f"Local step: {self.local_step} | Time: {self.time_sec} | Deadline: {self.episode_deadline}")
+        self.get_logger().info(f"Robot: ({self.robot_x:.2f}, {self.robot_y:.2f}) tilt: {self.robot_tilt:.2f}")
+        self.get_logger().info(f"State: {self.get_state(self.temp_i, self.temp_i)}")
+        self.temp_i += 1
+
     """*******************************************************************************
     ** Callback functions and relevant functions
     *******************************************************************************"""
 
-    def goal_pose_callback(self, msg):
+    def goal_pose_callback(self, msg: Pose):
         self.goal_x = msg.position.x
         self.goal_y = msg.position.y
         self.new_goal = True
         print(f"new goal! x: {self.goal_x} y: {self.goal_y}")
 
-    def goal_comm_callback(self, request, response):
+    def goal_comm_callback(self, request: Goal.Request, response: Goal.Response):
         response.new_goal = self.new_goal
         return response
 
-    def obstacle_odom_callback(self, msg):
+    def obstacle_odom_callback(self, msg: Odometry):
         if 'obstacle' in msg.child_frame_id:
             robot_pos = msg.pose.pose.position
             obstacle_id = int(msg.child_frame_id[-1]) - 1
@@ -131,7 +141,7 @@ class DRLEnvironment(Node):
         else:
             print("ERROR: received odom was not from obstacle!")
 
-    def odom_callback(self, msg):
+    def odom_callback(self, msg: Odometry):
         self.robot_x = msg.pose.pose.position.x
         self.robot_y = msg.pose.pose.position.y
         _, _, self.robot_heading = util.euler_from_quaternion(msg.pose.pose.orientation)
@@ -170,7 +180,7 @@ class DRLEnvironment(Node):
                     self.obstacle_distance = self.scan_ranges[i]
         self.obstacle_distance *= LIDAR_DISTANCE_CAP
 
-    def clock_callback(self, msg):
+    def clock_callback(self, msg: Clock):
         self.time_sec = msg.clock.sec
         if not self.reset_deadline:
             return
@@ -184,7 +194,7 @@ class DRLEnvironment(Node):
         self.reset_deadline = False
         self.clock_msgs_skipped = 0
 
-    def stop_reset_robot(self, success):
+    def stop_reset_robot(self, success: bool):
         self.cmd_vel_pub.publish(Twist()) # stop robot
         self.episode_deadline = np.inf
         self.done = True
@@ -203,7 +213,7 @@ class DRLEnvironment(Node):
                 self.get_logger().info('fail service not available, waiting again...')
             self.task_fail_client.call_async(req)
 
-    def get_state(self, action_linear_previous, action_angular_previous):
+    def get_state(self, action_linear_previous: float, action_angular_previous: float):
         state = copy.deepcopy(self.scan_ranges)                                             # range: [ 0, 1]
         state.append(float(numpy.clip((self.goal_distance / MAX_GOAL_DISTANCE), 0, 1)))     # range: [ 0, 1]
         state.append(float(self.goal_angle) / math.pi)                                      # range: [-1, 1]
@@ -236,7 +246,7 @@ class DRLEnvironment(Node):
             self.stop_reset_robot(self.succeed == SUCCESS)
         return state
 
-    def initalize_episode(self, response):
+    def initalize_episode(self, response: DrlStep.Response):
         self.initial_distance_to_goal = self.goal_distance
         response.state = self.get_state(0, 0)
         response.reward = 0.0
@@ -245,7 +255,7 @@ class DRLEnvironment(Node):
         rw.reward_initalize(self.initial_distance_to_goal)
         return response
 
-    def step_comm_callback(self, request, response):
+    def step_comm_callback(self, request: DrlStep.Request, response: DrlStep.Response):
         if len(request.action) == 0:
             return self.initalize_episode(response)
 

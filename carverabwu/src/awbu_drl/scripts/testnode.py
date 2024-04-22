@@ -44,6 +44,7 @@ class TestNode(Node):
         self.vel_pub.publish(msg)
 
     def timer_callback(self):
+        self.get_logger().info('Timer callback')
         self.move(0.5, 0.2)
 
 

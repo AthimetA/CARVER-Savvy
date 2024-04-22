@@ -28,38 +28,38 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time}],
          )
     
-    test_node = Node(
-            package='awbu_drl',
-            executable='testnode.py',
-            name='testnode',
-            parameters=[{'use_sim_time': use_sim_time}],
-         )
-    
     drl_gazebo = Node(
             package='awbu_drl',
             executable='drl_gazebo.py',
             name='drl_gazebo',
             parameters=[{'use_sim_time': use_sim_time}],
          )
-
-    package_name = 'abwu_simulation'
-
-    joy_params = os.path.join(get_package_share_directory(package_name),'config','joystick.yaml')
-
-    joy_node = Node(
-            package='joy',
-            executable='joy_node',
-            parameters=[joy_params, {'use_sim_time': use_sim_time}],
+    
+    drl_env = Node(
+            package='awbu_drl',
+            executable='drl_environment.py',
+            name='drl_env',
+            parameters=[{'use_sim_time': use_sim_time}],
          )
 
-    teleop_node = Node(
-            package='teleop_twist_joy',
-            executable='teleop_node',
-            name='teleop_node',
-            parameters=[joy_params, {'use_sim_time': use_sim_time}],
-            # remappings=[('/cmd_vel','/diff_cont/cmd_vel_unstamped')]
-            remappings=[('/cmd_vel','/cmd_vel_joy')]
-         )
+#     package_name = 'abwu_simulation'
+
+#     joy_params = os.path.join(get_package_share_directory(package_name),'config','joystick.yaml')
+
+#     joy_node = Node(
+#             package='joy',
+#             executable='joy_node',
+#             parameters=[joy_params, {'use_sim_time': use_sim_time}],
+#          )
+
+#     teleop_node = Node(
+#             package='teleop_twist_joy',
+#             executable='teleop_node',
+#             name='teleop_node',
+#             parameters=[joy_params, {'use_sim_time': use_sim_time}],
+#             # remappings=[('/cmd_vel','/diff_cont/cmd_vel_unstamped')]
+#             remappings=[('/cmd_vel','/cmd_vel_joy')]
+#          )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -68,8 +68,10 @@ def generate_launch_description():
 
         drl_gazebo,
 
-        joy_node,
+        drl_env,
 
-        teleop_node,
+        # joy_node,
+
+        # teleop_node,
 
     ])

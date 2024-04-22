@@ -19,7 +19,7 @@ def generate_launch_description():
     # Use sim time
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     # Pause simulation
-    pause = LaunchConfiguration('pause', default='true')
+    pause = LaunchConfiguration('pause', default='false')
 
     # ***** GAZEBO ***** #
     world_package_name = 'awbu_drl'
@@ -115,7 +115,7 @@ def generate_launch_description():
             name='ekf_filter_node_odom',
 	        output='screen',
             parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
-            remappings=[('odometry/filtered', 'odometry/local')]           
+            remappings=[('odometry/filtered', '/abwubot/odom')]           
            )
     ekf_filter_node_map = Node(
             package='robot_localization', 
@@ -125,32 +125,7 @@ def generate_launch_description():
             parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
             remappings=[('odometry/filtered', 'odometry/global')]
            ) 
-    
-    test_node = Node(
-            package='awbu_drl',
-            executable='testnode.py',
-            name='testnode',
-            parameters=[{'use_sim_time': use_sim_time}],
-         )
-    
-    package_name = 'abwu_simulation'
 
-    joy_params = os.path.join(get_package_share_directory(package_name),'config','joystick.yaml')
-
-    joy_node = Node(
-            package='joy',
-            executable='joy_node',
-            parameters=[joy_params, {'use_sim_time': use_sim_time}],
-         )
-
-    teleop_node = Node(
-            package='teleop_twist_joy',
-            executable='teleop_node',
-            name='teleop_node',
-            parameters=[joy_params, {'use_sim_time': use_sim_time}],
-            # remappings=[('/cmd_vel','/diff_cont/cmd_vel_unstamped')]
-            remappings=[('/cmd_vel','/cmd_vel_joy')]
-         )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -172,8 +147,5 @@ def generate_launch_description():
                 ]
             )
         ),
-        # test_node,
-        joy_node,
-        teleop_node
 
     ])

@@ -26,8 +26,8 @@ REWARD_FUNCTION = "A"           # Defined in reward.py
 
 # Sensor and Topic
 TOPIC_SCAN = 'scan'
-TOPIC_VELO = 'cmd_vel'
-TOPIC_ODOM = 'odom'
+TOPIC_VELO = '/abwubot/cmd_vel'
+TOPIC_ODOM = '/abwubot/odom'
 TOPIC_GOAL = 'goal_pose'
 LIDAR_DISTANCE_CAP          = 3.5   # meters
 THRESHOLD_COLLISION         = 0.13  # meters
