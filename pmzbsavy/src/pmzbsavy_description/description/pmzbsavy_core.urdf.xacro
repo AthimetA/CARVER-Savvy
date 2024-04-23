@@ -97,6 +97,11 @@
                     <mesh filename="file://$(find pmzbsavy_description)/meshes/Drivewheel.STL"/>
                 </geometry>
             </collision>
+            <!-- <collision>
+                <geometry>
+                    <sphere radius="${wheel_radius}"/>
+                </geometry>
+            </collision> -->
             <inertial>
                 <origin
                     xyz="0 -2.666E-5 0.03"
@@ -140,6 +145,11 @@
                     <mesh filename="file://$(find pmzbsavy_description)/meshes/Drivewheel.STL"/>
                 </geometry>
             </collision>
+            <!-- <collision>
+                <geometry>
+                    <sphere radius="${wheel_radius}"/>
+                </geometry>
+            </collision> -->
             <inertial>
                 <origin
                     xyz="0 -2.666E-5 0.03"

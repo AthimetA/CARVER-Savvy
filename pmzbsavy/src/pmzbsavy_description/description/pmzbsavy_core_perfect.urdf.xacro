@@ -53,9 +53,9 @@
                 <material name="grey"/>
             </visual>
             <collision>
-                <origin xyz="0 0 0"/>
+                <origin xyz="0.03595 -0.00002 0.2385"/>
                 <geometry>
-                    <mesh filename="file://$(find pmzbsavy_description)/meshes/URDF_SAVVY.STL"/>
+                    <box size="0.558 0.4876 0.295"/>
                 </geometry>
             </collision>
             <xacro:inertial_box mass="38.3" x="0.516" y="0.4876" z="0.295">
@@ -69,7 +69,7 @@
         <joint name="left_wheel_joint" type="continuous">
             <parent link="base_link"/>
             <child link="left_wheel"/>
-            <origin xyz="0 0.105525 0" rpy="-${pi/2} 0 0" />
+            <origin xyz="0 ${(wheel_thickness/2) + 0.105525} 0" rpy="-${pi/2} 0 0" />
             <axis xyz="0 0 1"/>
         </joint>
 
@@ -99,7 +99,7 @@
         <joint name="right_wheel_joint" type="continuous">
             <parent link="base_link"/>
             <child link="right_wheel"/>
-            <origin xyz="0 -0.105525 0" rpy="${pi/2} 0 0" />
+            <origin xyz="0 -${(wheel_thickness/2) + 0.105525} 0" rpy="${pi/2} 0 0" />
             <axis xyz="0 0 -1"/>
         </joint>
 
