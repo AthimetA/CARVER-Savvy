@@ -73,8 +73,9 @@ class DRLGazebo(Node):
         # Initialise client
         self.delete_entity_client       = self.create_client(DeleteEntity, 'delete_entity')
         self.spawn_entity_client        = self.create_client(SpawnEntity, 'spawn_entity')
-        self.reset_simulation_client    = self.create_client(Empty, 'reset_simulation')
-        self.gazebo_pause               = self.create_client(Empty, '/pause_physics')
+        self.reset_simulation_client    = self.create_client(Empty, 'reset_world')
+        self.gazebo_pause = self.create_client(Empty, '/pause_physics')
+        self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
 
         # Initialise servers
         self.task_succeed_server    = self.create_service(RingGoal, 'task_succeed', self.task_succeed_callback)
@@ -83,6 +84,24 @@ class DRLGazebo(Node):
         self.obstacle_coordinates   = self.get_obstacle_coordinates()
         self.get_logger().info(f"Obstacle coordinates: {self.obstacle_coordinates}")
         self.init_drl()
+
+        # self.timer = self.create_timer(3.0, self.test_callback)
+
+    def test_callback(self):
+        # self.get_logger().info("====================fail: task_fail_callback============================")
+        # self.pause_simulation()
+        # time.sleep(0.1)
+        # self.delete_entity()
+        # time.sleep(0.25)
+        # self.reset_simulation()
+        # time.sleep(0.1)
+        # self.generate_goal_pose(robot_x=0.0, robot_y=0.0, radius=5.0)
+        # self.publish_callback()
+        # time.sleep(0.1)
+        # self.unpause_simulation()
+        # time.sleep(0.1)
+        # self.get_logger().info(f"fail: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
+        self.get_logger().info("Test callback")
 
     """*******************************************************************************
     ** Callback functions and relevant functions
@@ -93,10 +112,9 @@ class DRLGazebo(Node):
     
     '''
     def reset_simulation(self):
-        req = Empty.Request()
         while not self.reset_simulation_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('reset service not available, waiting again...')
-        self.reset_simulation_client.call_async(req)
+        self.reset_simulation_client.call_async(Empty.Request())
 
     def delete_entity(self):
         req = DeleteEntity.Request()
@@ -104,6 +122,19 @@ class DRLGazebo(Node):
         while not self.delete_entity_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         self.delete_entity_client.call_async(req)
+
+    def pause_simulation(self):
+        # Pause simulation
+        while not self.gazebo_pause.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('pause gazebo service not available, waiting again...')
+        self.gazebo_pause.call_async(Empty.Request())
+            
+    def unpause_simulation(self):
+        # Unpause simulation
+        while not self.gazebo_unpause.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('unpause gazebo service not available, waiting again...')
+        self.gazebo_unpause.call_async(Empty.Request())
+
 
     def spawn_entity(self):
         goal_pose = Pose()
@@ -116,6 +147,7 @@ class DRLGazebo(Node):
         while not self.spawn_entity_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         self.spawn_entity_client.call_async(req)
+        self.get_logger().info("Entity spawned")
 
     '''
     
@@ -124,17 +156,23 @@ class DRLGazebo(Node):
     '''
 
     def task_succeed_callback(self, request: RingGoal.Request, response: RingGoal.Response)->RingGoal.Response:
+        self.get_logger().info("====================success: task_succeed_callback============================")
         self.delete_entity()
         self.generate_goal_pose(robot_x=request.robot_pose_x, robot_y=request.robot_pose_y, radius=request.radius)
         self.publish_callback()
+        time.sleep(0.1)
+        self.unpause_simulation()
         self.get_logger().info(f"success: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
         return response
 
     def task_fail_callback(self, request: RingGoal.Request, response: RingGoal.Response)->RingGoal.Response:
+        self.get_logger().info("====================fail: task_fail_callback============================")
         self.delete_entity()
         self.reset_simulation()
         self.generate_goal_pose(robot_x=request.robot_pose_x, robot_y=request.robot_pose_y, radius=request.radius)
         self.publish_callback()
+
+        self.unpause_simulation()
         self.get_logger().info(f"fail: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
         return response
 
@@ -148,10 +186,10 @@ class DRLGazebo(Node):
     def init_drl(self)->None:
         self.delete_entity()
         self.reset_simulation()
-        time.sleep(0.25)
+        self.unpause_simulation()
         self.publish_callback()
+        # time.sleep(0.1)
         self.get_logger().info(f"DRL Gazebo node has been initialized, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
-        time.sleep(0.25)
 
     def publish_callback(self)->None:
         # Publish goal pose
@@ -161,6 +199,7 @@ class DRLGazebo(Node):
         self.goal_pose_pub.publish(goal_pose)
         self.get_logger().info(f"Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
         self.spawn_entity()
+        self.get_logger().info("Goal published by publishe_callback")
 
     def goal_is_valid(self, goal_x: float, goal_y: float)->bool:
         if goal_x > ARENA_LENGTH/2 or goal_x < -ARENA_LENGTH/2 or goal_y > ARENA_WIDTH/2 or goal_y < -ARENA_WIDTH/2:
@@ -184,6 +223,7 @@ class DRLGazebo(Node):
         self.prev_y = self.goal_y
         iterations = 0
         while iterations < MAX_ITERATIONS:
+            self.get_logger().info(f"Goal generation iteration: {iterations}")
             iterations += 1 # Prevent infinite loop
             if ENABLE_TRUE_RANDOM_GOALS:
                 # Random goal generation within the arena

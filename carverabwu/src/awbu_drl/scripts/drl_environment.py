@@ -301,6 +301,7 @@ class DRLEnvironment(Node):
         twist = Twist()
         twist.linear.x = action_linear
         twist.angular.z = action_angular
+        self.get_logger().info(f"Publishing action: linear: {twist.linear.x:.2f} angular: {twist.angular.z:.2f}")
         self.cmd_vel_pub.publish(twist)
 
         # Prepare repsonse
