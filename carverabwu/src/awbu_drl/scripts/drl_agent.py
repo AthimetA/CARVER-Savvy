@@ -47,6 +47,7 @@ class DrlAgent(Node):
         self.real_robot = real_robot
         self.total_steps = 0
         self.observe_steps = OBSERVE_STEPS
+        self.test = -1
         # ===================================================================== #
         #                             Start Process                             #
         # ===================================================================== #
@@ -142,22 +143,23 @@ class DrlAgent(Node):
         # Get a random action
         vl = np.random.uniform(0.0, 6.0)
         vw = np.random.randint(-3, 3)
-        return [5.0, 1.0*vw]
+        return [5.0*self.test, 1.0*self.test]
 
     def process(self):
         # Prepare the environment
-        self.pause_simulation()
+        # self.pause_simulation()
 
         while (True):
             # Get the goal position from service
             _ = self.wait_new_goal() # Wait for new goal to be created on DRL Gazebo Node [Vaule is not used]
+            self.test *= -1
             # Initialize the episode
             episode_done = False
             step, reward_sum, loss_critic, loss_actor = 0, 0, 0, 0
             action_past = [0.0, 0.0]
             state = self.init_episode()
 
-            self.unpause_simulation()
+            # self.unpause_simulation()
             # Wait for the simulation to start
             time.sleep(0.5) # Delay for 0.5 seconds
             # Start the episode timer
