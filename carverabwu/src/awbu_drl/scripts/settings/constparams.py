@@ -33,8 +33,8 @@ LIDAR_DISTANCE_CAP          = 3.5   # meters
 THRESHOLD_COLLISION         = 0.13  # meters
 THREHSOLD_GOAL              = 0.20  # meters
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
-LINEAR_VELOCITY_NOISE       = 0     # 0 = no noise, 1 = noise enabled
-ANGULAR_VELOCITY_NOISE      = 1     # 0 = no noise, 1 = noise enabled
+LINEAR_VELOCITY_LOC       = 0     # 0 = no noise, 1 = noise enabled
+ANGULAR_VELOCITY_LOC      = 1     # 0 = no noise, 1 = noise enabled
 
 # Arena
 ARENA_LENGTH                = 15   # meters

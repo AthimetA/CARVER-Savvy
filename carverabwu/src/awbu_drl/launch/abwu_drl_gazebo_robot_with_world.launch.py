@@ -143,7 +143,7 @@ def generate_launch_description():
                     joint_state_broadcaster_spawner,
                     diff_drive_controllers,
                     ekf_filter_node_odom,
-                    ekf_filter_node_map
+                    # ekf_filter_node_map
                 ]
             )
         ),

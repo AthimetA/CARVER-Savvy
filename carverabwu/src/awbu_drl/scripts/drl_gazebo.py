@@ -1,5 +1,24 @@
 #!/usr/bin/env python3
 
+# Copyright 2019 ROBOTIS CO., LTD.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Authors: Ryan Shim, Gilbert, Tomas
+
+# Modified by: Athimet Aiewcharoen, FIBO, KMUTT
+# Date: 2024-04-24
+
 import os
 import random
 import math
@@ -29,7 +48,7 @@ class DRLGazebo(Node):
         ************************************************************"""
 
         self._entity_dir_path = os.environ['SIM_MODEL_PATH'] + '/goal_box'
-        self.get_logger().info("Goal entity directory path: " + self._entity_dir_path)
+        # self.get_logger().info("Goal entity directory path: " + self._entity_dir_path)
         self._entity_path = os.path.join(self._entity_dir_path, 'model.sdf')
         self.entity = open(self._entity_path, 'r').read()
         self.entity_name = 'goal_box'
@@ -62,6 +81,7 @@ class DRLGazebo(Node):
         self.task_fail_server       = self.create_service(RingGoal, 'task_fail', self.task_fail_callback)
 
         self.obstacle_coordinates   = self.get_obstacle_coordinates()
+        self.get_logger().info(f"Obstacle coordinates: {self.obstacle_coordinates}")
         self.init_drl()
 
     """*******************************************************************************

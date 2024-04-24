@@ -33,7 +33,7 @@ from settings.constparams import ARENA_LENGTH, ARENA_WIDTH
 from settings.constparams import MAX_NUMBER_OBSTACLES, OBSTACLE_RADIUS 
 # General
 from settings.constparams import EPISODE_TIMEOUT_SECONDS, SPEED_LINEAR_MAX, SPEED_ANGULAR_MAX,\
-                                 LINEAR_VELOCITY_NOISE, ANGULAR_VELOCITY_NOISE
+                                 LINEAR_VELOCITY_LOC, ANGULAR_VELOCITY_LOC
 
 # DRL ALGORITHM SETTINGS
 from settings.constparams import UNKNOWN, SUCCESS, COLLISION_WALL, COLLISION_OBSTACLE, TIMEOUT, TUMBLE
@@ -250,15 +250,15 @@ class DRLEnvironment(Node):
             return self.initalize_episode(response)
 
         if ENABLE_MOTOR_NOISE:
-            request.action[LINEAR_VELOCITY_NOISE] += numpy.clip(numpy.random.normal(0, 0.05), -0.1, 0.1)
-            request.action[ANGULAR_VELOCITY_NOISE] += numpy.clip(numpy.random.normal(0, 0.05), -0.1, 0.1)
+            request.action[LINEAR_VELOCITY_LOC] += numpy.clip(numpy.random.normal(0, 0.05), -0.1, 0.1)
+            request.action[ANGULAR_VELOCITY_LOC] += numpy.clip(numpy.random.normal(0, 0.05), -0.1, 0.1)
 
         # Un-normalize actions
         if ENABLE_BACKWARD:
-            action_linear = request.action[LINEAR_VELOCITY_NOISE] * SPEED_LINEAR_MAX
+            action_linear = request.action[LINEAR_VELOCITY_LOC] * SPEED_LINEAR_MAX
         else:
-            action_linear = (request.action[LINEAR_VELOCITY_NOISE] + 1) / 2 * SPEED_LINEAR_MAX
-        action_angular = request.action[ANGULAR_VELOCITY_NOISE] * SPEED_ANGULAR_MAX
+            action_linear = (request.action[LINEAR_VELOCITY_LOC] + 1) / 2 * SPEED_LINEAR_MAX
+        action_angular = request.action[ANGULAR_VELOCITY_LOC] * SPEED_ANGULAR_MAX
 
         # Publish action cmd
         twist = Twist()
@@ -267,7 +267,7 @@ class DRLEnvironment(Node):
         self.cmd_vel_pub.publish(twist)
 
         # Prepare repsonse
-        response.state = self.get_state(request.previous_action[LINEAR_VELOCITY_NOISE], request.previous_action[ANGULAR_VELOCITY_NOISE])
+        response.state = self.get_state(request.previous_action[LINEAR_VELOCITY_LOC], request.previous_action[ANGULAR_VELOCITY_LOC])
         response.reward = rw.get_reward(self.succeed, action_linear, action_angular, self.goal_distance,
                                             self.goal_angle, self.obstacle_distance)
         response.done = self.done
@@ -283,7 +283,7 @@ class DRLEnvironment(Node):
             self.reset_deadline = True
         if self.local_step % 200 == 0:
             print(f"Rtot: {response.reward:<8.2f}GD: {self.goal_distance:<8.2f}GA: {math.degrees(self.goal_angle):.1f}°\t", end='')
-            print(f"MinD: {self.obstacle_distance:<8.2f}Alin: {request.action[LINEAR_VELOCITY_NOISE]:<7.1f}Aturn: {request.action[ANGULAR_VELOCITY_NOISE]:<7.1f}")
+            print(f"MinD: {self.obstacle_distance:<8.2f}Alin: {request.action[LINEAR_VELOCITY_LOC]:<7.1f}Aturn: {request.action[ANGULAR_VELOCITY_LOC]:<7.1f}")
         return response
 
 def main(args=sys.argv[1:]):

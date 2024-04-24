@@ -30,6 +30,7 @@ install(PROGRAMS
   scripts/testnode.py
   scripts/drl_gazebo.py
   scripts/drl_environment.py
+  scripts/drl_agent.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
