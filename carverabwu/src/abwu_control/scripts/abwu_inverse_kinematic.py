@@ -19,8 +19,8 @@ class AbwuIKNode(Node):
         
         '''
 
-        self._WHEEL_RADIUS = 0.075 # radius of the wheel
-        self._BASE_WIDTH = 0.4   # distance between the wheels
+        self._WHEEL_RADIUS = 0.05 # radius of the wheel
+        self._BASE_WIDTH = 0.27105   # distance between the wheels
 
         # Create a subscriber for the Diff Drive Publisher
         self.create_subscription(Twist, '/abwubot/cmd_vel', self.diff_drive_cont_sub_callback, 10)

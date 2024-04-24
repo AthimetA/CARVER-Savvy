@@ -14,6 +14,9 @@ class AbwuFKNode(Node):
         # Initialize the ROS 2 node
         super().__init__('AbwuFKNode')
 
+        self._WHEEL_RADIUS = 0.05 # radius of the wheel
+        self._BASE_WIDTH = 0.27105   # distance between the wheels
+
         self.node_name = 'AbwuFKNode'
         self.node_enabled = True
 
@@ -22,7 +25,7 @@ class AbwuFKNode(Node):
         self.create_subscription(JointState, '/joint_states', self.joint_states_callback, 10)
 
         # Create a publisher for robot velocity commands
-        self.odom_topic_name = '/abwubot/wheel/odom'
+        self.odom_topic_name = 'abwubot/wheel/odom'
         self.odom_pub = self.create_publisher(Odometry, self.odom_topic_name, 10) # publish to /odom topic
 
         # create timer_callback
@@ -33,10 +36,6 @@ class AbwuFKNode(Node):
         self.x = 0.0
         self.y = 0.0
         self.wz = 0.0
-
-
-        self._WHEEL_RADIUS = 0.075 # radius of the wheel
-        self._BASE_WIDTH = 0.4   # distance between the wheels
 
     def timer_callback(self):
         if self.node_enabled:

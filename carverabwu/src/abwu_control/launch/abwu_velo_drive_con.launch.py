@@ -116,16 +116,16 @@ def generate_launch_description():
     )
 
     # Robot Localization
-    parameters_file_dir = os.path.join(control_package_dir, 'config')
-    parameters_file_path = os.path.join(parameters_file_dir, 'abwu_ekf.yaml')
-    os.environ['FILE_PATH'] = str(parameters_file_dir)
+    ekf_parameters_file_dir = os.path.join(control_package_dir, 'config')
     
     ekf_filter_node_odom = Node(
             package='robot_localization', 
             executable='ekf_node', 
-            name='ekf_filter_node_odom',
+            name='ekf_filter_node',
 	        output='screen',
-            parameters=[parameters_file_path, {'use_sim_time': use_sim_time}],
+            parameters=[
+                os.path.join(ekf_parameters_file_dir, 'abwu_ekf.yaml'),
+            ],
             remappings=[('odometry/filtered', '/abwubot/odom')]           
            )
 
@@ -145,9 +145,9 @@ def generate_launch_description():
                 on_exit = [
                     joint_state_broadcaster_spawner,
                     diff_drive_controllers,
-                    ekf_filter_node_odom,
                     abwu_inverse_kinemetic,
-                    abwu_forward_kinematic
+                    abwu_forward_kinematic,
+                    ekf_filter_node_odom,
                 ]
             )
         ),
