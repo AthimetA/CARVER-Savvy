@@ -1,1 +1,0 @@
-/home/athimeta/CARVER-Savvy/carverabwu/src/carverabwu_description/launch/carverabwu_gazebo_base.launch.py

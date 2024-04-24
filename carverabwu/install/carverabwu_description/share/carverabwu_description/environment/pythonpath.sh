@@ -1,1 +1,0 @@
-/home/athimeta/CARVER-Savvy/carverabwu/build/carverabwu_description/ament_cmake_environment_hooks/pythonpath.sh

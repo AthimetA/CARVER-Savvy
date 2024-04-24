@@ -1,0 +1,8 @@
+source;share/abwu_control/hook/cmake_prefix_path.ps1
+source;share/abwu_control/hook/cmake_prefix_path.dsv
+source;share/abwu_control/hook/cmake_prefix_path.sh
+source;share/abwu_control/local_setup.bash
+source;share/abwu_control/local_setup.dsv
+source;share/abwu_control/local_setup.ps1
+source;share/abwu_control/local_setup.sh
+source;share/abwu_control/local_setup.zsh

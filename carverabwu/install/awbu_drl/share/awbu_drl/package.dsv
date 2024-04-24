@@ -1,0 +1,8 @@
+source;share/awbu_drl/hook/cmake_prefix_path.ps1
+source;share/awbu_drl/hook/cmake_prefix_path.dsv
+source;share/awbu_drl/hook/cmake_prefix_path.sh
+source;share/awbu_drl/local_setup.bash
+source;share/awbu_drl/local_setup.dsv
+source;share/awbu_drl/local_setup.ps1
+source;share/awbu_drl/local_setup.sh
+source;share/awbu_drl/local_setup.zsh

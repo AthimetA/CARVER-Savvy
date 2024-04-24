@@ -1,9 +1,6 @@
 source;share/abwu_gazebo/hook/cmake_prefix_path.ps1
 source;share/abwu_gazebo/hook/cmake_prefix_path.dsv
 source;share/abwu_gazebo/hook/cmake_prefix_path.sh
-source;share/abwu_gazebo/hook/pythonpath.ps1
-source;share/abwu_gazebo/hook/pythonpath.dsv
-source;share/abwu_gazebo/hook/pythonpath.sh
 source;share/abwu_gazebo/local_setup.bash
 source;share/abwu_gazebo/local_setup.dsv
 source;share/abwu_gazebo/local_setup.ps1
