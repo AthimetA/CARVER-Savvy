@@ -19,7 +19,6 @@
 # Modified by: Athimet Aiewcharoen, FIBO, KMUTT
 # Date: 2024-04-24
 
-
 import math
 import numpy
 import sys

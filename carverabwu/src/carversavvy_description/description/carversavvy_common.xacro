@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+    <!-- Specify some standard inertial calculations https://en.wikipedia.org/wiki/List_of_moments_of_inertia -->
+    <!-- These make use of xacro's mathematical functionality -->
+
+    <xacro:macro name="inertial_sphere" params="mass radius *origin">
+        <inertial>
+            <xacro:insert_block name="origin"/>
+            <mass value="${mass}" />
+            <inertia ixx="${(2/5) * mass * (radius*radius)}" ixy="0.0" ixz="0.0"
+                    iyy="${(2/5) * mass * (radius*radius)}" iyz="0.0"
+                    izz="${(2/5) * mass * (radius*radius)}" />
+        </inertial>
+    </xacro:macro>  
+
+
+    <xacro:macro name="inertial_box" params="mass x y z *origin">
+        <inertial>
+            <xacro:insert_block name="origin"/>
+            <mass value="${mass}" />
+            <inertia ixx="${(1/12) * mass * (y*y+z*z)}" ixy="0.0" ixz="0.0"
+                    iyy="${(1/12) * mass * (x*x+z*z)}" iyz="0.0"
+                    izz="${(1/12) * mass * (x*x+y*y)}" />
+        </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="inertial_cylinder" params="mass length radius *origin">
+        <inertial>
+            <xacro:insert_block name="origin"/>
+            <mass value="${mass}" />
+            <inertia ixx="${(1/12) * mass * (3*radius*radius + length*length)}" ixy="0.0" ixz="0.0"
+                    iyy="${(1/12) * mass * (3*radius*radius + length*length)}" iyz="0.0"
+                    izz="${(1/2) * mass * (radius*radius)}" />
+        </inertial>
+    </xacro:macro>
+
+    <!-- Colors -->
+
+    <material name="grey">
+        <color rgba="0.2 0.2 0.2 1.0"/>
+    </material>
+
+    <material name="orange">
+        <color rgba="1.0 0.423529411765 0.0392156862745 1.0"/>
+    </material>
+
+    <material name="blue">
+        <color rgba="0.0 0.5 1.0 1.0"/>      
+    </material>
+
+    <material name="red">
+        <color rgba="1.0 0.0 0.0 1.0"/>      
+    </material>
+
+    <material name="black">
+        <color rgba="0.0 0.0 0.0 0.6"/>      
+    </material>
+
+    <material name="white">
+        <color rgba="1.0 1.0 1.0 1.0"/>      
+    </material>
+
+    <material name="darkblue">
+        <color rgba="0.0 0.0 0.3764 0.6"/>      
+    </material>
+
+    <!-- Mobile Robot Parameter -->
+    <xacro:macro name="carversavvy_common">
+        <xacro:property name="chassis_length" value="0.8" scope="parent"/>
+        <xacro:property name="chassis_width" value="0.5" scope="parent"/>
+        <xacro:property name="chassis_height" value="0.138" scope="parent"/>
+        <xacro:property name="chassis_mass" value="1.0" scope="parent"/>
+        <xacro:property name="wheel_radius" value="0.05" scope="parent"/>
+        <xacro:property name="wheel_thickness" value="0.06" scope="parent"/>
+        <xacro:property name="wheel_mass" value="0.45133" scope="parent"/>
+        <xacro:property name="wheel_offset_x" value="0.4" scope="parent"/>
+        <xacro:property name="wheel_offset_y" value="0.2" scope="parent"/>
+        <xacro:property name="wheel_offset_z" value="0.0001" scope="parent"/>
+        <xacro:property name="caster_wheel_radius" value="0.05" scope="parent"/>
+        <xacro:property name="caster_wheel_mass" value="0.32379" scope="parent"/>
+        <xacro:property name="caster_wheel_offset_x" value="0.3" scope="parent"/>
+        <xacro:property name="caster_wheel_offset_y" value="0.2" scope="parent"/>
+        <xacro:property name="caster_wheel_offset_z" value="${wheel_offset_z - wheel_radius + caster_wheel_radius}" scope="parent"/>
+    </xacro:macro>
+
+</robot>

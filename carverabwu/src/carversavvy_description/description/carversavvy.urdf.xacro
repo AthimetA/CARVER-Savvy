@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="robot">
+
+    <xacro:include filename="pmzbsavy_core_perfect.urdf.xacro" />
+    <xacro:carversavvy_core/>
+
+    <xacro:include filename="carversavvy_ros2control.xacro" />
+    <xacro:carversavvy_control/>
+
+    <xacro:include filename="carversavvy_lidar.xacro" />
+    <!-- <xacro:include filename="carversavvy_depth_camera.xacro" /> -->
+
+</robot>
