@@ -19,6 +19,8 @@ from common.testcon import testprint
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 
+from awbu_interfaces.srv import RingGoal
+
 class TestNode(Node):
     def __init__(self):
         # Initialize the node with the name 'TestNodeA'
@@ -44,19 +46,15 @@ class TestNode(Node):
         self.odom_gt_sub = self.create_subscription(Odometry, self.odom_gt_topic, self.odom_gt_callback, 10)
 
         self.get_logger().info('Test node initialized')
-        # # Check if GPU is available
-        # if th.cuda.is_available():
-        #     self.get_logger().info('Torch GPU available: {}'.format(th.cuda.get_device_name()))
-        # else:
-        #     self.get_logger().info('Torch GPU not available')
         self.get_logger().info('Torch GPU available: {}'.format(th.cuda.get_device_name()))
-        self.get_logger().info('====================')
-        self.get_logger().info(f'Test: {check_gpu()}')
 
         # velocity publisher
         self.vel_topic = '/abwubot/cmd_vel'
         # self.vel_topic = '/diff_cont/cmd_vel_unstamped'
         self.vel_pub = self.create_publisher(Twist, self.vel_topic, 10)
+
+        self.task_succeed_client = self.create_client(RingGoal, 'task_succeed')
+        self.task_fail_client = self.create_client(RingGoal, 'task_fail')
 
     def odom_callback(self, msg: Odometry):
         self.x = msg.pose.pose.position.x
@@ -85,6 +83,10 @@ class TestNode(Node):
             self.vx *= -1
             self.wz *= -1
             self.count_down_timer = 50
+            req = RingGoal.Request()
+            while not self.task_fail_client.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('fail service not available, waiting again...')
+            self.task_fail_client.call_async(req)
 
 
 

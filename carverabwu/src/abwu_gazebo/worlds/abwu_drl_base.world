@@ -12,41 +12,30 @@
       <uri>model://ground_plane</uri>
     </include>
 
-    <!-- A physics engine -->
-    <!-- <physics type="ode">
-      <gravity>0.000000 -1.000000 -1.000000</gravity>
-      <ode>
-        <solver>
-          <type>quick</type>
-          <iters>50</iters>
-          <precon_iters>0</precon_iters>
-          <sor>1.300000</sor>
-        </solver>
-        <constraints>
-          <cfm>0.000000</cfm>
-          <erp>0.200000</erp>
-          <contact_max_correcting_vel>100.000000</contact_max_correcting_vel>
-          <contact_surface_layer>0.001000</contact_surface_layer>
-        </constraints>
-      </ode>
-      <real_time_update_rate>0.000000</real_time_update_rate>
-      <max_step_size>0.001000</max_step_size>
+    <!-- Physics x1 realtime-->
+    <!-- <physics type='ode'>
+      <max_step_size>0.001</max_step_size> 
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000.0</real_time_update_rate>
     </physics> -->
+
+    <!-- Physics x2 realtime-->
+    <physics type='ode'>
+      <max_step_size>0.004</max_step_size> 
+      <real_time_factor>2</real_time_factor> 
+      <real_time_update_rate>500.0</real_time_update_rate>
+    </physics>
 
     <!-- World properties -->
     <gravity>0 0 -9.8</gravity>
     <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
     <atmosphere type='adiabatic'/>
-    <physics type='ode'>
-      <max_step_size>0.001</max_step_size>
-      <real_time_factor>1</real_time_factor>
-      <real_time_update_rate>1000.0</real_time_update_rate>
-    </physics>
     <scene>
       <ambient>0.4 0.4 0.4 1</ambient>
       <background>0.7 0.7 0.7 1</background>
-      <shadows>1</shadows>
+      <shadows>0</shadows>
     </scene>
+    
     <audio>
       <device>default</device>
     </audio>
@@ -58,6 +47,7 @@
       <elevation>0</elevation>
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
+
 
     <!-- A camera -->
     <gui fullscreen='0'>

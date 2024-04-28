@@ -80,8 +80,9 @@ class DRLEnvironment(Node):
         self.robot_x, self.robot_y = 0.0, 0.0 # robot position
         self.robot_x_prev, self.robot_y_prev = 0.0, 0.0 # robot previous position
         self.robot_heading = 0.0 # robot heading angle
-        self.total_distance = 0.0 # total distance traveled
         self.robot_tilt = 0.0 # robot orientation angle
+        self.total_distance = 0.0 # total distance traveled
+        
         # Episode variables
         self.done = False
         self.succeed = UNKNOWN
@@ -132,7 +133,7 @@ class DRLEnvironment(Node):
         self.temp_i = 0 
     
     def timer_callback(self):
-        self.get_logger().info(f"Local step: {self.local_step} | Time: {self.time_sec} | Deadline: {self.episode_deadline}")
+        self.get_logger().info(f"Gazebo Time: {self.time_sec} Node Time: {self.temp_i}")
         # self.get_logger().info(f"Robot: ({self.robot_x:.2f}, {self.robot_y:.2f}) tilt: {self.robot_tilt:.2f}")
         # self.get_logger().info(f"Goal Distance: {self.goal_distance:.2f} | Goal Angle: {math.degrees(self.goal_angle):.2f}")
         # self.get_logger().info(f"State: {self.get_state(self.temp_i, self.temp_i)}")
@@ -190,7 +191,7 @@ class DRLEnvironment(Node):
         self.goal_distance = distance_to_goal
         self.goal_angle = goal_angle
 
-    def scan_callback(self, msg):
+    def scan_callback(self, msg: LaserScan):
         if len(msg.ranges) != NUM_SCAN_SAMPLES:
             print(f"more or less scans than expected! check model.sdf, got: {len(msg.ranges)}, expected: {NUM_SCAN_SAMPLES}")
         # normalize laser values
@@ -202,10 +203,12 @@ class DRLEnvironment(Node):
         self.obstacle_distance *= LIDAR_DISTANCE_CAP
 
     def clock_callback(self, msg: Clock):
+        self.get_logger().info(f"Clock: {msg.clock.sec}")
         # Get current time
         self.time_sec = msg.clock.sec
         # Reset episode deadline
         if not self.reset_deadline:
+            self.get_logger().info("Not resetting deadline")
             return
         # Skip first few messages to avoid resetting clock before simulation is ready
         self.clock_msgs_skipped += 1
@@ -216,7 +219,9 @@ class DRLEnvironment(Node):
         if ENABLE_DYNAMIC_GOALS:
             episode_time = numpy.clip(episode_time * self.difficulty_radius, 10, 50)
         # Set deadline
+        self.get_logger().info(f"Resetting episode deadline to {episode_time} seconds")
         self.episode_deadline = self.time_sec + episode_time
+        self.get_logger().info(f"Episode deadline set to {self.episode_deadline} seconds")
         # Reset variables
         self.reset_deadline = False
         self.clock_msgs_skipped = 0
@@ -250,6 +255,9 @@ class DRLEnvironment(Node):
 
         if self.local_step <= 30: # Grace period to wait for simulation reset
             return state
+    
+        # self.get_logger().info(f"Time: {self.time_sec} | Episode Deadline: {self.episode_deadline} | Episode Timeout: {self.episode_timeout}")
+
         # Success
         if self.goal_distance < THREHSOLD_GOAL:
             self.succeed = SUCCESS
@@ -283,6 +291,9 @@ class DRLEnvironment(Node):
         return response
 
     def step_comm_callback(self, request: DrlStep.Request, response: DrlStep.Response):
+
+        # self.get_logger().info(f"Step {self.local_step} | Agent: {request.action} | Previous: {request.previous_action}")
+
         if len(request.action) == 0:
             return self.initalize_episode(response)
 
@@ -301,7 +312,7 @@ class DRLEnvironment(Node):
         twist = Twist()
         twist.linear.x = action_linear
         twist.angular.z = action_angular
-        self.get_logger().info(f"Publishing action: linear: {twist.linear.x:.2f} angular: {twist.angular.z:.2f}")
+        # self.get_logger().info(f"Publishing action: linear: {twist.linear.x:.2f} angular: {twist.angular.z:.2f}")
         self.cmd_vel_pub.publish(twist)
 
         # Prepare repsonse
@@ -312,6 +323,7 @@ class DRLEnvironment(Node):
         response.success = self.succeed
         response.distance_traveled = 0.0
         if self.done:
+            self.get_logger().info(f"Episode done! Reward: {response.reward:.2f} Success: {self.succeed}")
             response.distance_traveled = self.total_distance
             # Reset variables
             self.succeed = UNKNOWN

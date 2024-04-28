@@ -108,6 +108,7 @@ class DrlAgent(Node):
 
     def wait_new_goal(self):
         while(self.get_goal_status() == False):
+            print(f'Goal status: {self.get_goal_status()}')
             print("Waiting for new goal... (if persists: reset gazebo_goals node)")
             time.sleep(1.0)
 
