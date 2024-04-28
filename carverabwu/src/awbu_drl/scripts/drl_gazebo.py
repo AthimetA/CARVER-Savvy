@@ -178,10 +178,11 @@ class DRLGazebo(Node):
         self.get_logger().info("DRL Gazebo node has been started.")
 
         # Debug timer
-        self.timer = self.create_timer(5.0, self.test_callback)
+        self.timer = self.create_timer(1.0, self.test_callback)
+        self.real_node_time_sec = 0
 
     def test_callback(self):
-        self.get_logger().info("Test callback")
+        self.real_node_time_sec += 1
 
     '''
     
@@ -457,8 +458,9 @@ class DRLGazebo(Node):
             self.local_step = 0
             self._EP_done = False
         if self.local_step % 10 == 0:
-            print(f"Rtot: {response.reward:<8.2f}GD: {self.robot.distance_to_goal:<8.2f}GA: {math.degrees(self.robot.goal_angle):.1f}°\t", end='')
-            print(f"MinD: {self.obstacle_distance_nearest:<8.2f}Alin: {request.action[LINEAR_VELOCITY_LOC]:<7.1f}Aturn: {request.action[ANGULAR_VELOCITY_LOC]:<7.1f}")
+            print(f"T: {self.time_sec:<8}RT:{self.real_node_time_sec:<8}EPD: {self.episode_deadline:<8}\t", end='')
+            print(f"Reward: {response.reward:<8.2f}DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°\t", end='')
+            print(f"MinOBD: {self.obstacle_distance_nearest:<8.2f}Alin: {request.action[LINEAR_VELOCITY_LOC]:<7.1f}Aturn: {request.action[ANGULAR_VELOCITY_LOC]:<7.1f}")
         return response
 
     '''
