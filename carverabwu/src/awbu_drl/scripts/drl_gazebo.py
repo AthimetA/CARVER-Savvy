@@ -457,7 +457,7 @@ class DRLGazebo(Node):
             self._EP_succeed = UNKNOWN
             self.local_step = 0
             self._EP_done = False
-        if self.local_step % 10 == 0:
+        if self.local_step % 2 == 0:
             print(f"T: {self.time_sec:<8}RT:{self.real_node_time_sec:<8}EPD: {self.episode_deadline:<8}\t", end='')
             print(f"Reward: {response.reward:<8.2f}DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°\t", end='')
             print(f"MinOBD: {self.obstacle_distance_nearest:<8.2f}Alin: {request.action[LINEAR_VELOCITY_LOC]:<7.1f}Aturn: {request.action[ANGULAR_VELOCITY_LOC]:<7.1f}")
