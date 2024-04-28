@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/home/athimet/FRA532_Mobile_Robot/zhbbot/src/zhbbot_control"
+    "cmake.sourceDirectory": "/home/athimet/FRA532_Mobile_Robot/zhbbot/src/zhbbot_control",
+    "cmake.configureOnOpen": false
 }

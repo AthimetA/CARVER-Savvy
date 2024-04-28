@@ -143,11 +143,11 @@ class DrlAgent(Node):
         # Get a random action
         vl = np.random.uniform(0.0, 6.0)
         vw = np.random.randint(-3, 3)
-        return [5.0*self.test, 1.0*self.test]
+        return [5.0*self.test, 0.0]
 
     def process(self):
         # Prepare the environment
-        # self.pause_simulation()
+        self.pause_simulation()
 
         while (True):
             # Get the goal position from service
@@ -159,7 +159,7 @@ class DrlAgent(Node):
             action_past = [0.0, 0.0]
             state = self.init_episode()
 
-            # self.unpause_simulation()
+            self.unpause_simulation()
             # Wait for the simulation to start
             time.sleep(0.5) # Delay for 0.5 seconds
             # Start the episode timer

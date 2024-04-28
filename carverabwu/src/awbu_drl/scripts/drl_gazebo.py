@@ -85,7 +85,7 @@ class DRLGazebo(Node):
         self.get_logger().info(f"Obstacle coordinates: {self.obstacle_coordinates}")
         self.init_drl()
 
-        # self.timer = self.create_timer(3.0, self.test_callback)
+        self.timer = self.create_timer(3.0, self.test_callback)
 
     def test_callback(self):
         # self.get_logger().info("====================fail: task_fail_callback============================")
