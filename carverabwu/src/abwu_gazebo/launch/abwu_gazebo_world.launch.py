@@ -19,7 +19,7 @@ def generate_launch_description():
     # Use sim time
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     # Pause simulation
-    pause = LaunchConfiguration('pause', default='true')
+    pause = LaunchConfiguration('pause', default='false')
 
     world_package_name = 'abwu_gazebo'
 
