@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='pillar2'>
+  <model name='pillar_2'>
     
     <pose>5 -2 0 0 -0 0</pose>
 
