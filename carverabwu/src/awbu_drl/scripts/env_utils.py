@@ -8,7 +8,7 @@ from geometry_msgs.msg import Quaternion
 COLLITION_MARGIN = 0.5 # Margin to be added to the obstacles to calculate the collision [m]
 
 class ObstacleManager:
-    def __init__(self, obstacle_name: list = ['wall_outler', 'pillar1', 'pillar2']):
+    def __init__(self, obstacle_name: list = ['wall_outler', 'pillar_1', 'pillar_2', 'wall_inner_1']):
         self.obstacle_name = obstacle_name
         self.obstacle_coordinates = self.get_obstacle_coordinates(self.obstacle_name)
 

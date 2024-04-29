@@ -28,7 +28,7 @@ import numpy as np
 from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, STEP_TIME
 
 
-from awbu_interfaces.srv import DrlStep, Goal
+from awbu_interfaces.srv import DrlStep, EnvReady
 from std_srvs.srv import Empty
 
 import rclpy
@@ -54,7 +54,7 @@ class DrlAgent(Node):
         # ===================================================================== #
         # Create Clients for step action and goal position services
         self.step_comm_client = self.create_client(DrlStep, 'step_comm')
-        self.goal_comm_client = self.create_client(Goal, 'goal_comm')
+        self.env_comm_client = self.create_client(EnvReady, 'env_comm')
         if not self.real_robot:
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')
             self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
@@ -95,12 +95,12 @@ class DrlAgent(Node):
 
     def get_goal_status(self):
         # Request new goal position
-        req = Goal.Request()
+        req = EnvReady.Request()
         # Wait for service to be available
-        while not self.goal_comm_client.wait_for_service():
+        while not self.env_comm_client.wait_for_service():
             self.get_logger().info('new goal service not available, waiting again...')
         # Call the service
-        future = self.goal_comm_client.call_async(req)
+        future = self.env_comm_client.call_async(req)
         # Wait for response
         while rclpy.ok():
             rclpy.spin_once(self)
@@ -109,7 +109,7 @@ class DrlAgent(Node):
                     # Get the response from the service
                     # res ---> Goal.Response()
                     res = future.result()
-                    return res.new_goal # Return the new goal position
+                    return res.env_status
                 else:
                     self.get_logger().error(
                         'Exception while calling service: {0}'.format(future.exception()))

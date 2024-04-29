@@ -34,7 +34,6 @@ import rclpy
 from rclpy.qos import QoSProfile
 from rclpy.node import Node
 
-from awbu_interfaces.srv import RingGoal
 import xml.etree.ElementTree as ET
 from settings.constparams import ENABLE_TRUE_RANDOM_GOALS, ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS
 
@@ -66,7 +65,7 @@ from geometry_msgs.msg import Pose, Twist
 from rosgraph_msgs.msg import Clock
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
-from awbu_interfaces.srv import DrlStep, Goal, RingGoal
+from awbu_interfaces.srv import DrlStep, Goal, EnvReady
 
 import reward as rw
 from common import utilities as util
@@ -171,7 +170,7 @@ class DRLGazebo(Node):
 
         # Initialise services servers
         self.step_comm_server = self.create_service(DrlStep, 'step_comm', self.step_comm_callback)
-        self.goal_comm_server = self.create_service(Goal, 'goal_comm', self.goal_comm_callback)
+        self.goal_comm_server = self.create_service(EnvReady, 'env_comm', self.env_comm_callback)
 
         # Initialize Node
         self.init_drl()
@@ -284,8 +283,8 @@ class DRLGazebo(Node):
     #
     # Will be called when agent starts a new episode
     #
-    def goal_comm_callback(self, request: Goal.Request, response: Goal.Response):
-        response.new_goal = self.goal_ready
+    def env_comm_callback(self, request: EnvReady.Request, response: EnvReady.Response):
+        response.env_status = self.goal_ready
         return response
     
     def get_state(self,
