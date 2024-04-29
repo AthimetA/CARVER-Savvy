@@ -20,11 +20,11 @@
               <gaussian_noise>0.00</gaussian_noise>
               <frame_name>world</frame_name>
               <tf_frame_name>world</tf_frame_name>
-              <tf_prefix>odom_groud_truth_pose</tf_prefix>
+              <tf_prefix>abwubot_odom_groud_truth_pose</tf_prefix>
               <xyz_offset>0 0 0</xyz_offset>
               <rpy_offset>0 0 0</rpy_offset>
               <ros>
-                  <remapping>/odom:=odom_groud_truth_pose</remapping>
+                  <remapping>/odom:=/abwubot/odom</remapping>
               </ros>
           </plugin>
       </gazebo>

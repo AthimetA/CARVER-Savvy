@@ -163,9 +163,9 @@ class DRLGazebo(Node):
         self.obstacle_odom_sub          = self.create_subscription(Odometry, self.obstacle_odom_topic, self.obstacle_odom_callback, qos)
 
         # Initialise services clients
-        self.delete_entity_client       = self.create_client(DeleteEntity, 'delete_entity')
-        self.spawn_entity_client        = self.create_client(SpawnEntity, 'spawn_entity')
-        self.reset_simulation_client    = self.create_client(Empty, 'reset_world')
+        self.delete_entity_client       = self.create_client(DeleteEntity, '/delete_entity')
+        self.spawn_entity_client        = self.create_client(SpawnEntity, '/spawn_entity')
+        self.reset_simulation_client    = self.create_client(Empty, '/reset_world')
         self.gazebo_pause               = self.create_client(Empty, '/pause_physics')
         self.gazebo_unpause             = self.create_client(Empty, '/unpause_physics')
 
