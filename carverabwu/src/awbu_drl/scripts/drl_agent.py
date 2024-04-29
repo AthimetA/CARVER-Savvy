@@ -34,6 +34,7 @@ from std_srvs.srv import Empty
 import rclpy
 from rclpy.node import Node
 
+SIMUALTION_TIME_SCALE = 4.0 # 4x faster than real time
 
 class DrlAgent(Node):
     def __init__(self,
@@ -58,13 +59,21 @@ class DrlAgent(Node):
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')
             self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
         # Start the process
-        self.process()
+        self.timer_hz = 30.0 * SIMUALTION_TIME_SCALE # Based on 30Hz
+        self.timer_period = 1e9/self.timer_hz # Convert to nanoseconds
+        self.episode_start_time = 0.0
+        self.episode_done = False
+        self.agent_status = "IDLE"
+
+        self.process_start_time = time.perf_counter_ns()
+
+        self.agent_process()
 
     def pause_simulation(self):
         if self.real_robot:
             return None # No need to pause simulation for real robot
         # Pause simulation
-        while not self.gazebo_pause.wait_for_service(timeout_sec=1.0):
+        while not self.gazebo_pause.wait_for_service():
             self.get_logger().info('pause gazebo service not available, waiting again...')
         future = self.gazebo_pause.call_async(Empty.Request())
         while rclpy.ok():
@@ -76,7 +85,7 @@ class DrlAgent(Node):
         if self.real_robot:
             return None # No need to unpause simulation for real robot
         # Unpause simulation
-        while not self.gazebo_unpause.wait_for_service(timeout_sec=1.0):
+        while not self.gazebo_unpause.wait_for_service():
             self.get_logger().info('unpause gazebo service not available, waiting again...')
         future = self.gazebo_unpause.call_async(Empty.Request())
         while rclpy.ok():
@@ -88,7 +97,7 @@ class DrlAgent(Node):
         # Request new goal position
         req = Goal.Request()
         # Wait for service to be available
-        while not self.goal_comm_client.wait_for_service(timeout_sec=1.0):
+        while not self.goal_comm_client.wait_for_service():
             self.get_logger().info('new goal service not available, waiting again...')
         # Call the service
         future = self.goal_comm_client.call_async(req)
@@ -121,7 +130,7 @@ class DrlAgent(Node):
         req.action = action
         req.previous_action = previous_action
         # Wait for service to be available
-        while not self.step_comm_client.wait_for_service(timeout_sec=1.0):
+        while not self.step_comm_client.wait_for_service():
             self.get_logger().info('env step service not available, waiting again...')
         future = self.step_comm_client.call_async(req)
 
@@ -145,57 +154,75 @@ class DrlAgent(Node):
         vl = np.random.uniform(0.0, 6.0)
         vw = np.random.randint(-3, 3)
         return [5.0*self.test, 0.0]
-
-    def process(self):
-        # Prepare the environment
-        self.pause_simulation()
-
+    
+    def agent_process(self):
         while (True):
-            # Get the goal position from service
-            _ = self.wait_new_goal() # Wait for new goal to be created on DRL Gazebo Node [Vaule is not used]
-            self.test *= -1
-            # Initialize the episode
-            episode_done = False
-            step, reward_sum, loss_critic, loss_actor = 0, 0, 0, 0
-            action_past = [0.0, 0.0]
-            state = self.init_episode()
+            
+            # Get the current time
+            current_time = time.perf_counter_ns()
 
-            self.unpause_simulation()
-            # Wait for the simulation to start
-            time.sleep(0.5) # Delay for 0.5 seconds
-            # Start the episode timer
-            episode_start = time.perf_counter()
+            if (current_time - self.process_start_time) > self.timer_period:
 
-            while not episode_done:
-                self.get_logger().info(f"Step: {step}")
-                # If total steps is less than observe steps, take random actions
-                if self.training and self.total_steps < self.observe_steps:
+                # self.get_logger().info(f"Difference: {current_time - self.process_start_time}")
+                # self.get_logger().info(f"Agent Status: {self.agent_status}")
+
+                if self.agent_status == "IDLE":
+                    # Prepare the environment
+                    self.pause_simulation()
+                    # Wait for environment to be ready
+                    self.wait_new_goal()
+                    # Start the Episode
+                    self.agent_status = "EPISODE STARTED"
+
+                    # Initialize the episode
+                    self.episode_done = False
+                    step, reward_sum, loss_critic, loss_actor = 0, 0, 0, 0
+                    action_past = [0.0, 0.0]
+                    state = self.init_episode()
+
+                    # Unpause the simulation
+                    self.unpause_simulation()
+
+                    # Start the episode timer
+                    self.episode_start_time = time.perf_counter()
+
+                    self.test *= -1 # Toggle the test value
+
+                elif self.agent_status == "EPISODE STARTED":
+                    
+                    # Check if the episode is done
+                    if self.episode_done:
+                        self.agent_status = "EPISODE DONE"
+                    
+                    # Get the current action
                     action = self.get_random_action()
-                else:
-                    action = self.get_random_action()
+                    action_current = action
 
-                # Get the current action
-                action_current = action
+                    # Take a step
+                    next_state, reward, self.episode_done, outcome, distance_traveled = self.step(action_current, action_past)
+                    # Update the past action
+                    action_past = copy.deepcopy(action_current)
+                    # Update the reward sum
+                    reward_sum += reward
 
-                # Take a step
-                next_state, reward, episode_done, outcome, distance_traveled = self.step(action_current, action_past)
-                # Update the past action
-                action_past = copy.deepcopy(action_current)
-                # Update the reward sum
-                reward_sum += reward
+                    state = copy.deepcopy(next_state)
+                    step += 1
 
-                state = copy.deepcopy(next_state)
-                step += 1
+                    # time.sleep(STEP_TIME)
 
-                time.sleep(STEP_TIME) # Delay for STEP_TIME seconds
+                elif self.agent_status == "EPISODE DONE":
+                    self.pause_simulation()
+                    self.total_steps += step
+                    duration = time.perf_counter() - self.episode_start_time
+                    # Finish the episode
+                    self.finish_episode(step, duration, outcome, distance_traveled, reward_sum, loss_critic, loss_actor)
+                    self.agent_status = "IDLE"
 
-            # Episode done
-            # Pause the simulation
-            self.pause_simulation()
-            self.total_steps += step
-            duration = time.perf_counter() - episode_start
-            # Finish the episode
-            self.finish_episode(step, duration, outcome, distance_traveled, reward_sum, loss_critic, loss_actor)
+                # Reset the process start time
+                self.process_start_time = time.perf_counter_ns()
+            else:
+                # Wait for the next loop
+                pass
 
     def finish_episode(self, step, eps_duration, outcome, dist_traveled, reward_sum, loss_critic, lost_actor):
             if self.total_steps < self.observe_steps:

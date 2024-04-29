@@ -36,8 +36,8 @@ class TestNode(Node):
         self.get_entity_state('cylinder_obstacle_1')
 
         twist = Twist()
-        twist.linear.x = 0.1
-        twist.linear.y = 0.1
+        twist.linear.x = -0.1
+        twist.linear.y = 0.0
         twist.linear.z = 0.0
         twist.angular.x = 0.0
         twist.angular.y = 0.0
