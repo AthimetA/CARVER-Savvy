@@ -75,7 +75,7 @@ from common import utilities as util
 from env_utils import ObstacleManager, Robot
 
 MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
-REST_SIMULATION_PAUSE = 0.1  # seconds
+REST_SIMULATION_PAUSE = 0.5  # seconds
 
 class DRLGazebo(Node):
     def __init__(self):
@@ -365,15 +365,15 @@ class DRLGazebo(Node):
         self.reset_simulation()
         time.sleep(REST_SIMULATION_PAUSE)
 
-        # Spawn the goal entity
-        self.spawn_entity()
-
         # Generate a new goal
         self.generate_goal_pose(self.robot.x, self.robot.y, OBSTACLE_RADIUS)
         # Update the robot goal
         self.robot.update_goal(self.goal_x, self.goal_y)
         # Reset the robot
         self.robot.reset()
+
+        # Spawn the goal entity
+        self.spawn_entity()
     
         # Reset the episode variables
         self.reset_deadline = True
