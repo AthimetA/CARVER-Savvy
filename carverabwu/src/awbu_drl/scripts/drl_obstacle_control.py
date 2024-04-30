@@ -17,7 +17,7 @@ from rosgraph_msgs.msg import Clock
 from settings.constparams import EPISODE_TIMEOUT_SECONDS
 
 SIMUALTION_TIME_SCALE = 4.0 # 4x faster than real time
-PATH_INTERVAL_PER_EPISODE = 4
+PATH_INTERVAL_PER_EPISODE = 2
 
 class DynamicObstacle:
     def __init__(self,
@@ -36,6 +36,8 @@ class DynamicObstacle:
 
         self.current_interval = 1
         self.intervals = np.linspace(0.0, EPISODE_TIMEOUT_SECONDS, self.interval_per_episode +1)
+
+        print(f'Intervals: {self.intervals}')
 
         self.target_pose = initial_pose
         self.target_twist = Twist()
@@ -78,7 +80,11 @@ class DynamicObstacle:
         self.target_twist.linear.y = linear_y * np.sign(self.target_pose.position.y - self.initial_pose.position.y)
         self.target_twist.angular.z = angular_z
 
-    def get_twist_at_time(self, time : float):
+    def get_state_at_time(self, time_loc:int):
+
+        if time_loc == PATH_INTERVAL_PER_EPISODE:
+            return self.initial_pose, Twist()
+
         # Create a Twist message to store the output
         out_twist = Twist()
 
@@ -87,34 +93,42 @@ class DynamicObstacle:
         out_twist.linear.y = self.target_twist.linear.y
         out_twist.linear.z = self.target_twist.linear.z
 
-        # Check if the time is within the current interval
-        if time <= self.intervals[self.current_interval]:
-            # If it's an odd interval, return the original twist
-            if self.current_interval % 2 == 1:
-                return out_twist
-            # If it's an even interval, reverse the direction
-            else:
-                out_twist.linear.x *= -1
-                out_twist.linear.y *= -1
-                return out_twist
+        if time_loc % 2 == 0:
+            out_pose = self.initial_pose
+        elif time_loc % 2 == 1:
+            out_pose = self.target_pose
+            out_twist.linear.x *= -1
+            out_twist.linear.y *= -1
+        return out_pose, out_twist
 
-        # Handle the case where time reaches the end of the current interval
-        elif time > self.intervals[self.current_interval]:
-            # Move to the next interval
-            self.current_interval += 1
+        # # Check if the time is within the current interval
+        # if time <= self.intervals[self.current_interval]:
+        #     # If it's an odd interval, return the original twist
+        #     if self.current_interval % 2 == 1:
+        #         return out_twist
+        #     # If it's an even interval, reverse the direction
+        #     else:
+        #         out_twist.linear.x *= -1
+        #         out_twist.linear.y *= -1
+        #         return out_twist
 
-            # Check if it's past the episode duration
-            if self.current_interval > self.interval_per_episode:
-                # Reset the interval and print a message
-                self.reset()
+        # # Handle the case where time reaches the end of the current interval
+        # elif time > self.intervals[self.current_interval]:
+        #     # Move to the next interval
+        #     self.current_interval += 1
 
-            # Since the object reached the target pose, return zero twist
-            return Twist()
+        #     # Check if it's past the episode duration
+        #     if self.current_interval > self.interval_per_episode:
+        #         # Reset the interval and print a message
+        #         self.reset()
 
-        # If time is beyond the expected interval, print an error message
-        else:
-            print(f'Error: Time: {time}, Current Interval: {self.current_interval}, Intervals: {self.intervals}')
-            return Twist()
+        #     # Since the object reached the target pose, return zero twist
+        #     return Twist()
+
+        # # If time is beyond the expected interval, print an error message
+        # else:
+        #     print(f'Error: Time: {time}, Current Interval: {self.current_interval}, Intervals: {self.intervals}')
+        #     return Twist()
         
     def __repr__(self) -> str:
         return f'Obstacle: {self.name}, Initial Pose: ({self.initial_pose.position.x:.2f}, {self.initial_pose.position.y:.2f}), Target Pose: ({self.target_pose.position.x:.2f}, {self.target_pose.position.y:.2f})\n'
@@ -156,7 +170,7 @@ class ObstacleHandler(Node):
         
         self.start_episode_time = time.perf_counter_ns()
         self.EPISODE_TIMEOUT_SECONDS = EPISODE_TIMEOUT_SECONDS / SIMUALTION_TIME_SCALE
-        self.current_interval = 1
+        self.current_interval = 0
         self.interval_per_episode = PATH_INTERVAL_PER_EPISODE
         self.intervals = np.linspace(0.0, EPISODE_TIMEOUT_SECONDS, self.interval_per_episode +1) / SIMUALTION_TIME_SCALE
 
@@ -169,10 +183,12 @@ class ObstacleHandler(Node):
 
         # self.obstacle_list[0].set_target_pose(tgp)
 
-        # # for t in range(1, (EPISODE_TIMEOUT_SECONDS + 1)):
-        # #     self.get_logger().info(f'Time: {t}, Obstacle Twist: {self.obstacle_list[0].get_twist_at_time(t)}')
+        # for t in range(0, PATH_INTERVAL_PER_EPISODE+1):
+        #     tt = t
+        #     out_pose, out_twist = self.obstacle_list[0].get_state_at_time(tt)
+        #     self.get_logger().info(f'Time: {tt}, Pose: ({out_pose.position.x:.2f}, {out_pose.position.y:.2f}), Twist: ({out_twist.linear.x:.2f}, {out_twist.linear.y:.2f})')
 
-        # self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].initial_pose, self.obstacle_list[0].get_twist_at_time(2.0))
+        # self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].initial_pose, self.obstacle_list[0].get_state_at_time(2.0))
 
         self.obstacle_control_loop()
 
@@ -184,12 +200,35 @@ class ObstacleHandler(Node):
 
         self.obstacle_list[0].set_target_pose(tgp)
 
-        self.start_episode_time = time.perf_counter_ns()
+        tgp2 = Pose()
+        tgp2.position.x = 2.0
+        tgp2.position.y = -4.0
+        tgp2.position.z = 0.5
+
+        self.obstacle_list[1].set_target_pose(tgp2)
+
+        tgp3 = Pose()
+        tgp3.position.x = 3.0
+        tgp3.position.y = -6.0
+        tgp3.position.z = 0.5
+
+        self.obstacle_list[2].set_target_pose(tgp3)
+
+        tgp4 = Pose()
+        tgp4.position.x = 0.0
+        tgp4.position.y = 2.0
+        tgp4.position.z = 0.5
+
+        self.obstacle_list[3].set_target_pose(tgp4)
+
         time_episode_sec = (time.perf_counter_ns() - self.start_episode_time) / 1e9
 
-        self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].initial_pose, self.obstacle_list[0].get_twist_at_time(time_episode_sec))
-
+        self.start_episode_time = time.perf_counter_ns()
         self.start_loop_time = time.perf_counter_ns()
+
+        epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE) / SIMUALTION_TIME_SCALE
+
+        print(f'Episode Interval Step: {epsode_interval_step}')
 
         while (True):
             
@@ -198,12 +237,12 @@ class ObstacleHandler(Node):
 
             # Control loop at 10Hz * SIMUALTION_TIME_SCALE
             if time_loop_sec >= self.control_loop_period:
+
                 self.start_loop_time = time.perf_counter_ns()
 
                 # Obstacle control loop
-                time_episode_sec = (time.perf_counter_ns() - self.start_episode_time) / 1e9
+                time_episode_sec = ((time.perf_counter_ns() - self.start_episode_time) / 1e9 ) - 1/self.control_loop_hz
                 time_episode_sec = np.round(time_episode_sec, 2)
-
                 print(f'Epsiode Time: {time_episode_sec}, Current Interval: {self.current_interval}')
 
                 if time_episode_sec > self.EPISODE_TIMEOUT_SECONDS:
@@ -214,20 +253,30 @@ class ObstacleHandler(Node):
                     for obstacle in self.obstacle_list:
                         obstacle.reset()
 
-                    # Set the target pose for the obstacle
-                    self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].initial_pose, self.obstacle_list[0].initial_twist)
-
+                    # # Set the target pose for the obstacle
+                    # self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].initial_pose, self.obstacle_list[0].initial_twist)
                     break
 
-                elif time_episode_sec == self.intervals[self.current_interval]:
+                elif time_episode_sec % epsode_interval_step == 0:
+
+                    # # Update the obstacle state
+                    # out_pose, out_twist = self.obstacle_list[0].get_state_at_time(self.current_interval)
+                    # # Set the entity state
+                    # self.set_entity_state(self.obstacle_list[0].name, out_pose, out_twist)
+
+                    for obstacle in self.obstacle_list:
+                        print(f'Obstacle: {obstacle.name}')
+                        out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
+                        self.set_entity_state(obstacle.name, out_pose, out_twist)
+
+                    # Check if it's past the episode duration
+                    if self.current_interval > self.interval_per_episode:
+                        # Reset the interval and print a message
+                        self.current_interval = 0
+                        self.get_logger().info(f'Interval reset: {self.current_interval}')
+
                     self.current_interval += 1
-                    self.get_logger().info(f'Current Interval: {self.current_interval}, Time: {time_episode_sec}')
-                    self.get_logger().info(f'Obstacle Pose: {self.obstacle_list[0].target_pose}')
-                    self.get_logger().info(f'Obstacle Twist: {self.obstacle_list[0].get_twist_at_time(time_episode_sec*SIMUALTION_TIME_SCALE)}')
-                    if self.current_interval % 2 == 1:
-                        self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].target_pose, self.obstacle_list[0].get_twist_at_time(time_episode_sec*SIMUALTION_TIME_SCALE))
-                    else:
-                        self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].initial_pose, self.obstacle_list[0].get_twist_at_time(time_episode_sec*SIMUALTION_TIME_SCALE))
+                    
                 
         self.get_logger().info('Obstacle control loop finished')
 
@@ -275,7 +324,7 @@ class ObstacleHandler(Node):
         except Exception as e:
             self.get_logger().info(f'Error: {e}')
 
-    def set_entity_state(self, entity_name, pose, twist):
+    def set_entity_state(self, entity_name: str, pose: Pose, twist: Twist):
         request = SetEntityState.Request()
         request.state.name = entity_name
         request.state.pose = pose
