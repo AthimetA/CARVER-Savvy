@@ -17,10 +17,197 @@ from rosgraph_msgs.msg import Clock
 
 from settings.constparams import EPISODE_TIMEOUT_SECONDS
 
+from awbu_interfaces.srv import ObstacleStart
+
 SIMUALTION_TIME_SCALE = 4.0 # 4x faster than real time
 PATH_INTERVAL_PER_EPISODE = 2
 
 from ament_index_python import get_package_share_directory
+class ObstacleHandler(Node):
+    def __init__(self):
+        super().__init__('ObstacleHandler')
+
+        self.test_timer = self.create_timer(2.0, self.timer_callback)
+
+        # --------------- ROS Parameters --------------- #
+        qos = QoSProfile(depth=10)
+        qos_clock = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST
+        )
+        
+        # Initialise services servers
+        self.obstacle_start_srv = self.create_service(ObstacleStart, '/obstacle_start', self.obstacle_start_callback)
+
+        # Gazebo service client
+        self.set_entity_state_client    = self.create_client(SetEntityState, '/gazebo_drl/set_entity_state')
+        self.get_entity_state_client    = self.create_client(GetEntityState, '/gazebo_drl/get_entity_state')
+        self.get_model_list_client      = self.create_client(GetModelList, '/get_model_list')
+        self.reset_simulation_client    = self.create_client(Empty, '/reset_world')
+
+        self.reset_simulation()
+
+        # Gazebo model list subscriber
+        self.model_list = self.get_model_list()
+        self.obstacle_list =  self.init_obstacles()
+
+        # Load the obstacle information yaml file
+        self.__PKG_NAME = 'awbu_drl'
+        self.__PKG_PATH = get_package_share_directory(self.__PKG_NAME)
+
+        with open(f'{self.__PKG_PATH}/config/obstacle_params.yaml', 'r') as file:
+            __CFG = yaml.safe_load(file)
+            
+            __OBSTACLE_PARAMS = __CFG['ObstacleParams']
+
+            for obstacle in self.obstacle_list:
+                if obstacle.name in __OBSTACLE_PARAMS['obstacleNames']:
+                    __TGP = __CFG[obstacle.name]['TargetPose']
+                    # Set the target pose of the obstacle
+                    target_pose = Pose()
+                    target_pose.position.x = float(__TGP[0])
+                    target_pose.position.y = float(__TGP[1])
+                    target_pose.position.z = float(__TGP[2])
+                    obstacle.set_target_pose(target_pose)
+
+        del __CFG
+        del __OBSTACLE_PARAMS
+        del __TGP
+
+        print(f'Obstacle list: \n{self.obstacle_list}')
+
+        # Control loop
+        self.control_loop_hz =  10.0  # Based on 10Hz
+        self.control_loop_period = 1e9/self.control_loop_hz # Convert to nanoseconds
+        self.EPISODE_TIMEOUT_SECONDS = EPISODE_TIMEOUT_SECONDS / SIMUALTION_TIME_SCALE
+        self.interval_per_episode = PATH_INTERVAL_PER_EPISODE
+        self.epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE) / SIMUALTION_TIME_SCALE
+
+        self.start_loop_time = 0
+        self.start_episode_time = 0
+        self.current_interval = 0
+
+        # self.obstacle_control_loop()
+
+    def obstacle_start_callback(self, request: ObstacleStart.Request, response: ObstacleStart.Response):
+        self.get_logger().info('Obstacle start callback')
+        # for obstacle in self.obstacle_list:     
+        #     # Update the obstacle state
+        #     out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
+        #     self.set_entity_state(obstacle.name, out_pose, out_twist)
+        self.obstacle_control_loop()
+        response.obstacle_status = True
+        return response
+
+    def obstacle_control_loop(self):
+
+        # Start the episode/obstacle control loop timer
+        self.start_episode_time = time.perf_counter_ns()
+        self.start_loop_time = time.perf_counter_ns()
+
+        while (True):
+            
+            # Get the current time
+            time_loop_sec = (time.perf_counter_ns() - self.start_loop_time)
+
+            # Control loop at 10Hz
+            if time_loop_sec >= self.control_loop_period:
+
+                self.start_loop_time = time.perf_counter_ns()
+
+                # Obstacle control loop
+                time_episode_sec = ((time.perf_counter_ns() - self.start_episode_time) / 1e9 ) - 1/self.control_loop_hz
+                time_episode_sec = np.round(time_episode_sec, 2)
+                # print(f'Epsiode Time: {time_episode_sec}, Current Interval: {self.current_interval}')
+
+                if time_episode_sec > self.EPISODE_TIMEOUT_SECONDS:
+                    # Reset the interval
+                    self.current_interval = 0
+                    self.start_episode_time = time.perf_counter_ns()
+                    break # Exit the loop
+
+                elif time_episode_sec % self.epsode_interval_step == 0:
+
+                    for obstacle in self.obstacle_list:
+                        # # Update the obstacle state
+                        out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
+                        self.set_entity_state(obstacle.name, out_pose, out_twist)
+
+                    # Check if it's past the episode duration
+                    if self.current_interval > self.interval_per_episode:
+                        # Reset the interval and print a message
+                        self.current_interval = 0
+
+                    self.current_interval += 1
+                    
+        self.get_logger().info('Obstacle control loop finished')
+
+    def timer_callback(self):
+        self.get_logger().info('Timer callback')
+
+    def init_obstacles(self):
+        # Initialize the obstacles
+        obstacle_list = []
+        for obstacle in self.model_list:
+            if 'obstacle' in obstacle:
+                # Get the initial pose and twist of the obstacle
+                pose, twist = self.get_entity_state(obstacle)
+                obstacle_list.append(DynamicObstacle(name=obstacle, initial_pose=pose))
+        return obstacle_list
+
+    def clock_callback(self, msg: Clock):
+        # Get the current time in nanoseconds
+        self.time_sec = msg.clock.sec * 1e9 + msg.clock.nanosec
+
+    def get_model_list(self):
+        request = GetModelList.Request()
+        while not self.get_model_list_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        try:
+            future = self.get_model_list_client.call_async(request)
+            rclpy.spin_until_future_complete(self, future)
+            response = future.result()
+            return response.model_names
+
+        except Exception as e:
+            self.get_logger().info(f'Error: {e}')
+
+    def get_entity_state(self, entity_name):
+        request = GetEntityState.Request()
+        request.name = entity_name
+        request.reference_frame = 'world'
+        while not self.get_entity_state_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        try:
+            future = self.get_entity_state_client.call_async(request)
+            rclpy.spin_until_future_complete(self, future)
+            response = future.result()
+            return response.state.pose, response.state.twist
+        except Exception as e:
+            self.get_logger().info(f'Error: {e}')
+
+    def set_entity_state(self, entity_name: str, pose: Pose, twist: Twist):
+        request = SetEntityState.Request()
+        request.state.name = entity_name
+        request.state.pose = pose
+        request.state.twist = twist
+        request.state.reference_frame = 'world'
+        while not self.set_entity_state_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        try:
+            self.get_logger().info(f'Setting entity state for {entity_name}...')
+            future = self.set_entity_state_client.call_async(request)
+            # rclpy.spin_until_future_complete(self, future)
+            response = future.result()
+            # self.get_logger().info(f'Response: {response}')
+        except Exception as e:
+            self.get_logger().info(f'Error: {e}')
+
+    def reset_simulation(self):
+        while not self.reset_simulation_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('reset service not available, waiting again...')
+        self.reset_simulation_client.call_async(Empty.Request())
 
 class DynamicObstacle:
     def __init__(self,
@@ -100,178 +287,6 @@ class DynamicObstacle:
     def __repr__(self) -> str:
         return f'Obstacle: {self.name}, Initial Pose: ({self.initial_pose.position.x:.2f}, {self.initial_pose.position.y:.2f}), Target Pose: ({self.target_pose.position.x:.2f}, {self.target_pose.position.y:.2f})\n'
         
-
-class ObstacleHandler(Node):
-    def __init__(self):
-        super().__init__('ObstacleHandler')
-
-        self.test_timer = self.create_timer(2.0, self.timer_callback)
-
-        # --------------- ROS Parameters --------------- #
-        qos = QoSProfile(depth=10)
-        qos_clock = QoSProfile(
-            depth=1,
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            history=HistoryPolicy.KEEP_LAST
-        )
-        
-        # Gazebo service client
-        self.set_entity_state_client    = self.create_client(SetEntityState, '/gazebo_drl/set_entity_state')
-        self.get_entity_state_client    = self.create_client(GetEntityState, '/gazebo_drl/get_entity_state')
-        self.get_model_list_client      = self.create_client(GetModelList, '/get_model_list')
-        self.reset_simulation_client    = self.create_client(Empty, '/reset_world')
-
-        self.reset_simulation()
-
-        # Gazebo model list subscriber
-        self.model_list = self.get_model_list()
-        self.obstacle_list =  self.init_obstacles()
-
-        # Load the obstacle information yaml file
-        self.__PKG_NAME = 'awbu_drl'
-        self.__PKG_PATH = get_package_share_directory(self.__PKG_NAME)
-
-        with open(f'{self.__PKG_PATH}/config/obstacle_params.yaml', 'r') as file:
-            __CFG = yaml.safe_load(file)
-            
-            __OBSTACLE_PARAMS = __CFG['ObstacleParams']
-
-            for obstacle in self.obstacle_list:
-                if obstacle.name in __OBSTACLE_PARAMS['obstacleNames']:
-                    __TGP = __CFG[obstacle.name]['TargetPose']
-                    # Set the target pose of the obstacle
-                    target_pose = Pose()
-                    target_pose.position.x = float(__TGP[0])
-                    target_pose.position.y = float(__TGP[1])
-                    target_pose.position.z = float(__TGP[2])
-                    obstacle.set_target_pose(target_pose)
-
-        del __CFG
-        del __OBSTACLE_PARAMS
-        del __TGP
-
-        print(f'Obstacle list: \n{self.obstacle_list}')
-
-        # Control loop
-        self.control_loop_hz =  10.0  # Based on 10Hz
-        self.control_loop_period = 1e9/self.control_loop_hz # Convert to nanoseconds
-        self.EPISODE_TIMEOUT_SECONDS = EPISODE_TIMEOUT_SECONDS / SIMUALTION_TIME_SCALE
-        self.interval_per_episode = PATH_INTERVAL_PER_EPISODE
-        self.epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE) / SIMUALTION_TIME_SCALE
-
-        self.start_loop_time = 0
-        self.start_episode_time = 0
-        self.current_interval = 0
-
-        self.obstacle_control_loop()
-
-    def obstacle_control_loop(self):
-
-        # Start the episode/obstacle control loop timer
-        self.start_episode_time = time.perf_counter_ns()
-        self.start_loop_time = time.perf_counter_ns()
-
-        while (True):
-            
-            # Get the current time
-            time_loop_sec = (time.perf_counter_ns() - self.start_loop_time)
-
-            # Control loop at 10Hz
-            if time_loop_sec >= self.control_loop_period:
-
-                self.start_loop_time = time.perf_counter_ns()
-
-                # Obstacle control loop
-                time_episode_sec = ((time.perf_counter_ns() - self.start_episode_time) / 1e9 ) - 1/self.control_loop_hz
-                time_episode_sec = np.round(time_episode_sec, 2)
-                # print(f'Epsiode Time: {time_episode_sec}, Current Interval: {self.current_interval}')
-
-                if time_episode_sec > self.EPISODE_TIMEOUT_SECONDS:
-                    # Reset the interval
-                    self.current_interval = 0
-                    break # Exit the loop
-
-                elif time_episode_sec % self.epsode_interval_step == 0:
-
-                    for obstacle in self.obstacle_list:
-                        # # Update the obstacle state
-                        out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
-                        self.set_entity_state(obstacle.name, out_pose, out_twist)
-
-                    # Check if it's past the episode duration
-                    if self.current_interval > self.interval_per_episode:
-                        # Reset the interval and print a message
-                        self.current_interval = 0
-
-                    self.current_interval += 1
-                    
-        self.get_logger().info('Obstacle control loop finished')
-
-    def timer_callback(self):
-        self.get_logger().info('Timer callback')
-
-    def init_obstacles(self):
-        # Initialize the obstacles
-        obstacle_list = []
-        for obstacle in self.model_list:
-            if 'obstacle' in obstacle:
-                # Get the initial pose and twist of the obstacle
-                pose, twist = self.get_entity_state(obstacle)
-                obstacle_list.append(DynamicObstacle(name=obstacle, initial_pose=pose))
-        return obstacle_list
-
-    def clock_callback(self, msg: Clock):
-        # Get the current time in nanoseconds
-        self.time_sec = msg.clock.sec * 1e9 + msg.clock.nanosec
-
-    def get_model_list(self):
-        request = GetModelList.Request()
-        while not self.get_model_list_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        try:
-            future = self.get_model_list_client.call_async(request)
-            rclpy.spin_until_future_complete(self, future)
-            response = future.result()
-            return response.model_names
-
-        except Exception as e:
-            self.get_logger().info(f'Error: {e}')
-
-    def get_entity_state(self, entity_name):
-        request = GetEntityState.Request()
-        request.name = entity_name
-        request.reference_frame = 'world'
-        while not self.get_entity_state_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        try:
-            future = self.get_entity_state_client.call_async(request)
-            rclpy.spin_until_future_complete(self, future)
-            response = future.result()
-            return response.state.pose, response.state.twist
-        except Exception as e:
-            self.get_logger().info(f'Error: {e}')
-
-    def set_entity_state(self, entity_name: str, pose: Pose, twist: Twist):
-        request = SetEntityState.Request()
-        request.state.name = entity_name
-        request.state.pose = pose
-        request.state.twist = twist
-        request.state.reference_frame = 'world'
-        while not self.set_entity_state_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting again...')
-        try:
-            self.get_logger().info(f'Setting entity state for {entity_name}...')
-            future = self.set_entity_state_client.call_async(request)
-            rclpy.spin_until_future_complete(self, future)
-            response = future.result()
-            self.get_logger().info(f'Response: {response}')
-        except Exception as e:
-            self.get_logger().info(f'Error: {e}')
-
-    def reset_simulation(self):
-        while not self.reset_simulation_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('reset service not available, waiting again...')
-        self.reset_simulation_client.call_async(Empty.Request())
 
 
 def main(args=None):
