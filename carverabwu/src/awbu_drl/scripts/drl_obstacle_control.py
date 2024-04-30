@@ -3,6 +3,7 @@ import time
 import numpy as np
 import rclpy
 from rclpy.node import Node
+import yaml
 
 from geometry_msgs.msg import Twist, Pose
 from nav_msgs.msg import Odometry
@@ -19,6 +20,8 @@ from settings.constparams import EPISODE_TIMEOUT_SECONDS
 SIMUALTION_TIME_SCALE = 4.0 # 4x faster than real time
 PATH_INTERVAL_PER_EPISODE = 2
 
+from ament_index_python import get_package_share_directory
+
 class DynamicObstacle:
     def __init__(self,
     name: str,
@@ -34,17 +37,11 @@ class DynamicObstacle:
         self.interval_per_episode = interval_per_episode
         self.random_velocity = random_velocity
 
-        self.current_interval = 1
         self.intervals = np.linspace(0.0, EPISODE_TIMEOUT_SECONDS, self.interval_per_episode +1)
-
-        print(f'Intervals: {self.intervals}')
 
         self.target_pose = initial_pose
         self.target_twist = Twist()
         self.time_to_target = 0.0 # seconds
-
-    def reset(self):
-        self.current_interval = 1
 
     def set_initial_pose(self, pose: Pose):
         self.initial_pose = pose
@@ -55,7 +52,6 @@ class DynamicObstacle:
 
     def set_interval_per_episode(self, interval: float):
         self.interval_per_episode = interval
-        self.current_interval = 1
         self.intervals = np.linspace(0.0, EPISODE_TIMEOUT_SECONDS, self.interval_per_episode +1)
 
     def linear_path_velocity_calculation(self):
@@ -100,35 +96,6 @@ class DynamicObstacle:
             out_twist.linear.x *= -1
             out_twist.linear.y *= -1
         return out_pose, out_twist
-
-        # # Check if the time is within the current interval
-        # if time <= self.intervals[self.current_interval]:
-        #     # If it's an odd interval, return the original twist
-        #     if self.current_interval % 2 == 1:
-        #         return out_twist
-        #     # If it's an even interval, reverse the direction
-        #     else:
-        #         out_twist.linear.x *= -1
-        #         out_twist.linear.y *= -1
-        #         return out_twist
-
-        # # Handle the case where time reaches the end of the current interval
-        # elif time > self.intervals[self.current_interval]:
-        #     # Move to the next interval
-        #     self.current_interval += 1
-
-        #     # Check if it's past the episode duration
-        #     if self.current_interval > self.interval_per_episode:
-        #         # Reset the interval and print a message
-        #         self.reset()
-
-        #     # Since the object reached the target pose, return zero twist
-        #     return Twist()
-
-        # # If time is beyond the expected interval, print an error message
-        # else:
-        #     print(f'Error: Time: {time}, Current Interval: {self.current_interval}, Intervals: {self.intervals}')
-        #     return Twist()
         
     def __repr__(self) -> str:
         return f'Obstacle: {self.name}, Initial Pose: ({self.initial_pose.position.x:.2f}, {self.initial_pose.position.y:.2f}), Target Pose: ({self.target_pose.position.x:.2f}, {self.target_pose.position.y:.2f})\n'
@@ -160,82 +127,56 @@ class ObstacleHandler(Node):
         self.model_list = self.get_model_list()
         self.obstacle_list =  self.init_obstacles()
 
-        print(f'Obstacle list: \n{self.obstacle_list}')
+        # Load the obstacle information yaml file
+        self.__PKG_NAME = 'awbu_drl'
+        self.__PKG_PATH = get_package_share_directory(self.__PKG_NAME)
 
+        with open(f'{self.__PKG_PATH}/config/obstacle_params.yaml', 'r') as file:
+            __CFG = yaml.safe_load(file)
+            
+            __OBSTACLE_PARAMS = __CFG['ObstacleParams']
+
+            for obstacle in self.obstacle_list:
+                if obstacle.name in __OBSTACLE_PARAMS['obstacleNames']:
+                    __TGP = __CFG[obstacle.name]['TargetPose']
+                    # Set the target pose of the obstacle
+                    target_pose = Pose()
+                    target_pose.position.x = float(__TGP[0])
+                    target_pose.position.y = float(__TGP[1])
+                    target_pose.position.z = float(__TGP[2])
+                    obstacle.set_target_pose(target_pose)
+
+        del __CFG
+        del __OBSTACLE_PARAMS
+        del __TGP
+
+        print(f'Obstacle list: \n{self.obstacle_list}')
 
         # Control loop
         self.control_loop_hz =  10.0  # Based on 10Hz
         self.control_loop_period = 1e9/self.control_loop_hz # Convert to nanoseconds
-        self.start_loop_time = time.perf_counter_ns()
-        
-        self.start_episode_time = time.perf_counter_ns()
         self.EPISODE_TIMEOUT_SECONDS = EPISODE_TIMEOUT_SECONDS / SIMUALTION_TIME_SCALE
-        self.current_interval = 0
         self.interval_per_episode = PATH_INTERVAL_PER_EPISODE
-        self.intervals = np.linspace(0.0, EPISODE_TIMEOUT_SECONDS, self.interval_per_episode +1) / SIMUALTION_TIME_SCALE
+        self.epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE) / SIMUALTION_TIME_SCALE
 
-        self.get_logger().info(f'Interval per episode: {self.interval_per_episode}, Intervals: {self.intervals}')
-
-        # tgp = Pose()
-        # tgp.position.x = -5.5
-        # tgp.position.y = 6.0
-        # tgp.position.z = 0.5
-
-        # self.obstacle_list[0].set_target_pose(tgp)
-
-        # for t in range(0, PATH_INTERVAL_PER_EPISODE+1):
-        #     tt = t
-        #     out_pose, out_twist = self.obstacle_list[0].get_state_at_time(tt)
-        #     self.get_logger().info(f'Time: {tt}, Pose: ({out_pose.position.x:.2f}, {out_pose.position.y:.2f}), Twist: ({out_twist.linear.x:.2f}, {out_twist.linear.y:.2f})')
-
-        # self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].initial_pose, self.obstacle_list[0].get_state_at_time(2.0))
+        self.start_loop_time = 0
+        self.start_episode_time = 0
+        self.current_interval = 0
 
         self.obstacle_control_loop()
 
     def obstacle_control_loop(self):
-        tgp = Pose()
-        tgp.position.x = -5.5
-        tgp.position.y = 6.0
-        tgp.position.z = 0.5
 
-        self.obstacle_list[0].set_target_pose(tgp)
-
-        tgp2 = Pose()
-        tgp2.position.x = 2.0
-        tgp2.position.y = -4.0
-        tgp2.position.z = 0.5
-
-        self.obstacle_list[1].set_target_pose(tgp2)
-
-        tgp3 = Pose()
-        tgp3.position.x = 3.0
-        tgp3.position.y = -6.0
-        tgp3.position.z = 0.5
-
-        self.obstacle_list[2].set_target_pose(tgp3)
-
-        tgp4 = Pose()
-        tgp4.position.x = 0.0
-        tgp4.position.y = 2.0
-        tgp4.position.z = 0.5
-
-        self.obstacle_list[3].set_target_pose(tgp4)
-
-        time_episode_sec = (time.perf_counter_ns() - self.start_episode_time) / 1e9
-
+        # Start the episode/obstacle control loop timer
         self.start_episode_time = time.perf_counter_ns()
         self.start_loop_time = time.perf_counter_ns()
-
-        epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE) / SIMUALTION_TIME_SCALE
-
-        print(f'Episode Interval Step: {epsode_interval_step}')
 
         while (True):
             
             # Get the current time
             time_loop_sec = (time.perf_counter_ns() - self.start_loop_time)
 
-            # Control loop at 10Hz * SIMUALTION_TIME_SCALE
+            # Control loop at 10Hz
             if time_loop_sec >= self.control_loop_period:
 
                 self.start_loop_time = time.perf_counter_ns()
@@ -243,29 +184,17 @@ class ObstacleHandler(Node):
                 # Obstacle control loop
                 time_episode_sec = ((time.perf_counter_ns() - self.start_episode_time) / 1e9 ) - 1/self.control_loop_hz
                 time_episode_sec = np.round(time_episode_sec, 2)
-                print(f'Epsiode Time: {time_episode_sec}, Current Interval: {self.current_interval}')
+                # print(f'Epsiode Time: {time_episode_sec}, Current Interval: {self.current_interval}')
 
                 if time_episode_sec > self.EPISODE_TIMEOUT_SECONDS:
-                            
-                    self.start_episode_time = time.perf_counter_ns()
+                    # Reset the interval
+                    self.current_interval = 0
+                    break # Exit the loop
 
-                    # Reset the obstacles
-                    for obstacle in self.obstacle_list:
-                        obstacle.reset()
-
-                    # # Set the target pose for the obstacle
-                    # self.set_entity_state(self.obstacle_list[0].name, self.obstacle_list[0].initial_pose, self.obstacle_list[0].initial_twist)
-                    break
-
-                elif time_episode_sec % epsode_interval_step == 0:
-
-                    # # Update the obstacle state
-                    # out_pose, out_twist = self.obstacle_list[0].get_state_at_time(self.current_interval)
-                    # # Set the entity state
-                    # self.set_entity_state(self.obstacle_list[0].name, out_pose, out_twist)
+                elif time_episode_sec % self.epsode_interval_step == 0:
 
                     for obstacle in self.obstacle_list:
-                        print(f'Obstacle: {obstacle.name}')
+                        # # Update the obstacle state
                         out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
                         self.set_entity_state(obstacle.name, out_pose, out_twist)
 
@@ -273,11 +202,9 @@ class ObstacleHandler(Node):
                     if self.current_interval > self.interval_per_episode:
                         # Reset the interval and print a message
                         self.current_interval = 0
-                        self.get_logger().info(f'Interval reset: {self.current_interval}')
 
                     self.current_interval += 1
                     
-                
         self.get_logger().info('Obstacle control loop finished')
 
     def timer_callback(self):
@@ -333,11 +260,11 @@ class ObstacleHandler(Node):
         while not self.set_entity_state_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         try:
-            self.get_logger().info(f'Setting entity state...')
+            self.get_logger().info(f'Setting entity state for {entity_name}...')
             future = self.set_entity_state_client.call_async(request)
             rclpy.spin_until_future_complete(self, future)
             response = future.result()
-            self.get_logger().info(f'Set entity state: {response}')
+            self.get_logger().info(f'Response: {response}')
         except Exception as e:
             self.get_logger().info(f'Error: {e}')
 
