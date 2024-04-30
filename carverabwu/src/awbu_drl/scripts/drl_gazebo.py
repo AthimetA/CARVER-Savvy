@@ -65,7 +65,7 @@ from geometry_msgs.msg import Pose, Twist
 from rosgraph_msgs.msg import Clock
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
-from awbu_interfaces.srv import DrlStep, Goal, EnvReady
+from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart
 
 import reward as rw
 from common import utilities as util
@@ -167,6 +167,7 @@ class DRLGazebo(Node):
         self.reset_simulation_client    = self.create_client(Empty, '/reset_world')
         self.gazebo_pause               = self.create_client(Empty, '/pause_physics')
         self.gazebo_unpause             = self.create_client(Empty, '/unpause_physics')
+        self.obstacle_start_client      = self.create_client(ObstacleStart, '/obstacle_start')
 
         # Initialise services servers
         self.step_comm_server = self.create_service(DrlStep, 'step_comm', self.step_comm_callback)
@@ -224,6 +225,14 @@ class DRLGazebo(Node):
             self.get_logger().info('service not available, waiting again...')
         self.spawn_entity_client.call_async(req)
         self.get_logger().info("Entity spawned")
+
+    def obstacle_start(self):
+        req = ObstacleStart.Request()
+        req.empty = True
+        while not self.obstacle_start_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.obstacle_start_client.call_async(req)
+        self.get_logger().info("Obstacle started")
 
     '''
     
@@ -363,6 +372,8 @@ class DRLGazebo(Node):
         # Reset the simulation
         self.reset_simulation()
         time.sleep(REST_SIMULATION_PAUSE)
+
+        self.obstacle_start()
 
         # Generate a new goal
         self.generate_goal_pose(self.robot.x, self.robot.y, OBSTACLE_RADIUS)

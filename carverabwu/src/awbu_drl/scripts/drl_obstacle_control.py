@@ -20,15 +20,12 @@ from settings.constparams import EPISODE_TIMEOUT_SECONDS
 from awbu_interfaces.srv import ObstacleStart
 
 SIMUALTION_TIME_SCALE = 4.0 # 4x faster than real time
-PATH_INTERVAL_PER_EPISODE = 2
+PATH_INTERVAL_PER_EPISODE = 4
 
 from ament_index_python import get_package_share_directory
 class ObstacleHandler(Node):
     def __init__(self):
         super().__init__('ObstacleHandler')
-
-        self.test_timer = self.create_timer(2.0, self.timer_callback)
-
         # --------------- ROS Parameters --------------- #
         qos = QoSProfile(depth=10)
         qos_clock = QoSProfile(
@@ -36,6 +33,9 @@ class ObstacleHandler(Node):
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST
         )
+        # Clock subscriber
+        self.time_sec = 0
+        self.clock_sub = self.create_subscription(Clock, '/clock', self.clock_callback, qos_clock)
         
         # Initialise services servers
         self.obstacle_start_srv = self.create_service(ObstacleStart, '/obstacle_start', self.obstacle_start_callback)
@@ -79,69 +79,64 @@ class ObstacleHandler(Node):
 
         # Control loop
         self.control_loop_hz =  10.0  # Based on 10Hz
-        self.control_loop_period = 1e9/self.control_loop_hz # Convert to nanoseconds
-        self.EPISODE_TIMEOUT_SECONDS = EPISODE_TIMEOUT_SECONDS / SIMUALTION_TIME_SCALE
+        self.EPISODE_TIMEOUT_SECONDS = EPISODE_TIMEOUT_SECONDS
         self.interval_per_episode = PATH_INTERVAL_PER_EPISODE
-        self.epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE) / SIMUALTION_TIME_SCALE
+        self.epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE)
 
-        self.start_loop_time = 0
-        self.start_episode_time = 0
+        # Control timer
+        self.control_timer = self.create_timer(1.0/(self.control_loop_hz*SIMUALTION_TIME_SCALE), self.obstacle_control_loop_callback)
+        self.time_loop_on = False
         self.current_interval = 0
 
-        # self.obstacle_control_loop()
+        # Episode time
+        self.start_episode_time = self.time_sec
+        self.time_episode_sec = -1.0
+        self.time_episode_sec_last = -1.0
+
+
+    def obstacle_control_loop_callback(self):
+        # Get the current time
+        self.time_episode_sec = (self.time_sec - self.start_episode_time)
+
+        if self.time_episode_sec != self.time_episode_sec_last and self.time_loop_on:
+
+            if self.time_episode_sec > self.EPISODE_TIMEOUT_SECONDS:
+                # Disable the time loop
+                self.time_loop_on = False
+
+            elif self.time_episode_sec % self.epsode_interval_step == 0:
+                self.get_logger().info(f'Time: {self.time_episode_sec}, current interval: {self.current_interval}')
+                
+                for obstacle in self.obstacle_list:
+                    # # Update the obstacle state
+                    out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
+                    self.set_entity_state(obstacle.name, out_pose, out_twist)
+
+                # Check if it's past the episode duration
+                if self.current_interval > self.interval_per_episode:
+                    # Reset the interval and print a message
+                    self.current_interval = 0
+
+                self.current_interval += 1
+
+            self.time_episode_sec_last = self.time_episode_sec
+
+        # if not self.time_loop_on:
+        #     self.get_logger().info('IDLE : Please start the episode')
+
+    def clock_callback(self, msg: Clock):
+        # Get the current time in seconds
+        self.time_sec = msg.clock.sec
 
     def obstacle_start_callback(self, request: ObstacleStart.Request, response: ObstacleStart.Response):
-        self.get_logger().info('Obstacle start callback')
-        # for obstacle in self.obstacle_list:     
-        #     # Update the obstacle state
-        #     out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
-        #     self.set_entity_state(obstacle.name, out_pose, out_twist)
-        self.obstacle_control_loop()
+        self.get_logger().info('===============Obstacle start callback===============')
+        self.time_loop_on = True
+        self.current_interval = 0
+        self.start_episode_time = self.time_sec
+        self.time_episode_sec_last = self.time_episode_sec
+        # Response
         response.obstacle_status = True
         return response
-
-    def obstacle_control_loop(self):
-
-        # Start the episode/obstacle control loop timer
-        self.start_episode_time = time.perf_counter_ns()
-        self.start_loop_time = time.perf_counter_ns()
-
-        while (True):
-            
-            # Get the current time
-            time_loop_sec = (time.perf_counter_ns() - self.start_loop_time)
-
-            # Control loop at 10Hz
-            if time_loop_sec >= self.control_loop_period:
-
-                self.start_loop_time = time.perf_counter_ns()
-
-                # Obstacle control loop
-                time_episode_sec = ((time.perf_counter_ns() - self.start_episode_time) / 1e9 ) - 1/self.control_loop_hz
-                time_episode_sec = np.round(time_episode_sec, 2)
-                # print(f'Epsiode Time: {time_episode_sec}, Current Interval: {self.current_interval}')
-
-                if time_episode_sec > self.EPISODE_TIMEOUT_SECONDS:
-                    # Reset the interval
-                    self.current_interval = 0
-                    self.start_episode_time = time.perf_counter_ns()
-                    break # Exit the loop
-
-                elif time_episode_sec % self.epsode_interval_step == 0:
-
-                    for obstacle in self.obstacle_list:
-                        # # Update the obstacle state
-                        out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
-                        self.set_entity_state(obstacle.name, out_pose, out_twist)
-
-                    # Check if it's past the episode duration
-                    if self.current_interval > self.interval_per_episode:
-                        # Reset the interval and print a message
-                        self.current_interval = 0
-
-                    self.current_interval += 1
-                    
-        self.get_logger().info('Obstacle control loop finished')
 
     def timer_callback(self):
         self.get_logger().info('Timer callback')
@@ -155,10 +150,6 @@ class ObstacleHandler(Node):
                 pose, twist = self.get_entity_state(obstacle)
                 obstacle_list.append(DynamicObstacle(name=obstacle, initial_pose=pose))
         return obstacle_list
-
-    def clock_callback(self, msg: Clock):
-        # Get the current time in nanoseconds
-        self.time_sec = msg.clock.sec * 1e9 + msg.clock.nanosec
 
     def get_model_list(self):
         request = GetModelList.Request()
