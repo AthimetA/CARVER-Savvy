@@ -34,7 +34,7 @@ from std_srvs.srv import Empty
 import rclpy
 from rclpy.node import Node
 
-SIMUALTION_TIME_SCALE = 4.0 # 4x faster than real time
+SIMUALTION_TIME_SCALE = 2.0 # 4x faster than real time
 
 class DrlAgent(Node):
     def __init__(self,
@@ -190,16 +190,13 @@ class DrlAgent(Node):
 
                 elif self.agent_status == "EPISODE STARTED":
                     
-                    # Check if the episode is done
-                    if self.episode_done:
-                        self.agent_status = "EPISODE DONE"
-                    
                     # Get the current action
                     action = self.get_random_action()
                     action_current = action
 
                     # Take a step
                     next_state, reward, self.episode_done, outcome, distance_traveled = self.step(action_current, action_past)
+
                     # Update the past action
                     action_past = copy.deepcopy(action_current)
                     # Update the reward sum
@@ -208,15 +205,23 @@ class DrlAgent(Node):
                     state = copy.deepcopy(next_state)
                     step += 1
 
+                    # Check if the episode is done
+                    if self.episode_done:
+                        self.get_logger().info(f"Recieved: {self.episode_done}, {outcome}, {distance_traveled}")
+                        self.get_logger().info(f"Changing status to EPISODE DONE")
+                        self.agent_status = "EPISODE DONE"
+
                     # time.sleep(STEP_TIME)
 
                 elif self.agent_status == "EPISODE DONE":
+                    self.get_logger().info("Episode Done!")
                     self.pause_simulation()
                     self.total_steps += step
                     duration = time.perf_counter() - self.episode_start_time
                     # Finish the episode
                     self.finish_episode(step, duration, outcome, distance_traveled, reward_sum, loss_critic, loss_actor)
                     self.agent_status = "IDLE"
+
 
                 # Reset the process start time
                 self.process_start_time = time.perf_counter_ns()

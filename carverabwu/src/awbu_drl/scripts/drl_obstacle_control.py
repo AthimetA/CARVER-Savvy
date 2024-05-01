@@ -19,8 +19,8 @@ from settings.constparams import EPISODE_TIMEOUT_SECONDS
 
 from awbu_interfaces.srv import ObstacleStart
 
-SIMUALTION_TIME_SCALE = 4.0 # 4x faster than real time
-PATH_INTERVAL_PER_EPISODE = 4
+SIMUALTION_TIME_SCALE = 2.0 # 4x faster than real time
+PATH_INTERVAL_PER_EPISODE = 1
 
 from ament_index_python import get_package_share_directory
 class ObstacleHandler(Node):
@@ -84,7 +84,7 @@ class ObstacleHandler(Node):
         self.epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE)
 
         # Control timer
-        self.control_timer = self.create_timer(1.0/(self.control_loop_hz*SIMUALTION_TIME_SCALE), self.obstacle_control_loop_callback)
+        # self.control_timer = self.create_timer(1.0/(self.control_loop_hz*SIMUALTION_TIME_SCALE), self.obstacle_control_loop_callback)
         self.time_loop_on = False
         self.current_interval = 0
 
@@ -92,7 +92,6 @@ class ObstacleHandler(Node):
         self.start_episode_time = self.time_sec
         self.time_episode_sec = -1.0
         self.time_episode_sec_last = -1.0
-
 
     def obstacle_control_loop_callback(self):
         # Get the current time
@@ -105,7 +104,7 @@ class ObstacleHandler(Node):
                 self.time_loop_on = False
 
             elif self.time_episode_sec % self.epsode_interval_step == 0:
-                self.get_logger().info(f'Time: {self.time_episode_sec}, current interval: {self.current_interval}')
+                # self.get_logger().info(f'Time: {self.time_episode_sec}, current interval: {self.current_interval}')
                 
                 for obstacle in self.obstacle_list:
                     # # Update the obstacle state
@@ -129,17 +128,23 @@ class ObstacleHandler(Node):
         self.time_sec = msg.clock.sec
 
     def obstacle_start_callback(self, request: ObstacleStart.Request, response: ObstacleStart.Response):
-        self.get_logger().info('===============Obstacle start callback===============')
+        # self.get_logger().info('===============Obstacle start callback===============')
         self.time_loop_on = True
+        # Reset the episode time
         self.current_interval = 0
         self.start_episode_time = self.time_sec
         self.time_episode_sec_last = self.time_episode_sec
         # Response
+        for obstacle in self.obstacle_list:
+            # # Update the obstacle state
+            out_pose, out_twist = obstacle.get_state_at_time(self.current_interval)
+            self.set_entity_state(obstacle.name, out_pose, out_twist)
         response.obstacle_status = True
         return response
 
     def timer_callback(self):
-        self.get_logger().info('Timer callback')
+        # self.get_logger().info('Timer callback')
+        pass
 
     def init_obstacles(self):
         # Initialize the obstacles
@@ -187,7 +192,7 @@ class ObstacleHandler(Node):
         while not self.set_entity_state_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         try:
-            self.get_logger().info(f'Setting entity state for {entity_name}...')
+            # self.get_logger().info(f'Setting entity state for {entity_name}...')
             future = self.set_entity_state_client.call_async(request)
             # rclpy.spin_until_future_complete(self, future)
             response = future.result()

@@ -74,7 +74,7 @@ from common import utilities as util
 from env_utils import ObstacleManager, Robot
 
 MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
-REST_SIMULATION_PAUSE = 0.5  # seconds
+REST_SIMULATION_PAUSE = 0.01  # seconds
 
 class DRLGazebo(Node):
     def __init__(self):
@@ -143,7 +143,7 @@ class DRLGazebo(Node):
         self.obstacle_manager = ObstacleManager()
         # Pointers to the obstacle coordinates variable in the ObstacleManager class
         self.obstacle_coordinates = self.obstacle_manager.obstacle_coordinates
-        self.get_logger().info(f"Obstacle coordinates: {self.obstacle_coordinates}")
+        # self.get_logger().info(f"Obstacle coordinates: {self.obstacle_coordinates}")
 
 
         '''
@@ -316,6 +316,7 @@ class DRLGazebo(Node):
             self._EP_succeed = SUCCESS
         # Collision
         elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
+            self.get_logger().info(f">>>>>>>>> Collision detected! Distance: {self.obstacle_distance_nearest:.2f}")
             self._EP_succeed = COLLISION_OBSTACLE
         # Timeout
         elif self.time_sec >= self.episode_deadline:
@@ -371,7 +372,13 @@ class DRLGazebo(Node):
 
         # Reset the simulation
         self.reset_simulation()
-        time.sleep(REST_SIMULATION_PAUSE)
+        # time.sleep(REST_SIMULATION_PAUSE)
+
+        # Clear the obstacle distances
+        self.obstacle_distances = [np.inf] * MAX_NUMBER_OBSTACLES
+        self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
+
+        self.get_logger().info(f"Obstacle distance: {self.obstacle_distance_nearest:.2f}")
 
         self.obstacle_start()
 
@@ -467,6 +474,8 @@ class DRLGazebo(Node):
             self._EP_succeed = UNKNOWN
             self.local_step = 0
             self._EP_done = False
+            self.pause_simulation()
+            self.reset_simulation()
         if self.local_step % 2 == 0:
             print(f"T: {self.time_sec:<8}RT:{self.real_node_time_sec:<8}EPD: {self.episode_deadline:<8}\t", end='')
             print(f"Reward: {response.reward:<8.2f}DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°\t", end='')
@@ -484,7 +493,7 @@ class DRLGazebo(Node):
         self.pause_simulation()
         self.delete_entity() # if entity exists delete it
         self.reset_simulation() # Reset the simulation
-        time.sleep(REST_SIMULATION_PAUSE)
+        # time.sleep(REST_SIMULATION_PAUSE)
         self.unpause_simulation() 
         self.get_logger().info(f"DRL Gazebo node has been initialized, Simulation Paused")
         self.get_logger().info(f"Please start the episode by calling the service")
