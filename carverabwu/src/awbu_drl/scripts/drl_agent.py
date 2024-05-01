@@ -25,7 +25,7 @@ import sys
 import time
 import numpy as np
 
-from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, STEP_TIME
+from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, STEP_TIME, SIMUALTION_TIME_SCALE
 
 
 from awbu_interfaces.srv import DrlStep, EnvReady
@@ -33,8 +33,6 @@ from std_srvs.srv import Empty
 
 import rclpy
 from rclpy.node import Node
-
-SIMUALTION_TIME_SCALE = 2.0 # 4x faster than real time
 
 class DrlAgent(Node):
     def __init__(self,

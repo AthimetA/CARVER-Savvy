@@ -1,16 +1,22 @@
 import os
 import numpy as np
+import random
+import math
 import xml.etree.ElementTree as ET
 
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Quaternion
 
+from settings.constparams import ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS, ENABLE_TRUE_RANDOM_GOALS
+
 COLLITION_MARGIN = 0.5 # Margin to be added to the obstacles to calculate the collision [m]
 
-class ObstacleManager:
+class GoalManager:
     def __init__(self, obstacle_name: list = ['wall_outler', 'pillar_1', 'pillar_2', 'wall_inner_1']):
         self.obstacle_name = obstacle_name
         self.obstacle_coordinates = self.get_obstacle_coordinates(self.obstacle_name)
+
+        self.goal_x, self.goal_y = 0.0, 0.0
 
     '''
     
@@ -55,6 +61,60 @@ class ObstacleManager:
             wall_points = [top_right, bottom_right, bottom_left, top_left]
             obstacle_coordinates.append(wall_points)
         return obstacle_coordinates
+    
+    '''
+    
+    Goal generation functions
+    
+    '''
+
+    def goal_is_valid(self, goal_x: float, goal_y: float)->bool:
+        if goal_x > ARENA_LENGTH/2 or goal_x < -ARENA_LENGTH/2 or goal_y > ARENA_WIDTH/2 or goal_y < -ARENA_WIDTH/2:
+            return False
+        for obstacle in self.obstacle_coordinates:
+            # Obstacle is defined by 4 points [top_right, bottom_right, bottom_left, top_left] with [x, y] coordinates
+            if goal_x < obstacle[0][0] and goal_x > obstacle[2][0] and goal_y < obstacle[0][1] and goal_y > obstacle[2][1]: # check if goal is inside the obstacle
+                    return False
+        return True
+
+    def generate_goal_pose(self, robot_x: float, robot_y: float, radius: float)->None:
+        MAX_ITERATIONS = 100
+        GOAL_SEPARATION_DISTANCE = 5.0
+        DYNAMIC_GOAL_RADIUS = float(radius) if radius > GOAL_SEPARATION_DISTANCE else GOAL_SEPARATION_DISTANCE
+        PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1], [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1]]
+        self.prev_goal_x = self.goal_x
+        self.prev_goal_y = self.goal_y
+        iterations = 0
+        while iterations < MAX_ITERATIONS:
+            # self.get_logger().info(f"Goal generation iteration: {iterations}")
+            iterations += 1 # Prevent infinite loop
+            if ENABLE_TRUE_RANDOM_GOALS:
+                # Random goal generation within the arena
+                goal_x = random.uniform(-ARENA_LENGTH/2, ARENA_LENGTH/2)
+                goal_y = random.uniform(-ARENA_WIDTH/2, ARENA_WIDTH/2)
+            elif ENABLE_DYNAMIC_GOALS:
+                # Dynamic goal generation within a radius of the robot position
+                goal_x = random.uniform(robot_x - DYNAMIC_GOAL_RADIUS, robot_x + DYNAMIC_GOAL_RADIUS)
+                goal_y = random.uniform(robot_y - DYNAMIC_GOAL_RADIUS, robot_y + DYNAMIC_GOAL_RADIUS)
+            else:
+                # Get the goal from the predefined list
+                index = random.randint(0, len(PREDEFINED_GOAL_LOCATIONS) - 1)
+                goal_x = PREDEFINED_GOAL_LOCATIONS[index][0]
+                goal_y = PREDEFINED_GOAL_LOCATIONS[index][1]
+
+            # Check if the goal is valid and far enough from the previous goal
+            if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE:
+                    break
+            else:
+                continue 
+        if iterations >= MAX_ITERATIONS:
+            goal_x = 0.0 # Default goal
+            goal_y = 0.0 # Default goal
+        # Set the goal pose
+        self.goal_x = goal_x
+        self.goal_y = goal_y
+
+        return self.goal_x, self.goal_y
     
 class Robot:
     def __init__(self):

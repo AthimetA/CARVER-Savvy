@@ -15,11 +15,13 @@ from gazebo_msgs.srv import GetModelList, SetEntityState, GetEntityState
 from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
 from rosgraph_msgs.msg import Clock
 
-from settings.constparams import EPISODE_TIMEOUT_SECONDS
+from settings.constparams import EPISODE_TIMEOUT_SECONDS, SIMUALTION_TIME_SCALE
+
+# Topic name imports
+from settings.constparams import TOPIC_CLOCK
 
 from awbu_interfaces.srv import ObstacleStart
 
-SIMUALTION_TIME_SCALE = 2.0 # 4x faster than real time
 PATH_INTERVAL_PER_EPISODE = 4
 
 from ament_index_python import get_package_share_directory
@@ -35,7 +37,7 @@ class ObstacleHandler(Node):
         )
         # Clock subscriber
         self.time_sec = 0
-        self.clock_sub = self.create_subscription(Clock, '/clock', self.clock_callback, qos_clock)
+        self.clock_sub = self.create_subscription(Clock, TOPIC_CLOCK, self.clock_callback, qos_clock)
         
         # Initialise services servers
         self.obstacle_start_srv = self.create_service(ObstacleStart, '/obstacle_start', self.obstacle_start_callback)
@@ -74,8 +76,6 @@ class ObstacleHandler(Node):
         del __CFG
         del __OBSTACLE_PARAMS
         del __TGP
-
-        print(f'Obstacle list: \n{self.obstacle_list}')
 
         # Control loop
         self.control_loop_hz =  10.0  # Based on 10Hz

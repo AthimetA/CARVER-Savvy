@@ -28,7 +28,11 @@ REWARD_FUNCTION = "A"           # Defined in reward.py
 TOPIC_SCAN = 'scan'
 TOPIC_VELO = '/abwubot/cmd_vel'
 TOPIC_ODOM = '/abwubot/odom'
-TOPIC_GOAL = 'goal_pose'
+TOPIC_CLOCK = '/clock'
+TOPIC_OBSTACLES_ODOM = '/obstacles/odom'
+
+
+SIMUALTION_TIME_SCALE       = 4.0     # x faster than real time  
 LIDAR_DISTANCE_CAP          = 5.0   # meters
 THRESHOLD_COLLISION         = 0.35  # meters
 THREHSOLD_GOAL              = 0.20  # meters

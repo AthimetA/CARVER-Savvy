@@ -27,6 +27,7 @@ import numpy as np
 import time
 
 from gazebo_msgs.srv import DeleteEntity, SpawnEntity
+from gazebo_msgs.srv import SetEntityState
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Pose
 
@@ -41,7 +42,7 @@ from settings.constparams import ENABLE_TRUE_RANDOM_GOALS, ARENA_LENGTH, ARENA_W
 from settings.constparams import ENABLE_BACKWARD, ENABLE_DYNAMIC_GOALS
 # ENVIRONMENT SETTINGS 
 # Sensor
-from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_GOAL,\
+from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_CLOCK, TOPIC_OBSTACLES_ODOM,\
                                  LIDAR_DISTANCE_CAP, THRESHOLD_COLLISION, THREHSOLD_GOAL,\
                                  ENABLE_MOTOR_NOISE
 # Simulation Environment Settings
@@ -71,7 +72,7 @@ import reward as rw
 from common import utilities as util
 
 
-from env_utils import ObstacleManager, Robot
+from env_utils import GoalManager, Robot
 
 MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
 REST_SIMULATION_PAUSE = 0.01  # seconds
@@ -86,10 +87,6 @@ class DRLGazebo(Node):
         
         '''
 
-        self._entity_dir_path = os.environ['SIM_MODEL_PATH'] + '/goal_box'
-        # self.get_logger().info("Goal entity directory path: " + self._entity_dir_path)
-        self._entity_path = os.path.join(self._entity_dir_path, 'model.sdf')
-        self.entity = open(self._entity_path, 'r').read()
         self.entity_name = 'goal_box'
 
         '''
@@ -97,14 +94,6 @@ class DRLGazebo(Node):
         Initialize variables
         
         '''
-
-        # --------------- Constants --------------- #
-        # Topics
-        self.scan_topic = TOPIC_SCAN
-        self.velo_topic = TOPIC_VELO
-        self.odom_topic = TOPIC_ODOM
-        self.clock_topic = '/clock'
-        self.obstacle_odom_topic = '/obstacle/odom'
         
         # --------------- Robot --------------- #
         self.robot = Robot()
@@ -119,6 +108,8 @@ class DRLGazebo(Node):
 
         # --------------- Time and Episode --------------- #
         self.episode_timeout = EPISODE_TIMEOUT_SECONDS
+        self.time_sec = 0
+        self.episode_start_time = 0
         # Episode variables
         self.episode_deadline = np.inf
         self.reset_deadline = False
@@ -140,10 +131,7 @@ class DRLGazebo(Node):
         Obstacle Manager
         
         '''
-        self.obstacle_manager = ObstacleManager()
-        # Pointers to the obstacle coordinates variable in the ObstacleManager class
-        self.obstacle_coordinates = self.obstacle_manager.obstacle_coordinates
-        # self.get_logger().info(f"Obstacle coordinates: {self.obstacle_coordinates}")
+        self.goal_manager = GoalManager()
 
 
         '''
@@ -153,20 +141,20 @@ class DRLGazebo(Node):
         '''
 
         # Initialise publishers
-        self.cmd_vel_pub                = self.create_publisher(Twist, self.velo_topic, qos)
+        self.cmd_vel_pub                = self.create_publisher(Twist, TOPIC_VELO, qos)
 
         # subscribers
-        self.odom_sub                   = self.create_subscription(Odometry, self.odom_topic, self.odom_callback, qos)
-        self.scan_sub                   = self.create_subscription(LaserScan, self.scan_topic, self.scan_callback, qos_profile=qos_profile_sensor_data)
-        self.clock_sub                  = self.create_subscription(Clock, self.clock_topic, self.clock_callback, qos_profile=qos_clock)
-        self.obstacle_odom_sub          = self.create_subscription(Odometry, self.obstacle_odom_topic, self.obstacle_odom_callback, qos)
+        self.odom_sub                   = self.create_subscription(Odometry, TOPIC_ODOM, self.odom_callback, qos)
+        self.scan_sub                   = self.create_subscription(LaserScan, TOPIC_SCAN, self.scan_callback, qos_profile=qos_profile_sensor_data)
+        self.clock_sub                  = self.create_subscription(Clock, TOPIC_CLOCK, self.clock_callback, qos_profile=qos_clock)
+        self.obstacle_odom_sub          = self.create_subscription(Odometry, TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos)
 
         # Initialise services clients
         self.delete_entity_client       = self.create_client(DeleteEntity, '/delete_entity')
-        self.spawn_entity_client        = self.create_client(SpawnEntity, '/spawn_entity')
         self.reset_simulation_client    = self.create_client(Empty, '/reset_world')
         self.gazebo_pause               = self.create_client(Empty, '/pause_physics')
         self.gazebo_unpause             = self.create_client(Empty, '/unpause_physics')
+        self.set_entity_state_client    = self.create_client(SetEntityState, '/gazebo_drl/set_entity_state')
         self.obstacle_start_client      = self.create_client(ObstacleStart, '/obstacle_start')
 
         # Initialise services servers
@@ -213,17 +201,21 @@ class DRLGazebo(Node):
             self.get_logger().info('unpause gazebo service not available, waiting again...')
         self.gazebo_unpause.call_async(Empty.Request())
 
-    def spawn_entity(self):
-        goal_pose = Pose()
-        goal_pose.position.x = self.goal_x
-        goal_pose.position.y = self.goal_y
-        req = SpawnEntity.Request()
-        req.name = self.entity_name
-        req.xml = self.entity
-        req.initial_pose = goal_pose
-        while not self.spawn_entity_client.wait_for_service(timeout_sec=1.0):
+    def set_entity_state(self, goal_x: float, goal_y: float):
+        request = SetEntityState.Request()
+        request.state.name = self.entity_name
+        request.state.pose = Pose()
+        request.state.pose.position.x = goal_x
+        request.state.pose.position.y = goal_y
+        request.state.twist = Twist()
+        request.state.reference_frame = 'world'
+        while not self.set_entity_state_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
-        self.spawn_entity_client.call_async(req)
+        try:
+            # self.get_logger().info(f'Setting entity state for {entity_name}...')
+            self.set_entity_state_client.call_async(request)
+        except Exception as e:
+            self.get_logger().info(f'Error: {e}')
 
     def obstacle_start(self):
         req = ObstacleStart.Request()
@@ -314,6 +306,7 @@ class DRLGazebo(Node):
             self._EP_succeed = SUCCESS
         # Collision
         elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
+            self.get_logger().info(f"Collision with obstacle: {self.obstacle_distance_nearest:.2f}")
             self._EP_succeed = COLLISION_OBSTACLE
         # Timeout
         elif self.time_sec >= self.episode_deadline:
@@ -336,8 +329,6 @@ class DRLGazebo(Node):
             self.get_logger().info("Episode done, Agent reached the goal!")
         elif status == COLLISION_OBSTACLE:
             self.get_logger().info("Episode done, Agent collided with obstacle!")
-        elif status == COLLISION_WALL:
-            self.get_logger().info("Episode done, Agent collided with wall!")
         elif status == TIMEOUT:
             self.get_logger().info("Episode done, Agent reached the timeout!")
         elif status == TUMBLE:
@@ -364,27 +355,27 @@ class DRLGazebo(Node):
         # Pause the simulation
         self.pause_simulation()
 
-        # Delete the goal entity
-        self.delete_entity()
-
         # Reset the simulation
         self.reset_simulation()
+
+        # Generate a new goal
+        self.goal_x, self.goal_y = self.goal_manager.generate_goal_pose(self.robot.x, self.robot.y, OBSTACLE_RADIUS)
+
+        # Set the goal entity
+        self.set_entity_state(self.goal_x, self.goal_y)
 
         # Clear the obstacle distances
         self.obstacle_distances = [np.inf] * MAX_NUMBER_OBSTACLES
         self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
 
-        self.obstacle_start()
-
-        # Generate a new goal
-        self.generate_goal_pose(self.robot.x, self.robot.y, OBSTACLE_RADIUS)
         # Update the robot goal
         self.robot.update_goal(self.goal_x, self.goal_y)
         # Reset the robot
         self.robot.reset()
 
-        # Spawn the goal entity
-        self.spawn_entity()
+        # Start the obstacles
+        self.obstacle_start()
+
     
         # Reset the episode variables
         self.reset_deadline = True
@@ -401,6 +392,7 @@ class DRLGazebo(Node):
         rw.reward_initalize(self.robot.distance_to_goal)
 
         # Unpause the simulation
+        self.episode_start_time = self.time_sec
         self.unpause_simulation()
 
         return response
@@ -463,13 +455,12 @@ class DRLGazebo(Node):
         # Check if the episode is done
         if self._EP_done:
             self.get_logger().info(f"Reward: {response.reward:<8.2f} DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°")
+            self.get_logger().info(f'Time use in episode: {self.time_sec - self.episode_start_time} seconds / {self.episode_timeout} seconds')
             response.distance_traveled = self.robot.distance_traveled
             # Reset variables
             self._EP_succeed = UNKNOWN
             self.local_step = 0
             self._EP_done = False
-            self.pause_simulation()
-            self.reset_simulation()
         if self.local_step % 2 == 0:
             print(f"T: {self.time_sec:<8}RT:{self.real_node_time_sec:<8}EPD: {self.episode_deadline:<8}\t")
             print(f"Reward: {response.reward:<8.2f}DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°\t")
@@ -485,66 +476,13 @@ class DRLGazebo(Node):
     def init_drl(self)->None:
         # Initialize the DRL node
         self.pause_simulation()
-        self.delete_entity() # if entity exists delete it
+        # self.delete_entity() # if entity exists delete it
         self.reset_simulation() # Reset the simulation
         self.unpause_simulation() 
         self.get_logger().info(f"DRL Gazebo node has been initialized, Simulation Paused")
-        self.get_logger().info(f"Please start the episode by calling the service")
+        self.get_logger().info(f"Please start the episode by calling the service...")
         # Goal is ready
         self.goal_ready = True
-    
-    '''
-    
-    Goal generation functions
-    
-    '''
-
-    def goal_is_valid(self, goal_x: float, goal_y: float)->bool:
-        if goal_x > ARENA_LENGTH/2 or goal_x < -ARENA_LENGTH/2 or goal_y > ARENA_WIDTH/2 or goal_y < -ARENA_WIDTH/2:
-            return False
-        for obstacle in self.obstacle_coordinates:
-            # Obstacle is defined by 4 points [top_right, bottom_right, bottom_left, top_left] with [x, y] coordinates
-            if goal_x < obstacle[0][0] and goal_x > obstacle[2][0] and goal_y < obstacle[0][1] and goal_y > obstacle[2][1]: # check if goal is inside the obstacle
-                    return False
-        return True
-
-    def generate_goal_pose(self, robot_x: float, robot_y: float, radius: float)->None:
-        MAX_ITERATIONS = 100
-        GOAL_SEPARATION_DISTANCE = 5.0
-        DYNAMIC_GOAL_RADIUS = float(radius) if radius > GOAL_SEPARATION_DISTANCE else GOAL_SEPARATION_DISTANCE
-        PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1], [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1]]
-        self.prev_goal_x = self.goal_x
-        self.prev_goal_y = self.goal_y
-        iterations = 0
-        while iterations < MAX_ITERATIONS:
-            # self.get_logger().info(f"Goal generation iteration: {iterations}")
-            iterations += 1 # Prevent infinite loop
-            if ENABLE_TRUE_RANDOM_GOALS:
-                # Random goal generation within the arena
-                goal_x = random.uniform(-ARENA_LENGTH/2, ARENA_LENGTH/2)
-                goal_y = random.uniform(-ARENA_WIDTH/2, ARENA_WIDTH/2)
-            elif ENABLE_DYNAMIC_GOALS:
-                # Dynamic goal generation within a radius of the robot position
-                goal_x = random.uniform(robot_x - DYNAMIC_GOAL_RADIUS, robot_x + DYNAMIC_GOAL_RADIUS)
-                goal_y = random.uniform(robot_y - DYNAMIC_GOAL_RADIUS, robot_y + DYNAMIC_GOAL_RADIUS)
-            else:
-                # Get the goal from the predefined list
-                index = random.randint(0, len(PREDEFINED_GOAL_LOCATIONS) - 1)
-                goal_x = PREDEFINED_GOAL_LOCATIONS[index][0]
-                goal_y = PREDEFINED_GOAL_LOCATIONS[index][1]
-
-            # Check if the goal is valid and far enough from the previous goal
-            if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE:
-                    break
-            else:
-                continue 
-        if iterations >= MAX_ITERATIONS:
-            self.get_logger().info("Goal generation failed default to 0, 0")
-            goal_x = 0.0 # Default goal
-            goal_y = 0.0 # Default goal
-        # Set the goal pose
-        self.goal_x = goal_x
-        self.goal_y = goal_y
 
 def main():
     rclpy.init()
