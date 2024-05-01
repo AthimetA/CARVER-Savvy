@@ -207,14 +207,9 @@ class DrlAgent(Node):
 
                     # Check if the episode is done
                     if self.episode_done:
-                        self.get_logger().info(f"Recieved: {self.episode_done}, {outcome}, {distance_traveled}")
-                        self.get_logger().info(f"Changing status to EPISODE DONE")
                         self.agent_status = "EPISODE DONE"
 
-                    # time.sleep(STEP_TIME)
-
                 elif self.agent_status == "EPISODE DONE":
-                    self.get_logger().info("Episode Done!")
                     self.pause_simulation()
                     self.total_steps += step
                     duration = time.perf_counter() - self.episode_start_time
@@ -231,12 +226,12 @@ class DrlAgent(Node):
 
     def finish_episode(self, step, eps_duration, outcome, dist_traveled, reward_sum, loss_critic, lost_actor):
             if self.total_steps < self.observe_steps:
-                print(f"Observe phase: {self.total_steps}/{self.observe_steps} steps")
+                self.get_logger().info(f"Observe phase: {self.total_steps}/{self.observe_steps} steps")
                 return None
 
             self.episode += 1
-            print(f"Epi: {self.episode:<5}R: {reward_sum:<8.0f}", end='')
-            print(f"steps: {step:<6}steps_total: {self.total_steps:<7}time: {eps_duration:<6.2f}")
+            self.get_logger().info(f"Epi: {self.episode:<5}R: {reward_sum:<8.0f}", end='')
+            self.get_logger().info(f"steps: {step:<6}steps_total: {self.total_steps:<7}time: {eps_duration:<6.2f}")
 
 def main(args=sys.argv[1:]):
     rclpy.init(args=args)

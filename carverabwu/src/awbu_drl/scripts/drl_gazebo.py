@@ -224,7 +224,6 @@ class DRLGazebo(Node):
         while not self.spawn_entity_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         self.spawn_entity_client.call_async(req)
-        self.get_logger().info("Entity spawned")
 
     def obstacle_start(self):
         req = ObstacleStart.Request()
@@ -232,7 +231,6 @@ class DRLGazebo(Node):
         while not self.obstacle_start_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         self.obstacle_start_client.call_async(req)
-        self.get_logger().info("Obstacle started")
 
     '''
     
@@ -316,7 +314,6 @@ class DRLGazebo(Node):
             self._EP_succeed = SUCCESS
         # Collision
         elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
-            self.get_logger().info(f">>>>>>>>> Collision detected! Distance: {self.obstacle_distance_nearest:.2f}")
             self._EP_succeed = COLLISION_OBSTACLE
         # Timeout
         elif self.time_sec >= self.episode_deadline:
@@ -372,13 +369,10 @@ class DRLGazebo(Node):
 
         # Reset the simulation
         self.reset_simulation()
-        # time.sleep(REST_SIMULATION_PAUSE)
 
         # Clear the obstacle distances
         self.obstacle_distances = [np.inf] * MAX_NUMBER_OBSTACLES
         self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
-
-        self.get_logger().info(f"Obstacle distance: {self.obstacle_distance_nearest:.2f}")
 
         self.obstacle_start()
 
@@ -400,7 +394,8 @@ class DRLGazebo(Node):
         response.done = False
         response.success = UNKNOWN
         response.distance_traveled = 0.0
-
+        
+        self.get_logger().info(f"=====================================")
         self.get_logger().info(f"New episode started, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
 
         rw.reward_initalize(self.robot.distance_to_goal)
@@ -446,7 +441,6 @@ class DRLGazebo(Node):
         twist = Twist()
         twist.linear.x = action_linear
         twist.angular.z = action_angular
-        # self.get_logger().info(f"Publishing action: linear: {twist.linear.x:.2f} angular: {twist.angular.z:.2f}")
         self.cmd_vel_pub.publish(twist)
 
         # Prepare repsonse
@@ -468,7 +462,7 @@ class DRLGazebo(Node):
         response.distance_traveled = 0.0
         # Check if the episode is done
         if self._EP_done:
-            self.get_logger().info(f"Episode done! Reward: {response.reward:.2f} Success: {self._EP_succeed}")
+            self.get_logger().info(f"Reward: {response.reward:<8.2f} DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°")
             response.distance_traveled = self.robot.distance_traveled
             # Reset variables
             self._EP_succeed = UNKNOWN
@@ -477,8 +471,8 @@ class DRLGazebo(Node):
             self.pause_simulation()
             self.reset_simulation()
         if self.local_step % 2 == 0:
-            print(f"T: {self.time_sec:<8}RT:{self.real_node_time_sec:<8}EPD: {self.episode_deadline:<8}\t", end='')
-            print(f"Reward: {response.reward:<8.2f}DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°\t", end='')
+            print(f"T: {self.time_sec:<8}RT:{self.real_node_time_sec:<8}EPD: {self.episode_deadline:<8}\t")
+            print(f"Reward: {response.reward:<8.2f}DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°\t")
             print(f"MinOBD: {self.obstacle_distance_nearest:<8.2f}Alin: {request.action[LINEAR_VELOCITY_LOC]:<7.1f}Aturn: {request.action[ANGULAR_VELOCITY_LOC]:<7.1f}")
         return response
 
@@ -493,7 +487,6 @@ class DRLGazebo(Node):
         self.pause_simulation()
         self.delete_entity() # if entity exists delete it
         self.reset_simulation() # Reset the simulation
-        # time.sleep(REST_SIMULATION_PAUSE)
         self.unpause_simulation() 
         self.get_logger().info(f"DRL Gazebo node has been initialized, Simulation Paused")
         self.get_logger().info(f"Please start the episode by calling the service")
@@ -524,7 +517,7 @@ class DRLGazebo(Node):
         self.prev_goal_y = self.goal_y
         iterations = 0
         while iterations < MAX_ITERATIONS:
-            self.get_logger().info(f"Goal generation iteration: {iterations}")
+            # self.get_logger().info(f"Goal generation iteration: {iterations}")
             iterations += 1 # Prevent infinite loop
             if ENABLE_TRUE_RANDOM_GOALS:
                 # Random goal generation within the arena

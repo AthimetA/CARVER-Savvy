@@ -30,7 +30,7 @@ TOPIC_VELO = '/abwubot/cmd_vel'
 TOPIC_ODOM = '/abwubot/odom'
 TOPIC_GOAL = 'goal_pose'
 LIDAR_DISTANCE_CAP          = 5.0   # meters
-THRESHOLD_COLLISION         = 0.5  # meters
+THRESHOLD_COLLISION         = 0.35  # meters
 THREHSOLD_GOAL              = 0.20  # meters
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
 LINEAR_VELOCITY_LOC       = 0     # 0 = no noise, 1 = noise enabled
