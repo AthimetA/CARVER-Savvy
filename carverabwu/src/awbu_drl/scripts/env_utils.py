@@ -81,7 +81,10 @@ class GoalManager:
         MAX_ITERATIONS = 100
         GOAL_SEPARATION_DISTANCE = 5.0
         DYNAMIC_GOAL_RADIUS = float(radius) if radius > GOAL_SEPARATION_DISTANCE else GOAL_SEPARATION_DISTANCE
-        PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1], [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1]]
+        PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\
+                                     [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
+                                     [3.0,0.0]
+                                     ]
         self.prev_goal_x = self.goal_x
         self.prev_goal_y = self.goal_y
         iterations = 0
@@ -120,6 +123,8 @@ class Robot:
     def __init__(self):
         self.x = 0.0
         self.y = 0.0
+        self.row = 0.0
+        self.pitch = 0.0
         self.theta = 0.0
         self.linear_velocity = 0.0
         self.angular_velocity = 0.0
@@ -160,7 +165,7 @@ class Robot:
         # Update the robot position
         self.x = msg.pose.pose.position.x
         self.y = msg.pose.pose.position.y
-        _, _, self.theta = self.euler_from_quaternion(msg.pose.pose.orientation)
+        self.row, self.pitch, self.theta = self.euler_from_quaternion(msg.pose.pose.orientation)
         self.linear_velocity = msg.twist.twist.linear.x
         self.angular_velocity = msg.twist.twist.angular.z
 

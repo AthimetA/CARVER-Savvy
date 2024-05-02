@@ -303,17 +303,20 @@ class DRLGazebo(Node):
     def episode_check(self):
         # Success
         if self.robot.distance_to_goal < THREHSOLD_GOAL:
+            self.get_logger().info("Episode done, Agent reached the goal!")
             self._EP_succeed = SUCCESS
-        # Collision
-        elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
-            self.get_logger().info(f"Collision with obstacle: {self.obstacle_distance_nearest:.2f}")
-            self._EP_succeed = COLLISION_OBSTACLE
         # Timeout
         elif self.time_sec >= self.episode_deadline:
+            self.get_logger().info("Episode done, Agent reached the timeout!")
             self._EP_succeed = TIMEOUT
-        # Tumble
-        # elif self.robot.tilt > 0.06 or self.robot.tilt < -0.06:
-        #     self._EP_succeed = TUMBLE
+        # Collision
+        elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
+            self.get_logger().info(f"Episode done, Collision with obstacle: {self.obstacle_distance_nearest:.2f}")
+            self._EP_succeed = COLLISION_OBSTACLE
+        # Tumble [row, pitch > 45°]
+        elif np.abs(self.robot.row) > math.pi/4 or np.abs(self.robot.pitch) > math.pi/4:
+            self.get_logger().info(f"Episode done, Tumble: {math.degrees(self.robot.row):.2f}, {math.degrees(self.robot.pitch):.2f}")
+            self._EP_succeed = TUMBLE
 
         # Check if the episode is done [Success, Collision, Timeout, Tumble] 
         if self._EP_succeed is not UNKNOWN:
@@ -325,16 +328,6 @@ class DRLGazebo(Node):
         # Reset the episode deadline
         self.episode_deadline = np.inf
         self._EP_done = True
-        if status == SUCCESS:
-            self.get_logger().info("Episode done, Agent reached the goal!")
-        elif status == COLLISION_OBSTACLE:
-            self.get_logger().info("Episode done, Agent collided with obstacle!")
-        elif status == TIMEOUT:
-            self.get_logger().info("Episode done, Agent reached the timeout!")
-        elif status == TUMBLE:
-            self.get_logger().info("Episode done, Agent tumbled!")
-        else:
-            self.get_logger().info("Episode done, Unknown status!")
     
     def initalize_episode(self, response: DrlStep.Response):
         '''
@@ -365,7 +358,6 @@ class DRLGazebo(Node):
         self.set_entity_state(self.goal_x, self.goal_y)
 
         # Clear the obstacle distances
-        self.obstacle_distances = [np.inf] * MAX_NUMBER_OBSTACLES
         self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
 
         # Update the robot goal
