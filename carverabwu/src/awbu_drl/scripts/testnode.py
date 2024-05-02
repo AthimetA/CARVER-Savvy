@@ -13,13 +13,8 @@ import gymnasium as gym
 
 import stable_baselines3 as sb3
 
-from common.utilities import check_gpu
-from common.testcon import testprint
-
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-
-from awbu_interfaces.srv import RingGoal
 
 class TestNode(Node):
     def __init__(self):
@@ -53,8 +48,6 @@ class TestNode(Node):
         # self.vel_topic = '/diff_cont/cmd_vel_unstamped'
         self.vel_pub = self.create_publisher(Twist, self.vel_topic, 10)
 
-        self.task_succeed_client = self.create_client(RingGoal, 'task_succeed')
-        self.task_fail_client = self.create_client(RingGoal, 'task_fail')
 
     def odom_callback(self, msg: Odometry):
         self.x = msg.pose.pose.position.x
@@ -79,15 +72,6 @@ class TestNode(Node):
         self.get_logger().info(f'Publishing velocity command to {self.vel_topic} with linear: {self.vx}, angular: {self.wz}')
         self.move(self.vx, self.wz)
         self.count_down_timer -= 1
-        if self.count_down_timer == 0:
-            self.vx *= -1
-            self.wz *= -1
-            self.count_down_timer = 50
-            req = RingGoal.Request()
-            while not self.task_fail_client.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('fail service not available, waiting again...')
-            self.task_fail_client.call_async(req)
-
 
 
 

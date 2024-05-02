@@ -69,8 +69,6 @@ from sensor_msgs.msg import LaserScan
 from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart
 
 import reward as rw
-from common import utilities as util
-
 
 from env_utils import GoalManager, Robot
 
