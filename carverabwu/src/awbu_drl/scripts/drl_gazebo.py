@@ -163,7 +163,6 @@ class DRLGazebo(Node):
 
         # Initialize Node
         self.init_drl()
-        self.get_logger().info("DRL Gazebo node has been started.")
 
         # Debug timer
         self.timer = self.create_timer(1.0, self.test_callback)
@@ -296,8 +295,6 @@ class DRLGazebo(Node):
         state.append(float(action_linear_previous))                                                 # range: [-1, 1]
         state.append(float(action_angular_previous))                                                # range: [-1, 1]
         self.local_step += 1
-        # Check if the episode is done
-        self.episode_check()
         return state
     
     def episode_check(self):
@@ -364,6 +361,9 @@ class DRLGazebo(Node):
         self.robot.update_goal(self.goal_x, self.goal_y)
         # Reset the robot
         self.robot.reset()
+
+        # Start the robot
+        self.cmd_vel_pub.publish(Twist())
 
         # Start the obstacles
         self.obstacle_start()
@@ -440,6 +440,8 @@ class DRLGazebo(Node):
             goal_angle=self.robot.goal_angle,
             min_obstacle_distance=self.obstacle_distance_nearest,
         )
+        # Check if the episode is done
+        self.episode_check()
         # Update the episode status
         response.done = self._EP_done
         response.success = self._EP_succeed
@@ -468,8 +470,8 @@ class DRLGazebo(Node):
     def init_drl(self)->None:
         # Initialize the DRL node
         self.pause_simulation()
-        # self.delete_entity() # if entity exists delete it
         self.reset_simulation() # Reset the simulation
+        self.cmd_vel_pub.publish(Twist()) # Stop the robot if it is moving
         self.unpause_simulation() 
         self.get_logger().info(f"DRL Gazebo node has been initialized, Simulation Paused")
         self.get_logger().info(f"Please start the episode by calling the service...")
