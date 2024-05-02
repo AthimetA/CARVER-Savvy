@@ -11,6 +11,44 @@ from settings.constparams import ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS
 
 COLLITION_MARGIN = 0.5 # Margin to be added to the obstacles to calculate the collision [m]
 
+def get_simulation_speed(stage):
+    tree = ET.parse(os.getenv('ABWUDRL_BASE_PATH') + '/src/abwu_gazebo/worlds/abwu_drl_stage_' + str(stage) + '.world')
+    root = tree.getroot()
+    return int(root.find('world').find('physics').find('real_time_factor').text)
+
+def read_stage(stage=None):
+
+    file_path = os.getenv('ABWUDRL_BASE_PATH') +'/tmp/abwu_current_stage.txt'
+
+    if not os.path.exists(file_path):
+        print("\033[1m" + "\033[93m" + "Stage file does not exist, creating a new one with default stage 1" + "\033[0m")
+        # Create directory if it does not exist
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        # Create the file
+        with open(file_path, 'w') as f:
+            f.write('1')
+
+    if stage is None:
+        with open(os.getenv('ABWUDRL_BASE_PATH') +'/tmp/abwu_current_stage.txt', 'r') as f:
+            stage = f.read()
+        return int(stage)
+    else:
+        with open(os.getenv('ABWUDRL_BASE_PATH') +'/tmp/abwu_current_stage.txt', 'w') as f:
+            f.write(str(stage))
+        return stage
+    
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 class GoalManager:
     def __init__(self, obstacle_name: list = ['wall_outler', 'pillar_1', 'pillar_2', 'wall_inner_1']):
         self.obstacle_name = obstacle_name

@@ -26,7 +26,7 @@ import time
 import numpy as np
 
 from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, STEP_TIME, SIMUALTION_TIME_SCALE
-
+from settings.constparams import SIMUALTION_TIME_SCALE
 
 from awbu_interfaces.srv import DrlStep, EnvReady
 from std_srvs.srv import Empty
@@ -34,19 +34,105 @@ from std_srvs.srv import Empty
 import rclpy
 from rclpy.node import Node
 
+import torch
+
+from env_utils import get_simulation_speed, read_stage , bcolors
+
+from drlagnet_td3 import TD3
+from drlutils_graph import Graph
+from drlutils_replaybuffer import ReplayBuffer
+from drlutils_storagemanager import StorageManager
+from drlutils_logger import Logger
+from drlutils_visual import *
+
 class DrlAgent(Node):
     def __init__(self,
+    algorithm = "td3",
     training = True,
+    load_session = "",
     load_episode = 0,
     real_robot = False
     ):
         super().__init__("DrlAgentNode")
+
+        self.test = -1
+
+
+        '''
+        
+        Agent parameters:
+        
+        '''
+
+        self.algorithm = algorithm
         self.training = int(training)
+        self.load_session = load_session
         self.episode = int(load_episode)
         self.real_robot = real_robot
+
+        # ===================================================================== #
+        #                             Initialization                            #
+        # ===================================================================== #
+
+        # Torch device
+        if (torch.cuda.is_available()):
+            self.get_logger().info(bcolors.OKGREEN + f'GPU available: {torch.cuda.get_device_name(0)}' + bcolors.ENDC)
+        else:
+            self.get_logger().info(bcolors.FAIL + 'GPU not available, using CPU' + bcolors.ENDC)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.stage = read_stage(stage=None)
+        self.get_logger().info(bcolors.OKGREEN + f"Agent Mode: {'Training' if self.training else 'Testing'}, at Stage: {self.stage}" + bcolors.ENDC)
+        self.sim_speed = get_simulation_speed(stage=self.stage) if not self.real_robot else 1
+        self.get_logger().info(bcolors.OKGREEN + f"Simulation Speed: {self.sim_speed}" + bcolors.ENDC)
+
         self.total_steps = 0
         self.observe_steps = OBSERVE_STEPS
-        self.test = -1
+
+        # Initialize the model
+        self.model = TD3(self.device, self.sim_speed)
+        self.get_logger().info(bcolors.OKBLUE + f"Algorithm: {self.algorithm}, Model Initialized" + bcolors.ENDC)
+
+        
+        # Initialize the replay buffer
+        self.replay_buffer = ReplayBuffer(self.model.buffer_size)
+        self.get_logger().info(bcolors.OKBLUE + f"Replay Buffer Initialized with size: {self.model.buffer_size}" + bcolors.ENDC)
+
+        # Initialize the graph
+        self.graph = Graph()
+        self.get_logger().info(bcolors.OKBLUE + "Graph Initialized" + bcolors.ENDC)
+
+        # ===================================================================== #
+        #                             Model loading                             #
+        # ===================================================================== #
+
+        self.sm = StorageManager(self.algorithm, self.load_session, self.episode, self.device, self.stage)
+        
+        # If loading a session, load the model
+        if False:
+            # Delete the model
+            del self.model
+            self.model = self.sm.load_model()
+            self.model.device = self.device
+            self.sm.load_weights(self.model.networks)
+            if self.training:
+                self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size, os.path.join(self.load_session, 'stage'+str(self.sm.stage)+'_latest_buffer.pkl'))
+            self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.episode)
+            print(f"global steps: {self.total_steps}")
+            print(f"loaded model {self.load_session} (eps {self.episode}): {self.model.get_model_parameters()}")
+        else:
+            self.sm.new_session_dir(self.stage)
+            self.sm.store_model(self.model)
+
+        self.get_logger().info(bcolors.OKBLUE + "Storage Manager Initialized" + bcolors.ENDC)
+
+        self.graph.session_dir = self.sm.session_dir
+        self.logger = Logger(self.training, self.sm.machine_dir, self.sm.session_dir, self.sm.session, self.model.get_model_parameters(), self.model.get_model_configuration(), str(self.stage), self.algorithm, self.episode)
+        self.get_logger().info(bcolors.OKBLUE + "Logger Initialized" + bcolors.ENDC)
+        
+        if ENABLE_VISUAL:
+            self.visual = DrlVisual(self.model.state_size, self.model.hidden_size)
+            self.model.attach_visual(self.visual)
+
         # ===================================================================== #
         #                             Start Process                             #
         # ===================================================================== #

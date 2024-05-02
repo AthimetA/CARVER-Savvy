@@ -11,9 +11,9 @@ class StorageManager:
             print(f"ERROR: wrong combination of command and model! make sure command is: {name}_agent")
             while True:
                 pass
-        self.machine_dir = (os.getenv('DRLNAV_BASE_PATH') + '/src/turtlebot3_drl/model/' + str(socket.gethostname()))
+        self.machine_dir = (os.getenv('ABWUDRL_BASE_PATH') + '/src/awbu_drl/model/' + str(socket.gethostname()))
         if 'examples' in load_session:
-            self.machine_dir = (os.getenv('DRLNAV_BASE_PATH') + '/src/turtlebot3_drl/model/')
+            self.machine_dir = (os.getenv('ABWUDRL_BASE_PATH') + '/src/awbu_drl/model/')
         self.name = name
         self.stage = load_session[-1] if load_session else stage
         self.session = load_session
