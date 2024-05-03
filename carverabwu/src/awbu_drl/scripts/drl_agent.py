@@ -50,7 +50,7 @@ class DrlAgent(Node):
     def __init__(self,
     algorithm = "td3",
     training = True,
-    load_session = 'td3_0_stage_1', # Example : 'td3_0_stage_1'
+    load_session = 'td3_1_stage_1', # Example : 'td3_0_stage_1'
     load_episode = 0,
     real_robot = False
     ):
@@ -113,11 +113,12 @@ class DrlAgent(Node):
             # Delete the model
             del self.model
             self.model = self.sm.load_model()
+            self.get_logger().info(bcolors.OKGREEN + f"Model Loaded: {self.load_session} (eps {self.episode})" + bcolors.ENDC)
             self.model.device = self.device
             self.sm.load_weights(self.model.networks)
             if self.training:
                 self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size, os.path.join(self.load_session, 'stage'+str(self.sm.stage)+'_latest_buffer.pkl'))
-            # self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.episode)
+            self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.episode)
             print(f"global steps: {self.total_steps}")
             print(f"loaded model {self.load_session} (eps {self.episode}): {self.model.get_model_parameters()}")
         else:
