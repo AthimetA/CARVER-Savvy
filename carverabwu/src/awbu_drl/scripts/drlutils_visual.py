@@ -10,7 +10,7 @@ if ENABLE_VISUAL:
 
     pg.setConfigOptions(antialias=False)
 
-    class DrlVisual(pg.GraphicsWindow):
+    class DrlVisual(pg.GraphicsLayoutWidget):
         def __init__(self, state_size, hidden_size):
             super().__init__(None)
             self.show()
@@ -27,7 +27,7 @@ if ENABLE_VISUAL:
             self.plot_item_states.setXRange(-1, self.state_size, padding=0)
             self.plot_item_states.setYRange(-1, 1, padding=0)
 
-            self.bar_graph_states = pg.BarGraphItem(x=range(self.state_size), width=1)
+            self.bar_graph_states = pg.BarGraphItem(x=range(self.state_size), height = np.zeros(self.state_size), width=0.8)
             self.plot_item_states.addItem(self.bar_graph_states)
 
             self.hidden_plot_items = []
@@ -41,7 +41,7 @@ if ENABLE_VISUAL:
                 plot_item.setXRange(-1, hidden_size, padding=0)
                 plot_item.setYRange(-0.2, 1.3, padding=0)
 
-                bar_graph = pg.BarGraphItem(x=range(hidden_size), width=0.8)
+                bar_graph = pg.BarGraphItem(x=range(hidden_size), height=np.zeros(hidden_size), width=0.8)
                 plot_item.addItem(bar_graph)
 
                 line_plot = plot_item.plot(x=range(hidden_size), brush='r', symbol='x', symbolPen='r')
@@ -58,20 +58,20 @@ if ENABLE_VISUAL:
             self.plot_item_action_linear = self.addPlot(title="Action Linear")
             self.plot_item_action_linear.setXRange(-20, 20, padding=0)
             self.plot_item_action_linear.setYRange(-1, 1, padding=0)
-            self.bar_graph_action_linear = pg.BarGraphItem(x=range(1), width=0.5)
+            self.bar_graph_action_linear = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.plot_item_action_linear.addItem(self.bar_graph_action_linear)
 
             self.plot_item_action_angular = self.addPlot(title="Action Angular")
             self.plot_item_action_angular.setXRange(-1, 1, padding=0)
             self.plot_item_action_angular.setYRange(-1.5, 1.5, padding=0)
-            self.bar_graph_action_angular = pg.BarGraphItem(x=range(1), width=0.5)
+            self.bar_graph_action_angular = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.plot_item_action_angular.addItem(self.bar_graph_action_angular)
-            self.bar_graph_action_angular.rotate(90)
+            # self.bar_graph_action_angular.rotate(90)
 
             self.plot_item_reward = self.addPlot(title="Accumlated Reward")
             self.plot_item_reward.setXRange(-1, 1, padding=0)
             self.plot_item_reward.setYRange(-3000, 5000, padding=0)
-            self.bar_graph_reward = pg.BarGraphItem(x=range(1), width=0.5)
+            self.bar_graph_reward = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.plot_item_reward.addItem(self.bar_graph_reward)
 
             self.iteration = 0

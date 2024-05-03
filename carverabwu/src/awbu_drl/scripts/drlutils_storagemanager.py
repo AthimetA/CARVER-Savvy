@@ -9,11 +9,8 @@ class StorageManager:
     def __init__(self, name, load_session, load_episode, device, stage):
         if load_session and name not in load_session:
             print(f"ERROR: wrong combination of command and model! make sure command is: {name}_agent")
-            while True:
-                pass
+            assert False
         self.machine_dir = (os.getenv('ABWUDRL_BASE_PATH') + '/src/awbu_drl/model/' + str(socket.gethostname()))
-        if 'examples' in load_session:
-            self.machine_dir = (os.getenv('ABWUDRL_BASE_PATH') + '/src/awbu_drl/model/')
         self.name = name
         self.stage = load_session[-1] if load_session else stage
         self.session = load_session

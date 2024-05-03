@@ -70,7 +70,7 @@ from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart
 
 import reward as rw
 
-from env_utils import GoalManager, Robot
+from env_utils import GoalManager, Robot, bcolors
 
 MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
 REST_SIMULATION_PAUSE = 0.01  # seconds
@@ -298,19 +298,19 @@ class DRLGazebo(Node):
     def episode_check(self):
         # Success
         if self.robot.distance_to_goal < THREHSOLD_GOAL:
-            self.get_logger().info("Episode done, Agent reached the goal!")
+            self.get_logger().info(bcolors.OKGREEN + "Episode done, Agent reached the goal!" + bcolors.ENDC)
             self._EP_succeed = SUCCESS
         # Timeout
         elif self.time_sec >= self.episode_deadline:
-            self.get_logger().info("Episode done, Agent reached the timeout!")
+            self.get_logger().info(bcolors.WARNING + "Episode done, Agent reached the timeout!" + bcolors.ENDC)
             self._EP_succeed = TIMEOUT
         # Collision
         elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
-            self.get_logger().info(f"Episode done, Collision with obstacle: {self.obstacle_distance_nearest:.2f}")
+            self.get_logger().info(bcolors.FAIL + f"Episode done, Collision with obstacle: {self.obstacle_distance_nearest:.2f}" + bcolors.ENDC)
             self._EP_succeed = COLLISION_OBSTACLE
         # Tumble [row, pitch > 45°]
         elif np.abs(self.robot.row) > math.pi/4 or np.abs(self.robot.pitch) > math.pi/4:
-            self.get_logger().info(f"Episode done, Tumble: {math.degrees(self.robot.row):.2f}, {math.degrees(self.robot.pitch):.2f}")
+            self.get_logger().info(bcolors.FAIL + f"Episode done, Tumble: {math.degrees(self.robot.row):.2f}, {math.degrees(self.robot.pitch):.2f}" + bcolors.ENDC)
             self._EP_succeed = TUMBLE
 
         # Check if the episode is done [Success, Collision, Timeout, Tumble] 
@@ -377,7 +377,10 @@ class DRLGazebo(Node):
         response.distance_traveled = 0.0
         
         self.get_logger().info(f"=====================================")
-        self.get_logger().info(f"New episode started, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
+        # self.get_logger().info(bcolors.OKBLUE + f"New episode started, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}" + bcolors.ENDC)
+        loc = "Top" if self.goal_x > 0 else "Bottom" 
+        loc += " Right" if self.goal_y < 0 else " Left"
+        self.get_logger().info(bcolors.OKBLUE + f"Goal location: {loc} ({self.goal_x:.2f}, {self.goal_y:.2f})" + bcolors.ENDC)
 
         rw.reward_initalize(self.robot.distance_to_goal)
 
@@ -471,8 +474,8 @@ class DRLGazebo(Node):
         self.reset_simulation() # Reset the simulation
         self.cmd_vel_pub.publish(Twist()) # Stop the robot if it is moving
         self.unpause_simulation() 
-        self.get_logger().info(f"DRL Gazebo node has been initialized, Simulation Paused")
-        self.get_logger().info(f"Please start the episode by calling the service...")
+        self.get_logger().info(bcolors.OKCYAN + "DRL Gazebo node has been initialized, Simulation Paused" + bcolors.ENDC)
+        self.get_logger().info(bcolors.OKGREEN + f"Please start the episode by calling the service..." + bcolors.ENDC)
         # Goal is ready
         self.goal_ready = True
 

@@ -9,6 +9,8 @@ from geometry_msgs.msg import Quaternion
 
 from settings.constparams import ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS, ENABLE_TRUE_RANDOM_GOALS
 
+from settings.constparams import SUCCESS, COLLISION_WALL, COLLISION_OBSTACLE, TIMEOUT, TUMBLE
+
 COLLITION_MARGIN = 0.5 # Margin to be added to the obstacles to calculate the collision [m]
 
 def get_simulation_speed(stage):
@@ -36,6 +38,20 @@ def read_stage(stage=None):
         with open(os.getenv('ABWUDRL_BASE_PATH') +'/tmp/abwu_current_stage.txt', 'w') as f:
             f.write(str(stage))
         return stage
+    
+def translate_outcome(outcome):
+    if outcome == SUCCESS:
+        return "SUCCESS"
+    elif outcome == COLLISION_WALL:
+        return "COLL_WALL"
+    elif outcome == COLLISION_OBSTACLE:
+        return "COLL_OBST"
+    elif outcome == TIMEOUT:
+        return "TIMEOUT"
+    elif outcome == TUMBLE:
+        return "TUMBLE"
+    else:
+        return f"UNKNOWN: {outcome}"
     
 class bcolors:
     HEADER = '\033[95m'
@@ -121,7 +137,7 @@ class GoalManager:
         DYNAMIC_GOAL_RADIUS = float(radius) if radius > GOAL_SEPARATION_DISTANCE else GOAL_SEPARATION_DISTANCE
         PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\
                                      [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
-                                     [3.0,0.0]
+                                    #  [3.0,0.0]
                                      ]
         self.prev_goal_x = self.goal_x
         self.prev_goal_y = self.goal_y
