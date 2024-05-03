@@ -269,8 +269,8 @@ def association(previous_group,group):
 
         associations = []
         for i in range(len(row_temp)):
-            if euclidean[row_temp[i],col_temp[i]] <= 2:
-                associations.append((ID_List[row_temp[i]], col_temp[i]))
+        #     if euclidean[row_temp[i],col_temp[i]] <= 2:
+            associations.append((ID_List[row_temp[i]], col_temp[i]))
 
         return associations
 
@@ -325,7 +325,7 @@ def is_line(points):
     Returns:
     - True if the points form a straight line, False otherwise.
     """
-    if len(points) < 5:
+    if len(points) < 3:
         return True
     
     # Calculate the slopes between consecutive points

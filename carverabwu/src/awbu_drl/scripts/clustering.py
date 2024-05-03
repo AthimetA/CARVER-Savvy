@@ -4,23 +4,21 @@
 
 import rclpy
 from rclpy.node import Node
-import time
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
-import numpy as np
-import math
 from nav_msgs.msg import Odometry
-import math
-
+from rosgraph_msgs.msg import Clock
 from tf_transformations import euler_from_quaternion
 from visualization_msgs.msg import Marker, MarkerArray
-import random
 from geometry_msgs.msg import Point
+from std_srvs.srv import Empty
+from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
+import random
 import utils 
 import copy
-from std_srvs.srv import Empty
+import numpy as np
 
-TIME_STEP  = 1/30 #hz - > second
+TIME_STEP  = 1/5 #hz - > second
 
 class Object:
     def __init__(self) -> None:
@@ -31,6 +29,7 @@ class Object:
         self.type = None
         self.time = 0.
         self.time_step = TIME_STEP
+        self.Predicted_KF = ( 0. , 0. , 0. ,0)
         
         dt = self.time_step
         self.F = np.array([[1, 0, dt, 0], 
@@ -47,10 +46,13 @@ class Object:
                       [0.00, 0.00, 0.00, 0.01]
                       ])
         self.R = np.array([
-                    [0.01 , 0.01],
-                    [0.01 , 0.01]]).reshape(2, 2)
+                    [0.1 , 0.1],
+                    [0.1 , 0.1]]).reshape(2, 2)
 
         self.kf = utils.KalmanFilter(F = self.F, H = self.H, Q = self.Q, R = self.R)
+        
+        self._missing_frame = 0
+        self.max_missing_frame = 5
 
     def predict_kf(self):
         return np.dot(self.H,  self.kf.predict())[0]
@@ -77,9 +79,18 @@ class Clustering(Node):
             self.scan_callback,
             10)
         
-        self.publisher_ = self.create_publisher(MarkerArray, 'Obstacle', 10)
-        self.publisher2_ = self.create_publisher(MarkerArray, 'Obstacle_ob', 10)
         
+        self.publisher_ = self.create_publisher(MarkerArray, 'Obstacle', 10)
+        self.publisher2_= self.create_publisher(MarkerArray, 'Obstacle_ob', 10)
+
+        qos_clock = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST
+        )
+
+        self.clock_sub  = self.create_subscription(Clock, '/clock', self.clock_callback, qos_profile=qos_clock)
+
         self.ID = 0
         self.Current_group = {}
         self.Previous_group = {}
@@ -101,6 +112,15 @@ class Clustering(Node):
         self.timer = self.create_timer(TIME_STEP,  self.timer_callback)
 
         self.scan = None
+        self.time_sec = None
+        self.position = None
+
+    def clock_callback(self, msg: Clock):
+        # Get current time
+        seconds= msg.clock.sec 
+        nanoseconds = msg.clock.nanosec 
+        self.time_sec = seconds + nanoseconds / 1e9
+        # print("TIME" , self.time_sec)
 
     def service_callback(self, request, response):
         self.get_logger().info('Reseting')
@@ -122,7 +142,7 @@ class Clustering(Node):
         
 
     def timer_callback(self):
-        if self.scan == None : return 
+        if self.scan == None or self.time_sec == None or self.position == None: return 
         scan = self.scan
         # print(scan)
         x_robot = self.position.x
@@ -180,8 +200,8 @@ class Clustering(Node):
             #     print(locals_group)
 
         # print("+++++++++++++++++++++++++++++")
-        print("Current obstable :" , len([1 for x in _type_group if x == 'Obstacle']))
-        print("Current WALL :" , len([1 for x in _type_group if x == 'WALL']))
+        # print("Current obstable :" , len([1 for x in _type_group if x == 'Obstacle']))
+        # print("Current WALL :" , len([1 for x in _type_group if x == 'WALL']))
 
         if self._Start :        
             #### assign group by ID
@@ -195,7 +215,7 @@ class Clustering(Node):
                 group.center = _center_group[i]
                 group.radius = _radius_group[i]
                 group.type = _type_group[i] 
-                group.time = 0.
+                group.time = self.time_sec
                 
                 if group.type == "Obstacle" :
                     cen_velo = [_center_group[i][0] , _center_group[i][1] , 0. , 0.]
@@ -203,10 +223,13 @@ class Clustering(Node):
 
                 self.Current_group[self.ID] = group
 
+
                 self.ID +=1
 
 
             self._Start = False
+
+            
 
         else :
 
@@ -226,27 +249,33 @@ class Clustering(Node):
 
                     current_center = np.array(_center_group[j])
 
-                    velo = (current_center - precenter) / self.Previous_group[ID].time_step
+                    dt = self.time_sec - self.Previous_group[ID].time
+
+                    velo = (current_center - precenter) / dt
 
                     cen_velo = [current_center[0] , current_center[1] , velo[0] , velo[1]]
                     
                     
                     _x , _y , _vx , _vy = self.Previous_group[ID].predict_kf()
-                    self.Current_group[ID].position = map_group[j]
-                    self.Current_group[ID].velocity = (_vx , _vy)
-                    self.Current_group[ID].center = (_x,_y)
-                    self.Current_group[ID].radius = _radius_group[j]
 
-                    print("Distance" , (current_center - precenter) )
-                    print("velo" , velo)
-                    print('velo KF' , self.Current_group[ID].velocity)
+                    self.Current_group[ID].position = map_group[j]
+                    self.Current_group[ID].velocity = velo
+                    self.Current_group[ID].Predicted_KF = ( _x , _y , _vx , _vy)
+                    self.Current_group[ID].center = current_center
+                    self.Current_group[ID].radius = _radius_group[j]
+                    self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
+                    self.Current_group[ID]._missing_frame = 0
+
+                    # print("ID    " , ID )
+                    # print("Distance" , (current_center - precenter) )
+                    # print("velo" , velo)
+                    # print('velo KF' , self.Current_group[ID].velocity)
 
                     # if np.linalg.norm(np.array([_x,_y])- current_center) < 1: 
                     #     pass
                     # else : 
                     self.Current_group[ID].type = _type_group[j]
-                    self.Current_group[ID].time = 0.0
-
+                    self.Current_group[ID].time = self.time_sec
                     self.Current_group[ID].kf.update(np.array(cen_velo))
                 
                 ### MISSING OBSTACLE 
@@ -279,28 +308,35 @@ class Clustering(Node):
                         _argmin_distance = np.argmin(distance)
                         _min_distance = np.min(distance)
                         _index = _argmin_distance
-                        print("MIN" , _min_distance)
-                        print("_index" , _index)
+                        # print("MIN" , _min_distance)
+                        # print("_index" , _index)
 
-                        if _min_distance  < 0.1 and abs(r - es_r[_index]) < 0.1 and abs(es_r[_index]) < 3: 
-                            print("THIS IS REAL OBSTACLE ID : " , ID)
+                        if _min_distance  < 0.1 and \
+                            abs(r - es_r[_index]) < 0.1 and \
+                            abs(es_r[_index]) < 3: 
+                            print("THIS IS REAL OBSTACLE ID : {}".format(ID))
                             
                             self.Current_group[ID].position = wall_group[_index]
                             self.Current_group[ID].velocity = (_vx , _vy)
                             self.Current_group[ID].center = (_x,_y)
                             self.Current_group[ID].radius = es_r[_index]
+                            self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
+                            self.Current_group[ID]._missing_frame = 0
+                            self.Current_group[ID].Predicted_KF = ( _x , _y , _vx , _vy)
 
                             # if np.linalg.norm(np.array([_x,_y])- current_center) < 1: 
                             #     pass
                             # else : 
                             self.Current_group[ID].type = "Obstacle"
-                            self.Current_group[ID].time = 0.0
+                            self.Current_group[ID].time = self.time_sec
 
                             precenter = np.array(self.Previous_group[ID].center)
 
                             current_center = np.array(es_center[_index])
 
-                            velo = (current_center - precenter) / self.Previous_group[ID].time_step
+                            dt = self.time_sec -self.Previous_group[ID].time
+
+                            velo = (current_center - precenter) / dt
 
                             cen_velo = [current_center[0] , current_center[1] , velo[0] , velo[1]]
 
@@ -311,7 +347,9 @@ class Clustering(Node):
                             self.current_object +=1
 
                         else : 
-                            del self.Current_group[ID]
+                            self.Current_group[ID]._missing_frame +=1
+                            if self.Current_group[ID]._missing_frame > self.Current_group[ID].max_missing_frame  :
+                                del self.Current_group[ID]
 
                 ####### Maybe New object
                 if self.current_object > self.previous_object :
@@ -327,7 +365,7 @@ class Clustering(Node):
                             group.center = _center_group[i]
                             group.radius = _radius_group[i]
                             group.type = _type_group[i] 
-                            group.time = 0.
+                            group.time = self.time_sec
 
                     
                             # if group.type == "Obstacle" :
@@ -358,13 +396,28 @@ class Clustering(Node):
                         #     pass
                         # else : 
                         self.Current_group[ID].type = "WALL"
-                        self.Current_group[ID].time = 0.0
+                        self.Current_group[ID].time = self.time_sec
 
 
                 
         self.visualize_grouped_points(self.Current_group)
 
-        self.Previous_group = self.Current_group
+        if self._Start == False and self.Previous_group != {}:
+            print(self.Current_group)
+            for ID in self.Current_group:
+                if self.Current_group[ID].type == "Obstacle" and ID in self.Previous_group.keys():
+                    print("============== ID : {} =================" . format(ID))  
+                    print()
+                    distance = np.array(self.Current_group[ID].center) - np.array(self.Previous_group[ID].center)
+                    dt = self.time_sec - self.Previous_group[ID].time
+                    
+                    print("Distance :" , distance)
+                    print("dt :",dt)
+                    print("Center :" , self.Current_group[ID].center)
+                    print('velo :' , self.Current_group[ID].velocity)
+                    print("Predicted KF :" , self.Current_group[ID].Predicted_KF)
+
+        self.Previous_group = copy.deepcopy(self.Current_group)
         self.previous_object= self.current_object
 
         # with open('log.npy', 'wb') as f:
