@@ -92,7 +92,7 @@ LEARNING_RATE   = 0.003
 TAU             = 0.003
 
 OBSERVE_STEPS   = 25000     # At training start random actions are taken for N steps for better exploration
-OBSERVE_STEPS   = 250     # At training start random actions are taken for N steps for better exploration
+OBSERVE_STEPS   = 2500     # At training start random actions are taken for N steps for better exploration
 STEP_TIME       = 0.01      # Delay between steps, can be set to 0
 EPSILON_DECAY   = 0.9995    # Epsilon decay per step
 EPSILON_MINIMUM = 0.05

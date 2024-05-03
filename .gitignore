@@ -161,20 +161,4 @@ cython_debug/
 
 
 # Ignore directories
-cocoam/build
-cocoam/install
-cocoam/log
-
-Example/EX1/build
-Example/EX1/install
-Example/EX1/log
-Example/EX1/src/carver_navigation
-
-Example/EX1_B/build
-Example/EX1_B/install
-Example/EX1_B/log
-Example/EX1_B/src/carver_navigation
-
-zhbbot/build
-zhbbot/install
-zhbbot/log
+carverabwu/src/awbu_drl/model/AthimetPC
