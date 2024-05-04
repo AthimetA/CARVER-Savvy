@@ -39,10 +39,6 @@ install(PROGRAMS
 install(DIRECTORY
   # add directories here
   scripts
-  scripts/common
-  scripts/drl_gazebo
-  scripts/settings
-  scripts/drl_environment
   config
   launch
   DESTINATION share/${PROJECT_NAME})
