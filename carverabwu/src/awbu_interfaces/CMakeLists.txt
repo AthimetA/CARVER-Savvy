@@ -41,6 +41,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/EnvReady.srv"
   "srv/Goal.srv"
   "srv/ObstacleStart.srv"
+  
+  "msg/Obstacle.msg"
   # DEPENDENCIES std_msgs
   # DEPENDENCIES nav_msgs
 )

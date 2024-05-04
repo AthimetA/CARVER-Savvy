@@ -18,7 +18,12 @@ import utils
 import copy
 import numpy as np
 
-TIME_STEP  = 1/5 #hz - > second
+from awbu_interfaces.msg import Obstacle
+
+TIME_STEP  = 1/30 #hz - > second
+ALPHA = 0.5 # for CP
+MIN_DISTANCE = 0.1 # for tracking Missing object using KALMAN
+_RADIUS = 1 # object should have low radius
 
 class Object:
     def __init__(self) -> None:
@@ -83,6 +88,8 @@ class Clustering(Node):
         self.publisher_ = self.create_publisher(MarkerArray, 'Obstacle', 10)
         self.publisher2_= self.create_publisher(MarkerArray, 'Obstacle_ob', 10)
 
+        self.CP_publisher = self.create_publisher(Obstacle, 'Obstacle_CP', 10)
+
         qos_clock = QoSProfile(
             depth=1,
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -115,6 +122,23 @@ class Clustering(Node):
         self.time_sec = None
         self.position = None
 
+        
+
+    def _obstacle_pubish(self,_id,center_x,center_y,velocity_x,velocity_y,CP):
+
+        self._OBSTACLE = Obstacle()
+
+        self._OBSTACLE.id = _id
+        self._OBSTACLE.pose_x = center_x
+        self._OBSTACLE.pose_y = center_y 
+        self._OBSTACLE.velocity_x = velocity_x
+        self._OBSTACLE.velocity_y = velocity_y
+        self._OBSTACLE.cp = CP
+
+        self.CP_publisher.publish(self._OBSTACLE)
+
+
+
     def clock_callback(self, msg: Clock):
         # Get current time
         seconds= msg.clock.sec 
@@ -138,6 +162,8 @@ class Clustering(Node):
     
     def scan_callback(self ,msg):
         self.scan = msg
+        self.max_scan = msg.range_max
+        self.min_scan = msg.range_min
 
         
 
@@ -245,38 +271,39 @@ class Clustering(Node):
 
                 # print(associations)
                 for ID , j in associations : 
-                    precenter = np.array(self.Previous_group[ID].center)
+                    if _radius_group[j] < _RADIUS : 
+                        precenter = np.array(self.Previous_group[ID].center)
 
-                    current_center = np.array(_center_group[j])
+                        current_center = np.array(_center_group[j])
 
-                    dt = self.time_sec - self.Previous_group[ID].time
+                        dt = self.time_sec - self.Previous_group[ID].time
 
-                    velo = (current_center - precenter) / dt
+                        velo = (current_center - precenter) / dt
 
-                    cen_velo = [current_center[0] , current_center[1] , velo[0] , velo[1]]
-                    
-                    
-                    _x , _y , _vx , _vy = self.Previous_group[ID].predict_kf()
+                        cen_velo = [current_center[0] , current_center[1] , velo[0] , velo[1]]
+                        
+                        
+                        _x , _y , _vx , _vy = self.Previous_group[ID].predict_kf()
 
-                    self.Current_group[ID].position = map_group[j]
-                    self.Current_group[ID].velocity = velo
-                    self.Current_group[ID].Predicted_KF = ( _x , _y , _vx , _vy)
-                    self.Current_group[ID].center = current_center
-                    self.Current_group[ID].radius = _radius_group[j]
-                    self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
-                    self.Current_group[ID]._missing_frame = 0
+                        self.Current_group[ID].position = map_group[j]
+                        self.Current_group[ID].velocity = velo
+                        self.Current_group[ID].Predicted_KF = ( _x , _y , _vx , _vy)
+                        self.Current_group[ID].center = current_center
+                        self.Current_group[ID].radius = _radius_group[j]
+                        self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
+                        self.Current_group[ID]._missing_frame = 0
 
-                    # print("ID    " , ID )
-                    # print("Distance" , (current_center - precenter) )
-                    # print("velo" , velo)
-                    # print('velo KF' , self.Current_group[ID].velocity)
+                        # print("ID    " , ID )
+                        # print("Distance" , (current_center - precenter) )
+                        # print("velo" , velo)
+                        # print('velo KF' , self.Current_group[ID].velocity)
 
-                    # if np.linalg.norm(np.array([_x,_y])- current_center) < 1: 
-                    #     pass
-                    # else : 
-                    self.Current_group[ID].type = _type_group[j]
-                    self.Current_group[ID].time = self.time_sec
-                    self.Current_group[ID].kf.update(np.array(cen_velo))
+                        # if np.linalg.norm(np.array([_x,_y])- current_center) < 1: 
+                        #     pass
+                        # else : 
+                        self.Current_group[ID].type = _type_group[j]
+                        self.Current_group[ID].time = self.time_sec
+                        self.Current_group[ID].kf.update(np.array(cen_velo))
                 
                 ### MISSING OBSTACLE 
                 #### this maybe obstacle but tracking failed to track so we check again 
@@ -311,9 +338,9 @@ class Clustering(Node):
                         # print("MIN" , _min_distance)
                         # print("_index" , _index)
 
-                        if _min_distance  < 0.1 and \
-                            abs(r - es_r[_index]) < 0.1 and \
-                            abs(es_r[_index]) < 3: 
+                        if _min_distance  < MIN_DISTANCE and \
+                            abs(r - es_r[_index]) < MIN_DISTANCE and \
+                            abs(es_r[_index]) < _RADIUS: 
                             print("THIS IS REAL OBSTACLE ID : {}".format(ID))
                             
                             self.Current_group[ID].position = wall_group[_index]
@@ -357,25 +384,27 @@ class Clustering(Node):
                     ix = [x for x in range(len(map_group)) if x not in index_in_associations]
                     for i in ix :
                         if _center_group[i] != None :
-                            group = Object()
                             
-                            group.ID = self.ID 
-                            group.position = map_group[i]
-                            group.velocity = (0. , 0.) 
-                            group.center = _center_group[i]
-                            group.radius = _radius_group[i]
-                            group.type = _type_group[i] 
-                            group.time = self.time_sec
+                            if _radius_group[i] < _RADIUS : 
+                                group = Object()
+                                
+                                group.ID = self.ID 
+                                group.position = map_group[i]
+                                group.velocity = (0. , 0.) 
+                                group.center = _center_group[i]
+                                group.radius = _radius_group[i]
+                                group.type = _type_group[i] 
+                                group.time = self.time_sec
 
-                    
-                            # if group.type == "Obstacle" :
-                            cen_velo = [_center_group[i][0] , _center_group[i][1] , 0. , 0.]
-                            group.kf.update(np.array(cen_velo))
+                        
+                                # if group.type == "Obstacle" :
+                                cen_velo = [_center_group[i][0] , _center_group[i][1] , 0. , 0.]
+                                group.kf.update(np.array(cen_velo))
 
 
-                            self.Current_group[self.ID] = group
+                                self.Current_group[self.ID] = group
 
-                            self.ID +=1
+                                self.ID +=1
 
 
 
@@ -402,6 +431,13 @@ class Clustering(Node):
                 
         self.visualize_grouped_points(self.Current_group)
 
+        ID_LIST = [] 
+        CENTER_X = []
+        CENTER_Y = []
+        VELOCITY_X = []
+        VELOCITY_Y = []
+        CP_LIST = []
+
         if self._Start == False and self.Previous_group != {}:
             print(self.Current_group)
             for ID in self.Current_group:
@@ -411,11 +447,52 @@ class Clustering(Node):
                     distance = np.array(self.Current_group[ID].center) - np.array(self.Previous_group[ID].center)
                     dt = self.time_sec - self.Previous_group[ID].time
                     
+                    center_kf = [self.Current_group[ID].Predicted_KF [0] , self.Current_group[ID].Predicted_KF[1]]
+                    velocity_kf = [self.Current_group[ID].Predicted_KF [2] , self.Current_group[ID].Predicted_KF[3]]
+
                     print("Distance :" , distance)
                     print("dt :",dt)
                     print("Center :" , self.Current_group[ID].center)
                     print('velo :' , self.Current_group[ID].velocity)
                     print("Predicted KF :" , self.Current_group[ID].Predicted_KF)
+
+                    #### Calculate CP \
+                    n = len(self.Current_group[ID].position)
+                    points = self.Current_group[ID].position
+                    
+                    pos = np.array([x_robot , y_robot])
+                    dist = []
+                    for i in range(n):
+                        dist.append(np.math.sqrt((pos[0] - points[i][0])**2 + (pos[1] - points[i][1])**2))
+
+                    Dist_o = min(dist)
+                    Vr = np.array([self.linear_twist.x , self.linear_twist.y])
+                    Vo = np.array(self.Current_group[ID].velocity)
+                    Vr_prime = Vr - Vo
+                    t = Dist_o / np.sqrt(Vr_prime[0]**2 + Vr_prime[1]**2)
+
+                    Pc_ttc = min([ 1, dt / t])
+                    Imax = self.max_scan
+                    Imin = self.min_scan 
+
+                    Pc_dto = (Imax - Dist_o) / (Imax - Imin)
+
+                    
+                    CP = ALPHA * Pc_ttc + (1-ALPHA) * Pc_dto
+
+                    print("Pc_ttc : " ,Pc_ttc)
+                    print("Pc_dto : " ,Pc_dto)
+                    print("Collision Probability (CP) : " , CP)
+
+                    ID_LIST.append(ID)
+                    CENTER_X.append(self.Current_group[ID].center[0])
+                    CENTER_Y.append(self.Current_group[ID].center[1])
+                    VELOCITY_X.append(self.Current_group[ID].velocity[0])
+                    VELOCITY_Y.append(self.Current_group[ID].velocity[1])
+                    CP_LIST.append(CP)
+
+
+        self._obstacle_pubish(ID_LIST , CENTER_X , CENTER_Y , VELOCITY_X , VELOCITY_Y , CP_LIST)
 
         self.Previous_group = copy.deepcopy(self.Current_group)
         self.previous_object= self.current_object
@@ -451,9 +528,12 @@ class Clustering(Node):
                 position = []
                 for pos in temp[ID].position :
                     position.append(utils.transform_global_to_local(robot_pose , pos))
+
                 temp[ID].position = position
                 temp[ID].velocity = robot_pose,point_clusters[ID].velocity
-                temp[ID].center = utils.transform_global_to_local(robot_pose,point_clusters[ID].center)
+                # center_kf = [point_clusters[ID].Predicted_KF [0] , point_clusters[ID].Predicted_KF[1]]
+                center = point_clusters[ID].center
+                temp[ID].center = utils.transform_global_to_local(robot_pose ,center)
 
             elif temp[ID].type == "WALL" :
                 position = []
@@ -526,13 +606,16 @@ class Clustering(Node):
 
                 center = temp[ID].center 
                 radius = temp[ID].radius
+                
+                scaled_radius = radius / 0.5
 
                 marker.header.frame_id = "base_link"
                 marker.type = Marker.CYLINDER
                 marker.action = Marker.ADD
-                marker.scale.x = 1.  # Cylinder diameter
-                marker.scale.y = 1.  # Cylinder diameter
-                marker.scale.z = 1.  # Cylinder height
+                
+                marker.scale.x = scaled_radius  # Cylinder diameter
+                marker.scale.y = scaled_radius  # Cylinder diameter
+                marker.scale.z = scaled_radius  # Cylinder height
 
                 color = self.color_track[ID]
 

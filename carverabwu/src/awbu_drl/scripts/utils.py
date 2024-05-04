@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+from Hungarian import Hungarian 
 from scipy.optimize import linear_sum_assignment
 import math
 import numpy as np
@@ -161,74 +161,7 @@ def Clustering(scan_in , dth = 0.2):
 
     return clusters
 
-# def laser_scan_to_coordinates(laser_scan_msg):
-#     """
-#     Convert a LaserScan message to a list of 2D coordinates (x, y).
-    
-#     Parameters:
-#         laser_scan_msg (sensor_msgs.msg.LaserScan): The LaserScan message to convert.
 
-#     Returns:
-#         list: A list of 2D coordinates (x, y).
-#     """
-#     coordinates = []
-#     angle_min = laser_scan_msg.angle_min
-#     angle_increment = laser_scan_msg.angle_increment
-#     range_values = laser_scan_msg.ranges
-
-#     for i, range_value in enumerate(range_values):
-#         angle = angle_min + angle_increment * i
-#         x = range_value * np.cos(angle)  # Assuming laser is mounted at the origin
-#         y = range_value * np.sin(angle)  # Assuming laser is mounted at the origin
-#         coordinates.append((x, y))
-
-#     return coordinates
-
-
-
-# def Clustering(scan_in , Dmax = 0.4):
-
-#     pos = laser_scan_to_coordinates(scan_in)
-#     cluster = []
-#     group = []
-#     for i in range(1,len(pos)) : 
-        
-#         pn = np.array(pos[i])
-#         pn_1 = np.array(pos[i-1])
-        
-#         ## Euclidean
-#         dist = np.linalg.norm(pn - pn_1)
-
-#         if dist > Dmax :
-#             group.append((pn_1[0],pn_1[1]))
-#             cluster.append(group)
-#             group = []
-
-#         else : group.append((pn_1[0],pn_1[1]))
-    
-#     #for last point
-#     pn      = np.array(pos[0])
-#     pn_1    = np.array(pos[-1])
-#     pn_2    = np.array(pos[-2])
-
-#     dist1   = np.linalg.norm(pn - pn_1)
-#     dist2   = np.linalg.norm(pn_2 - pn_1)
-
-#     if dist1 < Dmax and dist2 < Dmax : 
-#         temm = []
-#         temm += cluster[0] + cluster[-1]
-#         temm.append((pn_1[0],pn_1[1]))
-#         del cluster[0]
-#         del cluster[-1]
-#         cluster.append(temm)
-#     elif dist1 < Dmax : cluster[0].append((pn_1[0],pn_1[1]))
-#     elif dist2 < Dmax : cluster[-1].append((pn_1[0],pn_1[1]))
-#     else : cluster.append([(pn_1[0],pn_1[1])])
-
-#     return cluster
-
-
-from Hungarian import Hungarian 
 
 def association(previous_group,group):
         '''
@@ -277,71 +210,6 @@ def association(previous_group,group):
 
 ########### Classifying object
 
-def check_line_conditions(slopes , thres_vertical=80 , thres_horizontal=0.01, error_ =  0.1 , thres_t = 0.9):
-    '''
-    thres_vertical  :  threshold of grad for vertical line
-    thres_horizontal : threshold of grad for horizontal line
-    error_           : threshold of error -> all of grad should similar if it's line
-    thres_t          : threshold for proportion -> to check most of all value should have huge value if it's vertical line. horizontal line otherwise
-    '''
-    check = 0
-    check2 = 0
-    # print(max(slopes))
-    for i in slopes : 
-        if abs(i) > thres_vertical : check +=1
-        if abs(i) < thres_horizontal : check2 +=1
-
-    # print("1," , check)
-    # print("2," , check2)
-    if check >= len(slopes)//3 or check2 >= len(slopes)//3 : return True
-
-
-    slopes = np.array(slopes)
-    num_elements = len(slopes)
-
-    greater         = np.sum(np.abs(slopes) > thres_vertical)
-    less            = np.sum(np.abs(slopes) < thres_horizontal)
-
-    abs_mean = np.abs(np.mean(slopes))
-    similarly       = np.sum(np.abs(np.abs(slopes) - abs_mean)) < error_
-    
-    proportion_greater = greater / num_elements
-    proportion_less = less / num_elements
-    proportion_similarly = similarly / num_elements
-    if proportion_less > thres_t or proportion_greater > thres_t or proportion_similarly > thres_t:
-        return True
-    else:
-        return False
-    
-
-    
-def is_line(points):
-    """
-    Check if the given points form a straight line.
-
-    Parameters:
-    - points: A list of tuples representing the (x, y) coordinates of the points.
-
-    Returns:
-    - True if the points form a straight line, False otherwise.
-    """
-    if len(points) < 3:
-        return True
-    
-    # Calculate the slopes between consecutive points
-    slopes = []
-    for i in range(len(points)-1):
-        dx = points[i+1][0] - points[i][0]
-        if dx == 0:
-            slope = np.inf  # vertical line
-        else:
-            slope = (points[i+1][1] - points[i][1]) / dx
-
-        slopes.append(slope)
-    
-    return check_line_conditions(slopes)
-
-
 def fit_line_to_points(points):
     # Extract x and y coordinates from the list of points
     x_coords, y_coords = zip(*points)
@@ -357,7 +225,7 @@ def calculate_distance(point, m, c):
     x, y = point
     return abs(y - (m * x + c)) / np.sqrt(1 + m**2)
 
-def is_oblique_line(points, distance_threshold = 0.01 , percentage_threshold = 0.8 ):
+def is_oblique_line(points, distance_threshold = 0.01 , percentage_threshold = 0.7 ):
     # Fit a line to the points
     ###### 
 
