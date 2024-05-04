@@ -67,7 +67,7 @@ REAL_N_SCAN_SAMPLES         = 40
 
 REAL_ARENA_LENGTH           = 4.2   # meters
 REAL_ARENA_WIDTH            = 4.2   # meters
-REAL_SPEED_LINEAR_MAX       = 0.22  # in m/s
+REAL_SPEED_LINEAR_MAX       = 2.0  # in m/s
 REAL_SPEED_ANGULAR_MAX      = 2.0   # in rad/s
 
 REAL_LIDAR_CORRECTION       = 0.40  # meters, subtracted from the real LiDAR values
@@ -92,7 +92,7 @@ LEARNING_RATE   = 0.003
 TAU             = 0.003
 
 OBSERVE_STEPS   = 25000     # At training start random actions are taken for N steps for better exploration
-OBSERVE_STEPS   = 2500     # At training start random actions are taken for N steps for better exploration
+OBSERVE_STEPS   = 250     # At training start random actions are taken for N steps for better exploration
 STEP_TIME       = 0.01      # Delay between steps, can be set to 0
 EPSILON_DECAY   = 0.9995    # Epsilon decay per step
 EPSILON_MINIMUM = 0.05

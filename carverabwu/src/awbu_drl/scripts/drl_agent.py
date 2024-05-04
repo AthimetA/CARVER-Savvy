@@ -50,8 +50,8 @@ class DrlAgent(Node):
     def __init__(self,
     algorithm = "td3",
     training = True,
-    load_session = 'td3_1_stage_1', # Example : 'td3_0_stage_1'
-    load_episode = 0,
+    load_session = '', # Example : 'td3_0_stage_1'
+    load_episode = 7400,
     real_robot = False
     ):
         super().__init__("DrlAgentNode")
@@ -106,7 +106,7 @@ class DrlAgent(Node):
         #                             Model loading                             #
         # ===================================================================== #
 
-        self.sm = StorageManager(self.algorithm, self.load_session, self.episode, self.device, self.stage)
+        self.sm = StorageManager(self.algorithm, self.stage, self.device)
         
         # If loading a session, load the model
         if self.load_session != '':
@@ -122,7 +122,7 @@ class DrlAgent(Node):
             print(f"global steps: {self.total_steps}")
             print(f"loaded model {self.load_session} (eps {self.episode}): {self.model.get_model_parameters()}")
         else:
-            self.sm.new_session_dir(self.stage)
+            # self.sm.new_session_dir(self.stage)
             self.sm.store_model(self.model)
 
         self.get_logger().info(bcolors.WARNING + f"Session Iteration: {self.sm.session}" + bcolors.ENDC)
