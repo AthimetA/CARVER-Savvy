@@ -1,5 +1,5 @@
 import numpy as np
-from settings.constparams import COLLISION_OBSTACLE, COLLISION_WALL, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM
+from settings.constparams import COLLISION, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM
 import time
 import os
 
@@ -125,12 +125,11 @@ class Logger():
             self.test_swerving.append(swerving_sum/step)
         success_count = self.test_outcome[SUCCESS]
 
-        self.file_log.write(f"{self.test_entry}, {outcome}, {step}, {episode_duration}, {distance_traveled}, {self.test_outcome[SUCCESS]}/{self.test_outcome[COLLISION_WALL]}/{self.test_outcome[COLLISION_OBSTACLE]}/{self.test_outcome[TIMEOUT]}/{self.test_outcome[TUMBLE]}\n")
+        self.file_log.write(f"{self.test_entry}, {outcome}, {step}, {episode_duration}, {distance_traveled}, {self.test_outcome[SUCCESS]}/{self.test_outcome[COLLISION]}/{self.test_outcome[TIMEOUT]}/{self.test_outcome[TUMBLE]}\n")
         if self.test_entry > 0 and self.test_entry % 100 == 0:
             self.update_comparison_file(self.test_entry, self.test_outcome[SUCCESS] / (self.test_entry / 100), 0)
             self.file_log.write(f"Successes: {self.test_outcome[SUCCESS]} ({self.test_outcome[SUCCESS]/self.test_entry:.2%}), "
-            f"collision (wall): {self.test_outcome[COLLISION_WALL]} ({self.test_outcome[COLLISION_WALL]/self.test_entry:.2%}), "
-            f"collision (obs): {self.test_outcome[COLLISION_OBSTACLE]} ({self.test_outcome[COLLISION_OBSTACLE]/self.test_entry:.2%}), "
+            f"collision: {self.test_outcome[COLLISION]} ({self.test_outcome[COLLISION]/self.test_entry:.2%}), "
             f"timeouts: {self.test_outcome[TIMEOUT]}, ({self.test_outcome[TIMEOUT]/self.test_entry:.2%}), "
             f"tumbles: {self.test_outcome[TUMBLE]}, ({self.test_outcome[TUMBLE]/self.test_entry:.2%}), ")
             if success_count > 0:
@@ -139,8 +138,7 @@ class Logger():
                                     f"duration: {sum(self.test_duration)/success_count:.3f}\n")
         if self.test_entry > 0:
             print(f"Successes: {self.test_outcome[SUCCESS]} ({self.test_outcome[SUCCESS]/self.test_entry:.2%}), "
-            f"collision (wall): {self.test_outcome[COLLISION_WALL]} ({self.test_outcome[COLLISION_WALL]/self.test_entry:.2%}), "
-            f"collision (obs): {self.test_outcome[COLLISION_OBSTACLE]} ({self.test_outcome[COLLISION_OBSTACLE]/self.test_entry:.2%}), "
+            f"collision: {self.test_outcome[COLLISION]} ({self.test_outcome[COLLISION]/self.test_entry:.2%}), "
             f"timeouts: {self.test_outcome[TIMEOUT]}, ({self.test_outcome[TIMEOUT]/self.test_entry:.2%}), "
             f"tumbles: {self.test_outcome[TUMBLE]}, ({self.test_outcome[TUMBLE]/self.test_entry:.2%}), ")
             if success_count > 0:

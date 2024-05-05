@@ -1,4 +1,4 @@
-from settings.constparams import REWARD_FUNCTION, COLLISION_OBSTACLE, COLLISION_WALL, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM
+from settings.constparams import REWARD_FUNCTION, COLLISION, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM
 
 goal_dist_initial = 0
 
@@ -30,7 +30,7 @@ def get_reward_A(succeed, action_linear, action_angular, goal_dist, goal_angle, 
 
         if succeed == SUCCESS:
             reward += 2500
-        elif succeed == COLLISION_OBSTACLE or succeed == COLLISION_WALL:
+        elif succeed == COLLISION:
             reward -= 2000
         return float(reward)
 

@@ -12,9 +12,9 @@ class Graph():
     def __init__(self):
         plt.show()
 
-        self.session_dir = ""
-        self.legend_labels = ['Unknown', 'Success', 'Collision Wall', 'Collision Dynamic', 'Timeout', 'Tumble']
-        self.legend_colors = ['b', 'g', 'r', 'c', 'm', 'y']
+        self.session_dir = '' # Waiting for session_dir
+        self.legend_labels = ['Unknown', 'Success', 'Collision', 'Timeout', 'Tumble']
+        self.legend_colors = ['b', 'g', 'r', 'c', 'm']
 
         self.outcome_histories = []
 
@@ -55,7 +55,7 @@ class Graph():
         # Plot outcome history
         for idx in range(len(self.data_outcome_history)):
             if idx == 0:
-                self.outcome_histories = [[0],[0],[0],[0],[0],[0]]
+                self.outcome_histories = [[0],[0],[0],[0],[0]]
                 self.outcome_histories[self.data_outcome_history[0]][0] += 1
             else:
                 for outcome_history in self.outcome_histories:

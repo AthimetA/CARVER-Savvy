@@ -9,7 +9,7 @@ from geometry_msgs.msg import Quaternion
 
 from settings.constparams import ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS, ENABLE_TRUE_RANDOM_GOALS
 
-from settings.constparams import SUCCESS, COLLISION_WALL, COLLISION_OBSTACLE, TIMEOUT, TUMBLE
+from settings.constparams import SUCCESS, COLLISION, TIMEOUT, TUMBLE
 
 COLLITION_MARGIN = 0.5 # Margin to be added to the obstacles to calculate the collision [m]
 
@@ -42,10 +42,8 @@ def read_stage(stage=None):
 def translate_outcome(outcome):
     if outcome == SUCCESS:
         return "SUCCESS"
-    elif outcome == COLLISION_WALL:
-        return "COLL_WALL"
-    elif outcome == COLLISION_OBSTACLE:
-        return "COLL_OBST"
+    elif outcome == COLLISION:
+        return "COLLISION"
     elif outcome == TIMEOUT:
         return "TIMEOUT"
     elif outcome == TUMBLE:

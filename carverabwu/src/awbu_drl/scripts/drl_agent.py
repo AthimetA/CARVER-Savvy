@@ -87,6 +87,10 @@ class DrlAgent(Node):
         self.total_steps = 0
         self.observe_steps = OBSERVE_STEPS
 
+        # ===================================================================== #
+        #                             Model loading                             #
+        # ===================================================================== #
+
         # Initialize the model
         self.model = TD3(self.device, self.sim_speed)
         self.get_logger().info(bcolors.OKBLUE + f"Algorithm: {self.algorithm}, Model Initialized" + bcolors.ENDC)
@@ -100,10 +104,7 @@ class DrlAgent(Node):
         self.graph = Graph()
         self.get_logger().info(bcolors.OKBLUE + "Graph Initialized" + bcolors.ENDC)
 
-        # ===================================================================== #
-        #                             Model loading                             #
-        # ===================================================================== #
-
+        # Initialize the storage manager
         self.sm = StorageManager(algorithm  =   self.algorithm, # Algorithm used
                                  stage      =   self.stage, # Stage number
                                  device     =   self.device # Torch device
@@ -133,9 +134,9 @@ class DrlAgent(Node):
             self.sm.new_session()
             self.sm.store_model(self.model)
 
-        self.get_logger().info(bcolors.WARNING + f"Session Iteration: {self.sm.session}" + bcolors.ENDC)
         self.get_logger().info(bcolors.OKBLUE + "Storage Manager Initialized" + bcolors.ENDC)
 
+        # Update graph session dir
         self.graph.session_dir = self.sm.session_dir
 
         # Initialize the logger
@@ -173,6 +174,8 @@ class DrlAgent(Node):
         self.agent_status = "IDLE"
 
         self.process_start_time = time.perf_counter_ns()
+
+        self.get_logger().info(bcolors.OKGREEN + "DRL Agent Node Initialized, Ready to Start..." + bcolors.ENDC)
 
         self.agent_process()
 

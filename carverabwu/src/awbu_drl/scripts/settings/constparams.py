@@ -115,8 +115,7 @@ FRAME_SKIP  = 4             # Number of frames skipped in between subsequent fra
 # Episode outcome enumeration
 UNKNOWN = 0
 SUCCESS = 1
-COLLISION_WALL = 2
-COLLISION_OBSTACLE = 3
-TIMEOUT = 4
-TUMBLE = 5
-RESULTS_NUM = 6
+COLLISION = 2
+TIMEOUT = 3
+TUMBLE = 4
+RESULTS_NUM = 5

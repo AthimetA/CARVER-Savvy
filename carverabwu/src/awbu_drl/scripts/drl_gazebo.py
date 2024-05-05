@@ -55,7 +55,7 @@ from settings.constparams import EPISODE_TIMEOUT_SECONDS, SPEED_LINEAR_MAX, SPEE
                                  LINEAR_VELOCITY_LOC, ANGULAR_VELOCITY_LOC
 
 # DRL ALGORITHM SETTINGS
-from settings.constparams import UNKNOWN, SUCCESS, COLLISION_WALL, COLLISION_OBSTACLE, TIMEOUT, TUMBLE
+from settings.constparams import UNKNOWN, SUCCESS, COLLISION, TIMEOUT, TUMBLE
 
 # Robot specific settings
 from settings.constparams import NUM_SCAN_SAMPLES
@@ -307,7 +307,7 @@ class DRLGazebo(Node):
         # Collision
         elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
             self.get_logger().info(bcolors.FAIL + f"Episode done, Collision with obstacle: {self.obstacle_distance_nearest:.2f}" + bcolors.ENDC)
-            self._EP_succeed = COLLISION_OBSTACLE
+            self._EP_succeed = COLLISION
         # Tumble [row, pitch > 45°]
         elif np.abs(self.robot.row) > math.pi/4 or np.abs(self.robot.pitch) > math.pi/4:
             self.get_logger().info(bcolors.FAIL + f"Episode done, Tumble: {math.degrees(self.robot.row):.2f}, {math.degrees(self.robot.pitch):.2f}" + bcolors.ENDC)
