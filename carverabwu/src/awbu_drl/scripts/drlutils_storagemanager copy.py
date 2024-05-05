@@ -89,7 +89,7 @@ class StorageManager:
         model_path = os.path.join(self.session_dir, 'stage'+str(self.stage)+'_agent.pkl')
         try :
             with open(model_path, 'rb') as f:
-                return CpuUnpickler(f, self.map_location).load()
+                return CpuUnpickler(f, self.device).load()
         except FileNotFoundError:
             quit(f"The specified model: {model_path} was not found. Check whether you specified the correct stage {self.stage} and model name")
 

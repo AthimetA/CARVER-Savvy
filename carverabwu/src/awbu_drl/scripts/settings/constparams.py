@@ -7,7 +7,7 @@ ENABLE_STACKING          = False    # Enable processing multiple consecutive sca
 ENABLE_VISUAL            = False    # Meant to be used only during evaluation/testing phase
 ENABLE_TRUE_RANDOM_GOALS = False    # If false, goals are selected semi-randomly from a list of known valid goal positions
 ENABLE_DYNAMIC_GOALS     = False    # If true, goal difficulty (distance) is adapted according to current success rate
-MODEL_STORE_INTERVAL     = 100      # Store the model weights every N episodes
+MODEL_STORE_INTERVAL     = 5      # Store the model weights every N episodes
 GRAPH_DRAW_INTERVAL      = 10       # Draw the graph every N episodes (drawing too often will slow down training)
 GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N episodes
 
@@ -45,7 +45,7 @@ ARENA_LENGTH                = 15   # meters
 ARENA_WIDTH                 = 15   # meters
 
 # General
-EPISODE_TIMEOUT_SECONDS     = 80    # Number of seconds after which episode timeout occurs
+EPISODE_TIMEOUT_SECONDS     = 40    # Number of seconds after which episode timeout occurs
 SPEED_LINEAR_MAX            = 2.0  # m/s
 SPEED_ANGULAR_MAX           = 2.0   # rad/s
 

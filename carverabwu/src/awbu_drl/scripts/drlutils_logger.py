@@ -4,7 +4,17 @@ import time
 import os
 
 class Logger():
-    def __init__(self, training, machine_dir, session_dir, session, hyperparameters, model_config, stage, algorithm, load_episode):
+    def __init__(self,
+    training: bool, # Use for file naming
+    machine_dir: str,  # Use for comparison file
+    session_dir: str, # Use for log file
+    session: int, # Number of session
+    hyperparameters: str, # Hyperparameters used
+    model_config : str, # Model configuration
+    stage: int, # Stage number
+    algorithm: str, # Algorithm used
+    load_episode: int, # Episode number
+    ):
         self.test_entry = 0
         self.test_outcome = [0] * RESULTS_NUM
         self.test_distance = []
@@ -15,7 +25,7 @@ class Logger():
         self.session = session
         self.hyperparameters = hyperparameters
         self.model_config = model_config
-        self.stage = stage
+        self.stage = str(stage)
         self.algorithm = algorithm
 
         self.highest_reward = -np.inf

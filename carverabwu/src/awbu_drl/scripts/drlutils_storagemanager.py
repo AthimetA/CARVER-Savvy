@@ -7,6 +7,9 @@ import torch
 import json
 
 from env_utils import bcolors
+from settings.constparams import MODEL_STORE_INTERVAL
+
+NUMBER_OF_MODELS_TO_STORE = 3
 
 class StorageManager:
     def __init__(self,
@@ -65,8 +68,6 @@ class StorageManager:
             with open(self.metadata_path, 'w') as f:
                 json.dump(self.metadata, f)
 
-        print(bcolors.OKGREEN + f"Algorithm: {self.algorithm}, Session: {self.session}, Stage: {self.stage}, Episode: {self.episode}" + bcolors.ENDC)
-
         if not new_session:
             self.session_dir = os.path.join(self.algorithm_dir, f'{self.algorithm}_{self.session}')
             if not os.path.exists(self.session_dir):
@@ -86,11 +87,18 @@ class StorageManager:
         # Stage dir
         self.stage_dir = os.path.join(self.session_dir, f'stage_{self.stage}')
 
-        print(bcolors.OKGREEN + f"Session directory: {self.session_dir}" + bcolors.ENDC)
-
         # Create the stage directory if it does not exist
         if not os.path.exists(self.stage_dir):
             os.makedirs(self.stage_dir)
+
+        print(bcolors.OKCYAN + f"Algorithm: {self.algorithm}, Session: {self.session}, Stage: {self.stage}, Episode: {self.episode}" + bcolors.ENDC)
+
+        # Model directory
+        model_file_name = f'{self.algorithm}_agent_model.pkl'
+        self.model_dir = os.path.join(self.session_dir, model_file_name)
+
+        self.episode_to_delete = 1
+        self.delete_episode_flag = False
 
     '''
     
@@ -98,9 +106,61 @@ class StorageManager:
     
     '''
 
-    def delete_file(path):
+    def delete_file(self,path):
         if os.path.exists(path):
             os.remove(path)
+
+    def update_episode(self):
+        self.episode += 1
+        
+        if self.episode % MODEL_STORE_INTERVAL == 0:
+            # Update the episode number in the metadata
+            for item in self.metadata['info']:
+                if item['stage'] == self.stage:
+                    item['episode'] = self.episode
+                    break
+
+            with open(self.metadata_path, 'w') as f:
+                json.dump(self.metadata, f)
+
+    def new_session(self):
+
+        # Check if the session directory exists and episode is not 0
+        if os.path.exists(self.session_dir) and self.episode != 0:
+
+            # Create a new session with 0 episodes
+
+            self.session += 1
+            self.episode = 0
+
+            self.session_dir = os.path.join(self.algorithm_dir, f'{self.algorithm}_{self.session}')
+            os.makedirs(self.session_dir)
+
+            self.metadata['session'] = self.session
+            self.metadata["info"] = [   
+                    {
+                        'stage': self.stage,
+                        'episode': 0,
+                    }]
+
+            with open(self.metadata_path, 'w') as f:
+                json.dump(self.metadata, f)
+
+            # Stage dir
+            self.stage_dir = os.path.join(self.session_dir, f'stage_{self.stage}')
+
+            # Create the stage directory if it does not exist
+            if not os.path.exists(self.stage_dir):
+                os.makedirs(self.stage_dir)
+
+            print(bcolors.OKBLUE + f"Algorithm: {self.algorithm}, Session: {self.session}, Stage: {self.stage}, Episode: {self.episode}" + bcolors.ENDC)
+
+            # Model directory
+            model_file_name = f'{self.algorithm}_agent_model.pkl'
+            self.model_dir = os.path.join(self.session_dir, model_file_name)
+
+            self.episode_to_delete = 1
+            self.delete_episode_flag = False
 
     '''
     
@@ -111,21 +171,108 @@ class StorageManager:
 
     # Store the model structure when creating the model on the first episode
     def store_model(self, model):
-        model_file_name = f'{self.algorithm}_agent_model.pkl'
-        dir = os.path.join(self.stage_dir, model_file_name)
-        with open(dir, 'wb') as f:
+        with open(self.model_dir, 'wb') as f:
             pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
 
+    # Store the model weights
+    def network_save_weights(self, network, model_dir, stage, episode):
+        
+        # Save the model weights
+        network_filename = f'{network.name}_stage_{stage}_episode_{episode}.pt'
+        network_filepath = os.path.join(model_dir, network_filename)
 
+        print(f"saving {network.name} model weights")
 
+        # Save using torch.save
+        torch.save(network.state_dict(), network_filepath)
+
+    def save_session(self, networks, graph_pickle_data, replay_buffer):
+
+        episode = self.episode
+        print(bcolors.OKCYAN + f"Saving data for episode: {episode}, location: {self.stage_dir}" + bcolors.ENDC)
+
+        # Save the model weights for actor and critic networks
+        for network in networks:
+            self.network_save_weights(network, self.stage_dir, self.stage, episode)
+
+        # Store graph data
+        graph_file_name = f'graph_data_stage_{self.stage}_episode_{episode}.pkl'
+        with open(os.path.join(self.stage_dir, graph_file_name), 'wb') as f:
+            pickle.dump(graph_pickle_data, f, pickle.HIGHEST_PROTOCOL)
+
+        # Store latest buffer (can become very large, multiple gigabytes)
+        last_buffer_file_name = f'replay_buffer_stage_{self.stage}.pkl'
+        with open(os.path.join(self.stage_dir, last_buffer_file_name), 'wb') as f:
+            pickle.dump(replay_buffer, f, pickle.HIGHEST_PROTOCOL)
+
+        # Delete previous iterations (Restore only the last n models)
+        if self.episode > NUMBER_OF_MODELS_TO_STORE * MODEL_STORE_INTERVAL:
+            self.delete_episode_flag = True
+            self.episode_to_delete = self.episode - NUMBER_OF_MODELS_TO_STORE * MODEL_STORE_INTERVAL
+
+        if self.delete_episode_flag:
+            # Delete the model weights
+            for network in networks:
+                network_filename = f'{network.name}_stage_{self.stage}_episode_{self.episode_to_delete}.pt'
+                network_filepath = os.path.join(self.stage_dir, network_filename)
+                self.delete_file(network_filepath)
+
+            # Delete the graph data
+            graph_file_name = f'graph_data_stage_{self.stage}_episode_{self.episode_to_delete}.pkl'
+            graph_path = os.path.join(self.stage_dir, graph_file_name)
+            self.delete_file(graph_path)
+
+            print(bcolors.FAIL + f"Deleting episode: {self.episode_to_delete}" + bcolors.ENDC)
+        
+    '''
+    
+    Loading functions
+    
+    
+    '''
+    def load_model(self):
+        try :
+            with open(self.model_dir, 'rb') as f:
+                return CpuUnpickler(f, self.device).load()
+        except FileNotFoundError:
+            quit(f"The specified model: {self.model_dir} was not found. Check whether you specified the correct stage {self.stage} and model name")
+
+    def network_load_weights(self, network, model_dir, stage):
+        filepath = os.path.join(model_dir, f'{network.name}_stage_{stage}_episode_{self.episode}.pt')
+        print(f"loading: {network.name} model from file: {filepath}")
+        network.load_state_dict(torch.load(filepath, self.device))
+
+    def load_weights(self, networks):
+        for network in networks:
+            self.network_load_weights(network, self.stage_dir, self.stage)
+
+    def load_graphdata(self):
+        graph_file_name = f'graph_data_stage_{self.stage}_episode_{self.episode}.pkl'
+        graph_path = os.path.join(self.stage_dir, graph_file_name)
+        if os.path.exists(graph_path):
+            with open(graph_path, 'rb') as f:
+                return pickle.load(f)
+        else:
+            print(f"graph data does not exist: {graph_path}")
+            return None
+        
+    def load_replay_buffer(self, size):
+        last_buffer_file_name = f'replay_buffer_stage_{self.stage}.pkl'
+        buffer_path = os.path.join(self.stage_dir, last_buffer_file_name)
+        if (os.path.exists(buffer_path)):
+            with open(buffer_path, 'rb') as f:
+                return pickle.load(f)
+        else:
+            print(f"buffer does not exist: {buffer_path}")
+            return deque(maxlen=size)
 
 class CpuUnpickler(pickle.Unpickler):
-    def __init__(self, file, device):
-        self.device = device
+    def __init__(self, file, map_location):
+        self.map_location = map_location
         super(CpuUnpickler, self).__init__(file)
 
     def find_class(self, module, name):
         if module == 'torch.storage' and name == '_load_from_bytes':
-            return lambda b: torch.load(io.BytesIO(b), device=self.device)
+            return lambda b: torch.load(io.BytesIO(b), map_location=self.map_location)
         else:
             return super().find_class(module, name)

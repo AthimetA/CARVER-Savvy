@@ -48,11 +48,10 @@ from drlutils_visual import *
 
 class DrlAgent(Node):
     def __init__(self,
-    algorithm = "td3",
-    training = True,
-    load_session = '', # Example : 'td3_0_stage_1'
-    load_episode = 7400,
-    real_robot = False
+    algorithm : str = "td3",
+    training : bool = True,
+    real_robot : bool= False,
+    load_session : bool = True,
     ):
         super().__init__("DrlAgentNode")
 
@@ -68,7 +67,6 @@ class DrlAgent(Node):
         self.algorithm = algorithm
         self.training = int(training)
         self.load_session = load_session
-        self.episode = int(load_episode)
         self.real_robot = real_robot
 
         # ===================================================================== #
@@ -107,29 +105,35 @@ class DrlAgent(Node):
         # ===================================================================== #
 
         self.sm = StorageManager(self.algorithm, self.stage, self.device)
+
+        if not os.path.exists(self.sm.model_dir):
+            self.load_session = False
         
         # If loading a session, load the model
-        if self.load_session != '':
+        if self.load_session:
             # Delete the model
             del self.model
             self.model = self.sm.load_model()
-            self.get_logger().info(bcolors.OKGREEN + f"Model Loaded: {self.load_session} (eps {self.episode})" + bcolors.ENDC)
             self.model.device = self.device
             self.sm.load_weights(self.model.networks)
+            
+            # Load the replay buffer
             if self.training:
-                self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size, os.path.join(self.load_session, 'stage'+str(self.sm.stage)+'_latest_buffer.pkl'))
-            self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.episode)
-            print(f"global steps: {self.total_steps}")
-            print(f"loaded model {self.load_session} (eps {self.episode}): {self.model.get_model_parameters()}")
+                self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size)
+            # Load the graph data
+            self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
+
+            self.get_logger().info(bcolors.OKGREEN + f"Model Loaded: {self.model.get_model_parameters()} device: {self.model.device} total steps: {self.total_steps}" + bcolors.ENDC)      
+
         else:
-            # self.sm.new_session_dir(self.stage)
+            self.sm.new_session()
             self.sm.store_model(self.model)
 
         self.get_logger().info(bcolors.WARNING + f"Session Iteration: {self.sm.session}" + bcolors.ENDC)
         self.get_logger().info(bcolors.OKBLUE + "Storage Manager Initialized" + bcolors.ENDC)
 
         self.graph.session_dir = self.sm.session_dir
-        self.logger = Logger(self.training, self.sm.machine_dir, self.sm.session_dir, self.sm.session, self.model.get_model_parameters(), self.model.get_model_configuration(), str(self.stage), self.algorithm, self.episode)
+        # self.logger = Logger(self.training, self.sm.machine_dir, self.sm.session_dir, self.sm.session, self.model.get_model_parameters(), self.model.get_model_configuration(), str(self.stage), self.algorithm, self.episode)
         self.get_logger().info(bcolors.OKBLUE + "Logger Initialized" + bcolors.ENDC)
 
         # assert False, "Visual not implemented yet"
@@ -358,23 +362,27 @@ class DrlAgent(Node):
                 print(f"Observe phase: {self.total_steps}/{self.observe_steps} steps")
                 return
 
-            self.episode += 1
-            print(f"Epi: {self.episode:<5}R: {reward_sum:<8.0f}outcome: {translate_outcome(outcome):<13}", end='')
+            # self.episode += 1
+            self.sm.update_episode()
+            print(f"Epi: {self.sm.episode:<5}R: {reward_sum:<8.0f}outcome: {translate_outcome(outcome):<13}", end='')
             print(f"steps: {step:<6}steps_total: {self.total_steps:<7}time: {eps_duration:<6.2f}")
 
             if (not self.training):
-                self.logger.update_test_results(step, outcome, dist_traveled, eps_duration, 0)
+                # self.logger.update_test_results(step, outcome, dist_traveled, eps_duration, 0)
                 return
 
             self.graph.update_data(step, self.total_steps, outcome, reward_sum, loss_critic, lost_actor)
-            self.logger.file_log.write(f"{self.episode}, {reward_sum}, {outcome}, {eps_duration}, {step}, {self.total_steps}, \
-                                            {self.replay_buffer.get_length()}, {loss_critic / step}, {lost_actor / step}\n")
+            # self.logger.file_log.write(f"{self.episode}, {reward_sum}, {outcome}, {eps_duration}, {step}, {self.total_steps}, \
+                                            # {self.replay_buffer.get_length()}, {loss_critic / step}, {lost_actor / step}\n")
 
-            if (self.episode % MODEL_STORE_INTERVAL == 0) or (self.episode == 1):
-                self.sm.save_session(self.episode, self.model.networks, self.graph.graphdata, self.replay_buffer.buffer)
-                self.logger.update_comparison_file(self.episode, self.graph.get_success_count(), self.graph.get_reward_average())
-            if (self.episode % GRAPH_DRAW_INTERVAL == 0) or (self.episode == 1):
-                self.graph.draw_plots(self.episode)
+            if (self.sm.episode % MODEL_STORE_INTERVAL == 0):
+                self.sm.save_session(
+                networks            =   self.model.networks,
+                graph_pickle_data   =   self.graph.graphdata, 
+                replay_buffer       =   self.replay_buffer.buffer)
+                # self.logger.update_comparison_file(self.episode, self.graph.get_success_count(), self.graph.get_reward_average())
+            if (self.sm.episode % GRAPH_DRAW_INTERVAL == 0) or (self.sm.episode == 1):
+                self.graph.draw_plots(self.sm.episode)
 
 
 def main(args=sys.argv[1:]):
