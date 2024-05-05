@@ -104,8 +104,12 @@ class DrlAgent(Node):
         #                             Model loading                             #
         # ===================================================================== #
 
-        self.sm = StorageManager(self.algorithm, self.stage, self.device)
+        self.sm = StorageManager(algorithm  =   self.algorithm, # Algorithm used
+                                 stage      =   self.stage, # Stage number
+                                 device     =   self.device # Torch device
+                                 )
 
+        # If the model directory does not exist, Load the session is False
         if not os.path.exists(self.sm.model_dir):
             self.load_session = False
         
@@ -133,10 +137,19 @@ class DrlAgent(Node):
         self.get_logger().info(bcolors.OKBLUE + "Storage Manager Initialized" + bcolors.ENDC)
 
         self.graph.session_dir = self.sm.session_dir
-        # self.logger = Logger(self.training, self.sm.machine_dir, self.sm.session_dir, self.sm.session, self.model.get_model_parameters(), self.model.get_model_configuration(), str(self.stage), self.algorithm, self.episode)
-        self.get_logger().info(bcolors.OKBLUE + "Logger Initialized" + bcolors.ENDC)
 
-        # assert False, "Visual not implemented yet"
+        # Initialize the logger
+        self.logger = Logger(   training        = self.training,  
+                                session         = self.sm.session,
+                                stage           = self.stage,
+                                load_episode    = self.sm.episode,
+                                algorithm       = self.algorithm,
+                                session_dir     = self.sm.session_dir, # Use for comparison file
+                                state_dir       = self.sm.stage_dir, # Use for log file
+                                hyperparameters = self.model.get_model_parameters(),
+                                model_config    = self.model.get_model_configuration(),
+                            )
+        self.get_logger().info(bcolors.OKBLUE + "Logger Initialized" + bcolors.ENDC)
         
         if ENABLE_VISUAL:
             self.qapp = QtWidgets.QApplication([])
@@ -351,36 +364,32 @@ class DrlAgent(Node):
                 pass
 
     def finish_episode(self, step, eps_duration, outcome, dist_traveled, reward_sum, loss_critic, lost_actor):
-            # if self.total_steps < self.observe_steps:
-            #     self.get_logger().info(f"Observe phase: {self.total_steps}/{self.observe_steps} steps")
-            #     return None
-
-            # self.episode += 1
-            # self.get_logger().info(f"Epi: {self.episode:<5}R: {reward_sum:<8.0f}", end='')
-            # self.get_logger().info(f"steps: {step:<6}steps_total: {self.total_steps:<7}time: {eps_duration:<6.2f}")
+            
             if self.total_steps < self.observe_steps:
                 print(f"Observe phase: {self.total_steps}/{self.observe_steps} steps")
                 return
 
-            # self.episode += 1
+            # Update the episode number
             self.sm.update_episode()
             print(f"Epi: {self.sm.episode:<5}R: {reward_sum:<8.0f}outcome: {translate_outcome(outcome):<13}", end='')
             print(f"steps: {step:<6}steps_total: {self.total_steps:<7}time: {eps_duration:<6.2f}")
 
             if (not self.training):
-                # self.logger.update_test_results(step, outcome, dist_traveled, eps_duration, 0)
+                self.logger.update_test_results(step, outcome, dist_traveled, eps_duration, 0)
                 return
 
+            # Update the graph
             self.graph.update_data(step, self.total_steps, outcome, reward_sum, loss_critic, lost_actor)
-            # self.logger.file_log.write(f"{self.episode}, {reward_sum}, {outcome}, {eps_duration}, {step}, {self.total_steps}, \
-                                            # {self.replay_buffer.get_length()}, {loss_critic / step}, {lost_actor / step}\n")
+            # Update the logger file
+            self.logger.file_log.write(f"{self.sm.episode}, {reward_sum}, {outcome}, {eps_duration}, {step}, {self.total_steps}, \
+                                            {self.replay_buffer.get_length()}, {loss_critic / step}, {lost_actor / step}\n")
 
             if (self.sm.episode % MODEL_STORE_INTERVAL == 0):
                 self.sm.save_session(
                 networks            =   self.model.networks,
                 graph_pickle_data   =   self.graph.graphdata, 
                 replay_buffer       =   self.replay_buffer.buffer)
-                # self.logger.update_comparison_file(self.episode, self.graph.get_success_count(), self.graph.get_reward_average())
+                self.logger.update_comparison_file(self.sm.episode, self.graph.get_success_count(), self.graph.get_reward_average())
             if (self.sm.episode % GRAPH_DRAW_INTERVAL == 0) or (self.sm.episode == 1):
                 self.graph.draw_plots(self.sm.episode)
 

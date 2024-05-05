@@ -9,7 +9,7 @@ import json
 from env_utils import bcolors
 from settings.constparams import MODEL_STORE_INTERVAL
 
-NUMBER_OF_MODELS_TO_STORE = 3
+NUMBER_OF_MODELS_TO_STORE = 2
 
 class StorageManager:
     def __init__(self,
