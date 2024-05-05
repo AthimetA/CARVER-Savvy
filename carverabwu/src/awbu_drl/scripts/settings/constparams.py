@@ -7,7 +7,7 @@ ENABLE_STACKING          = False    # Enable processing multiple consecutive sca
 ENABLE_VISUAL            = False    # Meant to be used only during evaluation/testing phase
 ENABLE_TRUE_RANDOM_GOALS = False    # If false, goals are selected semi-randomly from a list of known valid goal positions
 ENABLE_DYNAMIC_GOALS     = False    # If true, goal difficulty (distance) is adapted according to current success rate
-MODEL_STORE_INTERVAL     = 5      # Store the model weights every N episodes
+MODEL_STORE_INTERVAL     = 100      # Store the model weights every N episodes
 GRAPH_DRAW_INTERVAL      = 10       # Draw the graph every N episodes (drawing too often will slow down training)
 GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N episodes
 
@@ -31,8 +31,6 @@ TOPIC_ODOM = '/abwubot/odom'
 TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/obstacles/odom'
 
-
-SIMUALTION_TIME_SCALE       = 4.0     # x faster than real time  
 LIDAR_DISTANCE_CAP          = 5.0   # meters
 THRESHOLD_COLLISION         = 0.50  # meters
 THREHSOLD_GOAL              = 0.20  # meters
@@ -92,7 +90,7 @@ LEARNING_RATE   = 0.003
 TAU             = 0.003
 
 OBSERVE_STEPS   = 25000     # At training start random actions are taken for N steps for better exploration
-OBSERVE_STEPS   = 250     # At training start random actions are taken for N steps for better exploration
+# OBSERVE_STEPS   = 250     # At training start random actions are taken for N steps for better exploration
 STEP_TIME       = 0.01      # Delay between steps, can be set to 0
 EPSILON_DECAY   = 0.9995    # Epsilon decay per step
 EPSILON_MINIMUM = 0.05

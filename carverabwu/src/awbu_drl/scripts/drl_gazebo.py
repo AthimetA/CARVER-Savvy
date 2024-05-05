@@ -350,7 +350,7 @@ class DRLGazebo(Node):
         self.goal_x, self.goal_y = self.goal_manager.generate_goal_pose(self.robot.x, self.robot.y, OBSTACLE_RADIUS)
 
         # Set the goal entity
-        self.set_entity_state(self.goal_x, self.goal_y)
+        # self.set_entity_state(self.goal_x, self.goal_y)
 
         # Clear the obstacle distances
         self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP

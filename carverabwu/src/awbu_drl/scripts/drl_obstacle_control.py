@@ -15,12 +15,14 @@ from gazebo_msgs.srv import GetModelList, SetEntityState, GetEntityState
 from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
 from rosgraph_msgs.msg import Clock
 
-from settings.constparams import EPISODE_TIMEOUT_SECONDS, SIMUALTION_TIME_SCALE
+from settings.constparams import EPISODE_TIMEOUT_SECONDS
 
 # Topic name imports
 from settings.constparams import TOPIC_CLOCK
 
 from awbu_interfaces.srv import ObstacleStart
+
+from env_utils import get_simulation_speed, read_stage
 
 PATH_INTERVAL_PER_EPISODE = 4
 
@@ -28,6 +30,7 @@ from ament_index_python import get_package_share_directory
 class ObstacleHandler(Node):
     def __init__(self):
         super().__init__('ObstacleHandler')
+        self.sim_speed = get_simulation_speed(stage=read_stage())
         # --------------- ROS Parameters --------------- #
         qos = QoSProfile(depth=10)
         qos_clock = QoSProfile(
@@ -84,7 +87,7 @@ class ObstacleHandler(Node):
         self.epsode_interval_step = (EPISODE_TIMEOUT_SECONDS / PATH_INTERVAL_PER_EPISODE)
 
         # Control timer
-        self.control_timer = self.create_timer(1.0/(self.control_loop_hz*SIMUALTION_TIME_SCALE), self.obstacle_control_loop_callback)
+        self.control_timer = self.create_timer(1.0/(self.control_loop_hz*self.sim_speed), self.obstacle_control_loop_callback)
         self.time_loop_on = False
         self.current_interval = 0
 
@@ -278,6 +281,10 @@ class DynamicObstacle:
             out_pose = self.target_pose
             out_twist.linear.x *= -1
             out_twist.linear.y *= -1
+
+        # Debugging
+        out_pose = self.initial_pose
+        out_twist = Twist()
         return out_pose, out_twist
         
     def __repr__(self) -> str:

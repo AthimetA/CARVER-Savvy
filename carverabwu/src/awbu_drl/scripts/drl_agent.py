@@ -25,8 +25,7 @@ import sys
 import time
 import numpy as np
 
-from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, STEP_TIME, SIMUALTION_TIME_SCALE
-from settings.constparams import SIMUALTION_TIME_SCALE
+from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL
 
 from awbu_interfaces.srv import DrlStep, EnvReady
 from std_srvs.srv import Empty
@@ -167,7 +166,7 @@ class DrlAgent(Node):
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')
             self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
         # Start the process
-        self.timer_hz = 30.0 * SIMUALTION_TIME_SCALE # Based on 30Hz
+        self.timer_hz = 50.0 * self.sim_speed # Scale the simulation speed
         self.timer_period = 1e9/self.timer_hz # Convert to nanoseconds
         self.episode_start_time = 0.0
         self.episode_done = False

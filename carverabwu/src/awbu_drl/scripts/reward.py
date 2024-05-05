@@ -1,4 +1,4 @@
-from settings.constparams import REWARD_FUNCTION, COLLISION, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM
+from settings.constparams import REWARD_FUNCTION, COLLISION, TUMBLE, SUCCESS, TIMEOUT, RESULTS_NUM, SPEED_LINEAR_MAX, THRESHOLD_COLLISION
 
 goal_dist_initial = 0
 
@@ -8,25 +8,28 @@ def get_reward(succeed, action_linear, action_angular, distance_to_goal, goal_an
     return reward_function_internal(succeed, action_linear, action_angular, distance_to_goal, goal_angle, min_obstacle_distance)
 
 def get_reward_A(succeed, action_linear, action_angular, goal_dist, goal_angle, min_obstacle_dist):
+        # Constants
+        r_conts = -2
+
         # [-3.14, 0]
         r_yaw = -1 * abs(goal_angle)
-
-        # [-4, 0]
-        r_vangular = -1 * (action_angular**2)
 
         # [-1, 1]
         r_distance = (2 * goal_dist_initial) / (goal_dist_initial + goal_dist) - 1
 
+        # [-4, 0]
+        r_vangular = -1 * (action_angular**2)
+
         # [-20, 0]
-        if min_obstacle_dist < 0.22:
-            r_obstacle = -20
+        if min_obstacle_dist < THRESHOLD_COLLISION * 2:
+            r_obstacle = -60
         else:
             r_obstacle = 0
 
         # [-2 * (2.2^2), 0]
-        r_vlinear = -1 * (((0.22 - action_linear) * 10) ** 2)
+        r_vlinear = -1 * (((SPEED_LINEAR_MAX - action_linear) * 10) ** 2)
 
-        reward = r_yaw + r_distance + r_obstacle + r_vlinear + r_vangular - 1
+        reward = r_yaw + r_distance + r_obstacle + r_vlinear + r_vangular + r_conts
 
         if succeed == SUCCESS:
             reward += 2500
