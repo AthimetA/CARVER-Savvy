@@ -20,7 +20,11 @@ import numpy as np
 
 from awbu_interfaces.msg import Obstacle
 
-TIME_STEP  = 1/(30 * 2)
+from env_utils import get_simulation_speed, read_stage
+
+sim_speed = get_simulation_speed(read_stage())
+
+TIME_STEP  = 1/(30 * sim_speed)
 ALPHA = 0.5 # for CP
 MIN_DISTANCE = 0.1 # for tracking Missing object using KALMAN
 _RADIUS = 1 # object should have low radius

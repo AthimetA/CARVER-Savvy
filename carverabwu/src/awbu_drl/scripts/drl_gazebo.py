@@ -100,6 +100,12 @@ class DRLGazebo(Node):
         self.goal_ready = False
         self.goal_x, self.goal_y = 0.0, 0.0
 
+        self.obstacle_pos_x = self.robot.x + LIDAR_DISTANCE_CAP     # meters
+        self.obstacle_pos_y = self.robot.y + LIDAR_DISTANCE_CAP     # meters
+
+        self.obstacle_vel_x = 0.0
+        self.obstacle_vel_y = 0.0
+
         # --------------- Laser Scanner --------------- #
         self.scan_ranges = [LIDAR_DISTANCE_CAP] * NUM_SCAN_SAMPLES
         self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
@@ -264,22 +270,11 @@ class DRLGazebo(Node):
             # Get the closest obstacle
             max_cp_loc = np.argmax(msg.cp)
 
-            vel_x = msg.velocity_x[max_cp_loc]
-            vel_y = msg.velocity_y[max_cp_loc]
-
-            vel_x = np.float64(vel_x)
-            vel_y = np.float64(vel_y)
-
-            if np.isnan(vel_x) or np.isnan(vel_y):
-                self.get_logger().info(bcolors.FAIL + "Obstacle velocity is NaN" + bcolors.ENDC)
-                
             self.obstacle_pos_x = msg.pose_x[max_cp_loc]
             self.obstacle_pos_y = msg.pose_y[max_cp_loc]
 
-            self.obstacle_vel_x = vel_x
-            self.obstacle_vel_y = vel_y
-
-            self.get_logger().info(f"PC {msg.cp[max_cp_loc]:.2f} id {msg.id[max_cp_loc]}, pose: {self.obstacle_pos_x:.2f}, {self.obstacle_pos_y:.2f}, vel: {self.obstacle_vel_x:.2f}, {self.obstacle_vel_y:.2f}")
+            self.obstacle_vel_x = msg.velocity_x[max_cp_loc]
+            self.obstacle_vel_y = msg.velocity_y[max_cp_loc]
 
         else:
             self.obstacle_pos_x = self.robot.x + LIDAR_DISTANCE_CAP     # meters
@@ -307,11 +302,28 @@ class DRLGazebo(Node):
         action_linear_previous: float,
         action_angular_previous: float
     ):
-        state = copy.deepcopy(self.scan_ranges)                                                     # range: [ 0, 1]
-        state.append(float(np.clip((self.robot.distance_to_goal / MAX_GOAL_DISTANCE), 0, 1)))       # range: [ 0, 1]
-        state.append(float(self.robot.goal_angle) / math.pi)                                        # range: [-1, 1]
-        state.append(float(action_linear_previous))                                                 # range: [-1, 1]
-        state.append(float(action_angular_previous))                                                # range: [-1, 1]
+        # state = copy.deepcopy(self.scan_ranges)                                                     # range: [ 0, 1]
+        # state.append(float(np.clip((self.robot.distance_to_goal / MAX_GOAL_DISTANCE), 0, 1)))       # range: [ 0, 1]
+        # state.append(float(self.robot.goal_angle) / math.pi)                                        # range: [-1, 1]
+        # state.append(float(action_linear_previous))                                                 # range: [-1, 1]
+        # state.append(float(action_angular_previous))                                                # range: [-1, 1]
+        # Distance Obervation
+        state = copy.deepcopy(self.scan_ranges)
+        # Goal Related Obervation
+        state.append(float(self.robot.distance_to_goal))
+        state.append(float(self.robot.goal_angle))
+        # # Robot Observation
+        state.append(float(self.robot.x))
+        state.append(float(self.robot.y))
+        state.append(float(self.robot.linear_velocity))
+        state.append(float(self.robot.angular_velocity))
+        # # Obstacle Observation
+        state.append(float(self.obstacle_pos_x))
+        state.append(float(self.obstacle_pos_y))
+        # state.append(float(self.obstacle_vel_x))
+        # state.append(float(self.obstacle_vel_y))
+        state.append(float(0.0))
+        state.append(float(0.0))
         self.local_step += 1
         return state
     

@@ -8,11 +8,12 @@ controller_manager:
     # If x8 Simulator is used, update_rate is 125 Hz
     # update_rate: 125 # Hz
     # If x10 Simulator is used, update_rate is 125 Hz
-    # update_rate: 100 # Hz
+    update_rate: 100 # Hz
 
     # update_rate: 1000 # Hz
 
-    update_rate: 500 # Hz
+    # x2 Simulator
+    # update_rate: 500 # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
