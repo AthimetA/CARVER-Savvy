@@ -105,7 +105,7 @@ class ObstacleCP(Node):
 
                     dist = np.linalg.norm(robot_post - ob_pose)
 
-                    if dist < LIDAR_DISTANCE_CAP :
+                    if dist < LIDAR_DISTANCE_CAP + 0.5:
 
                         Dist_o = dist - RADIUS
                         Vr = np.array([self.linear_twist.x , self.linear_twist.y])

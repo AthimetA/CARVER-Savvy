@@ -132,38 +132,16 @@
       <uri>model://wall_outler</uri>
     </include>
 
-    <include>
-      <uri>model://pillar_1</uri>
-    </include>
-
-    <include>
-      <uri>model://pillar_2</uri>
-    </include>
-
-    <include>
-      <uri>model://wall_inner_1</uri>
-    </include>
-
     <!-- Obstacle -->
 
     <include>
       <uri>model://cylinder_obstacle_1</uri>
-      <pose>5.5 6.0 0.5 0 0 0</pose> 
+      <pose>6.0 -4.0 0.5 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://cylinder_obstacle_2</uri>
-      <pose>-6.0 -4.0 0.5 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://cylinder_obstacle_3</uri>
-      <pose>-5.5 3.5 0.5 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://cylinder_obstacle_4</uri>
-      <pose>0 -6.5 0.5 0 0 0</pose>
+      <pose>-6.0 4.0 0.5 0 0 0</pose>
     </include>
 
 

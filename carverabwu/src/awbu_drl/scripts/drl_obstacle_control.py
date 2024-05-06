@@ -24,13 +24,14 @@ from awbu_interfaces.srv import ObstacleStart
 
 from env_utils import get_simulation_speed, read_stage
 
-PATH_INTERVAL_PER_EPISODE = 4
+PATH_INTERVAL_PER_EPISODE = 2
 
 from ament_index_python import get_package_share_directory
 class ObstacleHandler(Node):
     def __init__(self):
         super().__init__('ObstacleHandler')
-        self.sim_speed = get_simulation_speed(stage=read_stage())
+        self.stage = read_stage()
+        self.sim_speed = get_simulation_speed(stage=self.stage)
         # --------------- ROS Parameters --------------- #
         qos = QoSProfile(depth=10)
         qos_clock = QoSProfile(
@@ -61,7 +62,7 @@ class ObstacleHandler(Node):
         self.__PKG_NAME = 'awbu_drl'
         self.__PKG_PATH = get_package_share_directory(self.__PKG_NAME)
 
-        with open(f'{self.__PKG_PATH}/config/obstacle_params.yaml', 'r') as file:
+        with open(f'{self.__PKG_PATH}/config/obstacle_params_{self.stage}.yaml', 'r') as file:
             __CFG = yaml.safe_load(file)
             
             __OBSTACLE_PARAMS = __CFG['ObstacleParams']
