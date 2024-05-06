@@ -32,12 +32,21 @@ def generate_launch_description():
             name='drl_obstacle',
             parameters=[{'use_sim_time': use_sim_time}],
          )
+    
+    drl_obstacle_cp = Node(
+            package='awbu_drl',
+            executable='drl_obstacle_cp.py',
+            name='drl_obstacle_cp',
+            parameters=[{'use_sim_time': use_sim_time}],
+         )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
 
         drl_gazebo,
 
-        drl_obstacle
+        drl_obstacle,
+
+        drl_obstacle_cp,
 
     ])

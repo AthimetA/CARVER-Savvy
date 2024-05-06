@@ -31,6 +31,7 @@ install(PROGRAMS
   scripts/drl_gazebo.py
   scripts/drl_agent.py
   scripts/drl_obstacle_control.py
+  scripts/drl_obstacle_cp.py
   scripts/clustering.py
   DESTINATION lib/${PROJECT_NAME}
 )

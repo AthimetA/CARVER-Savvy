@@ -3,6 +3,7 @@
 import numpy as np
 import time
 import rclpy
+import copy
 from rclpy.node import Node
 
 # Test import DL libraries
@@ -17,13 +18,9 @@ import stable_baselines3 as sb3
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 
-from gazebo_msgs.srv import GetEntityState, GetModelList , GetModelState
-from drl_obstacle_control import DynamicObstacle
+from gazebo_msgs.srv import GetEntityState, GetModelList
 
-from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
-from rosgraph_msgs.msg import Clock
-
-from settings.constparams import TOPIC_CLOCK , LIDAR_DISTANCE_CAP
+from settings.constparams import LIDAR_DISTANCE_CAP
 
 from env_utils import get_simulation_speed, read_stage
 
@@ -44,12 +41,10 @@ class TestNode(Node):
 
         # Gazebo model list subscriber
         self.model_list = self.get_model_list()
-        self.obstacle_list =  self.init_obstacles()
+        self.obstacle_list =  [model for model in self.model_list if 'obstacle' in model]
 
-        self.get_logger().info(f'Model List: {self.model_list}')
         self.get_logger().info(f'Obstacle List: {self.obstacle_list}')
         self.get_logger().info('TestNodeA has been initialized')
-
 
         # Clock subscriber
         self.control_loop_hz = 30 * SIM_SPD
@@ -81,7 +76,6 @@ class TestNode(Node):
 
     def control_loop(self):
 
-
         # Control loop
         while True:
             
@@ -89,59 +83,59 @@ class TestNode(Node):
 
             time_diff = self.time_sec - self.start_loop_time
 
-            if self.time_sec - self.start_loop_time >= self.control_loop_period:
+            if time_diff >= self.control_loop_period:
                 self.start_loop_time = self.time_sec
                 # Get the current state of the obstacles
-                for obstacle in self.model_list:
-                    if 'obstacle' in obstacle:
-                        ID_LIST = [] 
-                        CENTER_X = []
-                        CENTER_Y = []
-                        VELOCITY_X = []
-                        VELOCITY_Y = []
-                        CP_LIST = []
+                for obstacle in self.obstacle_list:
 
-                        # Get the initial pose and twist of the obstacle
-                        pose, twist = self.get_entity_state(obstacle)
-                        # self.get_logger().info(f'Name: {obstacle}, Pose: {pose.position.x}, {pose.position.y}, \
-                        #                        Twist: {twist.linear.x}, {twist.linear.y}, {twist.linear.z}')
-                        
-                        ob_pose = np.array([pose.position.x , pose.position.y])
-                        robot_post = np.array([self.position.x , self.position.y])
+                    ID_LIST = [] 
+                    CENTER_X = []
+                    CENTER_Y = []
+                    VELOCITY_X = []
+                    VELOCITY_Y = []
+                    CP_LIST = []
 
-                        dist = np.linalg.norm(robot_post - ob_pose)
-
-                        if dist < LIDAR_DISTANCE_CAP :
-
-                            
-                            Dist_o = dist - RADIUS
-                            Vr = np.array([self.linear_twist.x , self.linear_twist.y])
-                            Vo = np.array([twist.linear.x , twist.linear.y])
-                            Vr_prime = Vr - Vo
-                            t = Dist_o / np.sqrt(Vr_prime[0]**2 + Vr_prime[1]**2)
-
-                            Pc_ttc = min([ 1, self.control_loop_period / t])
-                            Imax = self.max_scan
-                            Imin = self.min_scan 
-
-                            Pc_dto = (Imax - Dist_o) / (Imax - Imin)
-
-                            
-                            CP = ALPHA * Pc_ttc + (1-ALPHA) * Pc_dto
-                            print("==========")
-                            print("Pc_ttc : " ,Pc_ttc)
-                            print("Pc_dto : " ,Pc_dto)
-                            print("Collision Probability (CP) : " , CP)
-
-                            ID_LIST.append(0.0)
-                            CENTER_X.append(pose.position.x)
-                            CENTER_Y.append(pose.position.y)
-                            VELOCITY_X.append(twist.linear.x)
-                            VELOCITY_Y.append(twist.linear.y)
-                            CP_LIST.append(CP)
-
+                    # Get the initial pose and twist of the obstacle
+                    pose, twist = self.get_entity_state(obstacle)
+                    # self.get_logger().info(f'Name: {obstacle}, Pose: {pose.position.x}, {pose.position.y}, \
+                    #                        Twist: {twist.linear.x}, {twist.linear.y}, {twist.linear.z}')
                     
-    
+                    ob_pose = np.array([pose.position.x , pose.position.y])
+                    robot_post = np.array([self.position.x , self.position.y])
+
+                    dist = np.linalg.norm(robot_post - ob_pose)
+
+                    if dist < LIDAR_DISTANCE_CAP :
+
+                        Dist_o = dist - RADIUS
+                        Vr = np.array([self.linear_twist.x , self.linear_twist.y])
+                        Vo = np.array([twist.linear.x , twist.linear.y])
+                        Vr_prime = Vr - Vo
+                        t = Dist_o / np.sqrt(Vr_prime[0]**2 + Vr_prime[1]**2)
+
+                        Pc_ttc = min([ 1, self.control_loop_period / t])
+                        Imax = self.max_scan
+                        Imin = self.min_scan 
+
+                        Pc_dto = (Imax - Dist_o) / (Imax - Imin)
+
+                        
+                        CP = ALPHA * Pc_ttc + (1-ALPHA) * Pc_dto
+                        print("==========")
+                        print("Pc_ttc : " ,Pc_ttc)
+                        print("Pc_dto : " ,Pc_dto)
+                        print("Collision Probability (CP) : " , CP)
+
+                        ID_LIST.append(int(obstacle[-1]))
+                        CENTER_X.append(pose.position.x)
+                        CENTER_Y.append(pose.position.y)
+                        VELOCITY_X.append(twist.linear.x)
+                        VELOCITY_Y.append(twist.linear.y)
+                        CP_LIST.append(CP)
+
+                self._obstacle_pubish(ID_LIST , CENTER_X , CENTER_Y , VELOCITY_X , VELOCITY_Y , CP_LIST)
+
+                
     def _obstacle_pubish(self,_id,center_x,center_y,velocity_x,velocity_y,CP):
 
         self._OBSTACLE = Obstacle()
@@ -155,29 +149,18 @@ class TestNode(Node):
 
         self.CP_publisher.publish(self._OBSTACLE)
 
-    def scan_callback(self ,msg):
+    def scan_callback(self ,msg: LaserScan):
         self.scan = msg
         self.max_scan = msg.range_max
         self.min_scan = msg.range_min
 
     
-    def get_odometry(self, odom):
+    def get_odometry(self, odom: Odometry):
         self.position = odom.pose.pose.position
         self.orientation = odom.pose.pose.orientation
         self.linear_twist = odom.twist.twist.linear
         self.angular_twist = odom.twist.twist.angular
 
-
-    def init_obstacles(self):
-        # Initialize the obstacles
-        obstacle_list = []
-        for obstacle in self.model_list:
-            if 'obstacle' in obstacle:
-                # Get the initial pose and twist of the obstacle
-                pose, twist = self.get_entity_state(obstacle)
-                self.get_logger().info(f'Name: {obstacle}, Pose: {pose}, Twist: {twist}')
-                obstacle_list.append(DynamicObstacle(name=obstacle, initial_pose=pose))
-        return obstacle_list
 
     def get_model_list(self):
         request = GetModelList.Request()
