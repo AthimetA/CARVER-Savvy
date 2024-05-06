@@ -490,12 +490,13 @@ class Clustering(Node):
                     print("Collision Probability (CP) : " , CP)
                     
                     if not np.isnan(self.Current_group[ID].velocity[0]) and not np.isnan(self.Current_group[ID].velocity[1]) :
-                        ID_LIST.append(ID)
-                        CENTER_X.append(self.Current_group[ID].center[0])
-                        CENTER_Y.append(self.Current_group[ID].center[1])
-                        VELOCITY_X.append(self.Current_group[ID].velocity[0])
-                        VELOCITY_Y.append(self.Current_group[ID].velocity[1])
-                        CP_LIST.append(CP)
+                        if not np.isinf(self.Current_group[ID].velocity[0]) and not np.isinf(self.Current_group[ID].velocity[1]) :
+                            ID_LIST.append(ID)
+                            CENTER_X.append(self.Current_group[ID].center[0])
+                            CENTER_Y.append(self.Current_group[ID].center[1])
+                            VELOCITY_X.append(self.Current_group[ID].velocity[0])
+                            VELOCITY_Y.append(self.Current_group[ID].velocity[1])
+                            CP_LIST.append(CP)
 
 
         self._obstacle_pubish(ID_LIST , CENTER_X , CENTER_Y , VELOCITY_X , VELOCITY_Y , CP_LIST)

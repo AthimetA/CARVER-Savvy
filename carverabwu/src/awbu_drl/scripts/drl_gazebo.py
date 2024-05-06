@@ -322,6 +322,7 @@ class DRLGazebo(Node):
         state.append(float(self.obstacle_pos_y))
         # state.append(float(self.obstacle_vel_x))
         # state.append(float(self.obstacle_vel_y))
+        self.get_logger().info(f'Obstacle vel: {self.obstacle_vel_x:.2f}, {self.obstacle_vel_y:.2f}')
         state.append(float(0.0))
         state.append(float(0.0))
         self.local_step += 1
