@@ -85,17 +85,15 @@ class ObstacleCP(Node):
                 self.start_loop_time = self.time_sec
 
                 # print("==========")
-
+                ID_LIST = [] 
+                CENTER_X = []
+                CENTER_Y = []
+                VELOCITY_X = []
+                VELOCITY_Y = []
+                CP_LIST = []
 
                 # Get the current state of the obstacles
                 for obstacle in self.obstacle_list:
-
-                    ID_LIST = [] 
-                    CENTER_X = []
-                    CENTER_Y = []
-                    VELOCITY_X = []
-                    VELOCITY_Y = []
-                    CP_LIST = []
 
                     # Get the initial pose and twist of the obstacle
                     pose, twist = self.get_entity_state(obstacle)

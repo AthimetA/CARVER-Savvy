@@ -22,34 +22,33 @@ class Reward():
         # Reward for the angle to the goal
         if angle_to_goal < self.angle_to_goal:
             R_ANGLE = 5
+            # Update the angle to the goal
+            self.angle_to_goal = angle_to_goal
         else:
             R_ANGLE = 0
-        # Update the angle to the goal
-        self.angle_to_goal = angle_to_goal
 
         # Reward for the distance to the goal
         if distance_to_goal < self.distance_to_goal:
             R_DISTANCE = 5
+            # Update the distance to the goal
+            self.distance_to_goal = distance_to_goal
         else:
             R_DISTANCE = 0
-
-        # Update the distance to the goal
-        self.distance_to_goal = distance_to_goal
 
         # Reward for status
         if status == SUCCESS:
             R_STATUS = 2500
         elif status == COLLISION:
-            R_STATUS = -2000
+            R_STATUS = -5000
         elif status == TUMBLE:
-            R_STATUS = -2000
+            R_STATUS = -5000
         elif status == TIMEOUT:
             R_STATUS = -1000
         else:
             R_STATUS = 0
 
         # Total reward
-        reward = R_STEP + R_ANGLE + R_DISTANCE + R_STATUS
+        reward = R_STEP + R_ANGLE + 2*R_DISTANCE + R_STATUS
 
         return float(reward)
 
