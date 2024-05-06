@@ -29,7 +29,7 @@ TOPIC_SCAN = 'scan'
 TOPIC_VELO = '/abwubot/cmd_vel'
 TOPIC_ODOM = '/abwubot/odom'
 TOPIC_CLOCK = '/clock'
-TOPIC_OBSTACLES_ODOM = '/obstacles/odom'
+TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
 LIDAR_DISTANCE_CAP          = 5.0   # meters
 THRESHOLD_COLLISION         = 0.50  # meters
@@ -90,7 +90,7 @@ LEARNING_RATE   = 0.003
 TAU             = 0.003
 
 OBSERVE_STEPS   = 25000     # At training start random actions are taken for N steps for better exploration
-# OBSERVE_STEPS   = 250     # At training start random actions are taken for N steps for better exploration
+OBSERVE_STEPS   = 250     # At training start random actions are taken for N steps for better exploration
 STEP_TIME       = 0.01      # Delay between steps, can be set to 0
 EPSILON_DECAY   = 0.9995    # Epsilon decay per step
 EPSILON_MINIMUM = 0.05

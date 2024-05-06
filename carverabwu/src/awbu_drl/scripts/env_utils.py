@@ -185,7 +185,7 @@ class Robot:
         self.goal_x = 0.0
         self.goal_y = 0.0
         self.distance_to_goal = 0.0
-        self.heading_to_goal = 0.0
+        self.angle_to_goal = 0.0
         self.goal_angle = 0.0
 
         # --------------- Previous Values --------------- #
@@ -210,8 +210,8 @@ class Robot:
         self.prev_y = 0.0
         
         self.distance_to_goal = self.calculate_distance(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
-        self.heading_to_goal = self.calculate_heading(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
-        self.goal_angle = self.calculate_angle(target_angle=self.heading_to_goal, angle=self.theta)
+        self.angle_to_goal = self.calculate_heading(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
+        self.goal_angle = self.calculate_angle(target_angle=self.angle_to_goal, angle=self.theta)
 
     def update_position(self, msg: Odometry):
         # Update the robot position
@@ -228,8 +228,8 @@ class Robot:
 
         # Update the goal information
         self.distance_to_goal = self.calculate_distance(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
-        self.heading_to_goal = self.calculate_heading(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
-        self.goal_angle = self.calculate_angle(target_angle=self.heading_to_goal, angle=self.theta)
+        self.angle_to_goal = self.calculate_heading(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
+        self.goal_angle = self.calculate_angle(target_angle=self.angle_to_goal, angle=self.theta)
 
     def calculate_distance(self, target_x: float, target_y: float, x: float, y: float):
         return np.sqrt((target_x - x)**2 + (target_y - y)**2)

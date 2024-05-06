@@ -283,8 +283,8 @@ class DynamicObstacle:
             out_twist.linear.y *= -1
 
         # Debugging
-        out_pose = self.initial_pose
-        out_twist = Twist()
+        # out_pose = self.initial_pose
+        # out_twist = Twist()
         return out_pose, out_twist
         
     def __repr__(self) -> str:

@@ -67,8 +67,9 @@ from rosgraph_msgs.msg import Clock
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart
+from awbu_interfaces.msg import Obstacle
 
-import reward as rw
+from drlutils_reward import Reward
 
 from env_utils import GoalManager, Robot, bcolors
 
@@ -126,10 +127,11 @@ class DRLGazebo(Node):
 
         '''
         
-        Obstacle Manager
+        Manager
         
         '''
         self.goal_manager = GoalManager()
+        self.reward_manager = Reward()
 
 
         '''
@@ -145,7 +147,7 @@ class DRLGazebo(Node):
         self.odom_sub                   = self.create_subscription(Odometry, TOPIC_ODOM, self.odom_callback, qos)
         self.scan_sub                   = self.create_subscription(LaserScan, TOPIC_SCAN, self.scan_callback, qos_profile=qos_profile_sensor_data)
         self.clock_sub                  = self.create_subscription(Clock, TOPIC_CLOCK, self.clock_callback, qos_profile=qos_clock)
-        self.obstacle_odom_sub          = self.create_subscription(Odometry, TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos)
+        self.obstacle_odom_sub          = self.create_subscription(Obstacle, TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos)
 
         # Initialise services clients
         self.delete_entity_client       = self.create_client(DeleteEntity, '/delete_entity')
@@ -257,16 +259,34 @@ class DRLGazebo(Node):
         # Reset variables
         self.reset_deadline = False
 
-    def obstacle_odom_callback(self, msg: Odometry):
-        if 'obstacle' in msg.child_frame_id:
-            # robot_pos = msg.pose.pose.position
-            # obstacle_id = int(msg.child_frame_id[-1]) - 1
-            # diff_x = self.robot_x - robot_pos.x
-            # diff_y = self.robot_y - robot_pos.y
-            # self.obstacle_distances[obstacle_id] = math.sqrt(diff_y**2 + diff_x**2)
-            pass # Not used in this version
+    def obstacle_odom_callback(self, msg: Obstacle):
+        if len(msg.id) != 0:
+            # Get the closest obstacle
+            max_cp_loc = np.argmax(msg.cp)
+
+            vel_x = msg.velocity_x[max_cp_loc]
+            vel_y = msg.velocity_y[max_cp_loc]
+
+            vel_x = np.float64(vel_x)
+            vel_y = np.float64(vel_y)
+
+            if np.isnan(vel_x) or np.isnan(vel_y):
+                self.get_logger().info(bcolors.FAIL + "Obstacle velocity is NaN" + bcolors.ENDC)
+                
+            self.obstacle_pos_x = msg.pose_x[max_cp_loc]
+            self.obstacle_pos_y = msg.pose_y[max_cp_loc]
+
+            self.obstacle_vel_x = vel_x
+            self.obstacle_vel_y = vel_y
+
+            self.get_logger().info(f"PC {msg.cp[max_cp_loc]:.2f} id {msg.id[max_cp_loc]}, pose: {self.obstacle_pos_x:.2f}, {self.obstacle_pos_y:.2f}, vel: {self.obstacle_vel_x:.2f}, {self.obstacle_vel_y:.2f}")
+
         else:
-            print("ERROR: received odom was not from obstacle!")
+            self.obstacle_pos_x = self.robot.x + LIDAR_DISTANCE_CAP     # meters
+            self.obstacle_pos_y = self.robot.y + LIDAR_DISTANCE_CAP     # meters
+
+            self.obstacle_vel_x = 0.0
+            self.obstacle_vel_y = 0.0
 
     '''
     
@@ -382,7 +402,7 @@ class DRLGazebo(Node):
         loc += " Right" if self.goal_y < 0 else " Left"
         self.get_logger().info(bcolors.OKBLUE + f"Goal location: {loc} ({self.goal_x:.2f}, {self.goal_y:.2f})" + bcolors.ENDC)
 
-        rw.reward_initalize(self.robot.distance_to_goal)
+        self.reward_manager.reward_initalize(self.robot.distance_to_goal, self.robot.goal_angle)
 
         # Unpause the simulation
         self.episode_start_time = self.time_sec
@@ -432,17 +452,14 @@ class DRLGazebo(Node):
         response.state = self.get_state(
             action_linear_previous  = request.previous_action[LINEAR_VELOCITY_LOC],
             action_angular_previous = request.previous_action[ANGULAR_VELOCITY_LOC])
-        # Calculate reward
-        response.reward = rw.get_reward(
-            succeed=self._EP_succeed,
-            action_linear=action_linear,
-            action_angular=action_angular,
-            distance_to_goal=self.robot.distance_to_goal,
-            goal_angle=self.robot.goal_angle,
-            min_obstacle_distance=self.obstacle_distance_nearest,
-        )
         # Check if the episode is done
         self.episode_check()
+        # Calculate reward
+        response.reward = self.reward_manager.get_reward(
+            status              = self._EP_succeed,
+            distance_to_goal    = self.robot.distance_to_goal,
+            angle_to_goal       = self.robot.goal_angle
+        )
         # Update the episode status
         response.done = self._EP_done
         response.success = self._EP_succeed

@@ -1,0 +1,1 @@
+/home/athimet/CARVER-Savvy/carverabwu/build/awbu_interfaces/rosidl_generator_cpp/awbu_interfaces/msg/detail/obstacle__traits.hpp

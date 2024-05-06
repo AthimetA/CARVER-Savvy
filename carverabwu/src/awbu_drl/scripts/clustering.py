@@ -20,7 +20,7 @@ import numpy as np
 
 from awbu_interfaces.msg import Obstacle
 
-TIME_STEP  = 1/30 #hz - > second
+TIME_STEP  = 1/(30 * 2)
 ALPHA = 0.5 # for CP
 MIN_DISTANCE = 0.1 # for tracking Missing object using KALMAN
 _RADIUS = 1 # object should have low radius
@@ -88,7 +88,7 @@ class Clustering(Node):
         self.publisher_ = self.create_publisher(MarkerArray, 'Obstacle', 10)
         self.publisher2_= self.create_publisher(MarkerArray, 'Obstacle_ob', 10)
 
-        self.CP_publisher = self.create_publisher(Obstacle, 'Obstacle_CP', 10)
+        self.CP_publisher = self.create_publisher(Obstacle, '/abwubot/obstacleCP', 10)
 
         qos_clock = QoSProfile(
             depth=1,
@@ -344,7 +344,8 @@ class Clustering(Node):
                             print("THIS IS REAL OBSTACLE ID : {}".format(ID))
                             
                             self.Current_group[ID].position = wall_group[_index]
-                            self.Current_group[ID].velocity = (_vx , _vy)
+                            # self.Current_group[ID].velocity = (_vx , _vy)
+                            self.Current_group[ID].velocity = (self.Previous_group[ID].velocity[0] , self.Previous_group[ID].velocity[1])
                             self.Current_group[ID].center = (_x,_y)
                             self.Current_group[ID].radius = es_r[_index]
                             self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
@@ -483,13 +484,14 @@ class Clustering(Node):
                     print("Pc_ttc : " ,Pc_ttc)
                     print("Pc_dto : " ,Pc_dto)
                     print("Collision Probability (CP) : " , CP)
-
-                    ID_LIST.append(ID)
-                    CENTER_X.append(self.Current_group[ID].center[0])
-                    CENTER_Y.append(self.Current_group[ID].center[1])
-                    VELOCITY_X.append(self.Current_group[ID].velocity[0])
-                    VELOCITY_Y.append(self.Current_group[ID].velocity[1])
-                    CP_LIST.append(CP)
+                    
+                    if not np.isnan(self.Current_group[ID].velocity[0]) and not np.isnan(self.Current_group[ID].velocity[1]) :
+                        ID_LIST.append(ID)
+                        CENTER_X.append(self.Current_group[ID].center[0])
+                        CENTER_Y.append(self.Current_group[ID].center[1])
+                        VELOCITY_X.append(self.Current_group[ID].velocity[0])
+                        VELOCITY_Y.append(self.Current_group[ID].velocity[1])
+                        CP_LIST.append(CP)
 
 
         self._obstacle_pubish(ID_LIST , CENTER_X , CENTER_Y , VELOCITY_X , VELOCITY_Y , CP_LIST)

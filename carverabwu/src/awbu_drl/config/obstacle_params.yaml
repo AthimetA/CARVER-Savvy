@@ -20,6 +20,7 @@ cylinder_obstacle_3:
 
 cylinder_obstacle_4:
   InitialPose: [0, -6.50, 0.50]
-  TargetPose: [0, 2.00 , 0.50]
+  # TargetPose: [0, 2.00 , 0.50]
+  TargetPose: [0, -4.00 , 0.50]
 
 
