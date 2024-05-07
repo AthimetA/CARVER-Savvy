@@ -7,11 +7,11 @@ ObstacleParams:
   ObstacleColors: ["blue", "red"]
 
 cylinder_obstacle_1:
-  InitialPose:  [6.0, -4.00, 0.50]
-  TargetPose:   [-6.0, -4.00 , 0.50]
+  InitialPose:  [5.5, 1.50, 0.50]
+  TargetPose:   [0.0, -5.50, 0.50]
 
 cylinder_obstacle_2:
-  InitialPose:  [-6.0, 4.00, 0.50]
-  TargetPose:   [6.0, 4.00 , 0.50]
+  InitialPose:  [-5.5, -1.50, 0.50]
+  TargetPose:   [0.0, 5.50 , 0.50]
 
 
