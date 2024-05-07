@@ -324,10 +324,12 @@ class DRLGazebo(Node):
         state.append(float(x))
         y = self.robot.y / ARENA_WIDTH
         state.append(float(y))
-        vel_x = self.robot.linear_velocity / SPEED_LINEAR_MAX
-        state.append(float(vel_x))
-        vel_y = self.robot.angular_velocity / SPEED_ANGULAR_MAX
-        state.append(float(vel_y))
+        theta = self.robot.theta / math.pi
+        state.append(float(theta))
+        vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
+        state.append(float(vel))
+        omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
+        state.append(float(omega))
         # Obstacle Observation
         obstacle_x = self.obstacle_pos_x / ARENA_LENGTH
         state.append(float(obstacle_x))
@@ -337,7 +339,7 @@ class DRLGazebo(Node):
         state.append(float(obstacle_vel_x))
         obstacle_vel_y = self.obstacle_vel_y / SPEED_LINEAR_MAX
         state.append(float(obstacle_vel_y))
-        self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Vx: {vel_x:.2f} Vy: {vel_y:.2f} Ox: {obstacle_x:.2f} Oy: {obstacle_y:.2f} Ovx: {obstacle_vel_x:.2f} Ovy: {obstacle_vel_y:.2f}')
+        self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
         # self.get_logger().info(f'State: {state}')
         self.local_step += 1
         return state
@@ -488,7 +490,7 @@ class DRLGazebo(Node):
             distance_to_goal    = self.robot.distance_to_goal,
             angle_to_goal       = self.robot.goal_angle
         )
-        # Update the episode status
+        self.get_logger().info(f"Reward: {response.reward:<8.2f} DTG: {self.robot.distance_to_goal:<8.2f}")
         response.done = self._EP_done
         response.success = self._EP_succeed
         response.distance_traveled = 0.0

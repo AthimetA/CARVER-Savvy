@@ -103,8 +103,8 @@ TARGET_UPDATE_FREQUENCY = 1000
 # DDPG parameters
 
 # TD3 parameters
-POLICY_NOISE            = 0.1
-POLICY_NOISE_CLIP       = 0.25
+POLICY_NOISE            = 0.4
+POLICY_NOISE_CLIP       = 0.6
 POLICY_UPDATE_FREQUENCY = 2
 
 # Stacking
