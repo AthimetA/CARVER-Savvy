@@ -76,6 +76,11 @@ from env_utils import GoalManager, Robot, bcolors
 MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
 REST_SIMULATION_PAUSE = 0.01  # seconds
 
+PATH_INTERVAL_PER_EPISODE = 2
+
+MAX_OBS_SPEED_X = (ARENA_LENGTH / EPISODE_TIMEOUT_SECONDS) * PATH_INTERVAL_PER_EPISODE
+MAX_OBS_SPEED_Y = (ARENA_WIDTH / EPISODE_TIMEOUT_SECONDS) * PATH_INTERVAL_PER_EPISODE
+
 class DRLGazebo(Node):
     def __init__(self):
         super().__init__('drl_gazebo')
@@ -310,19 +315,30 @@ class DRLGazebo(Node):
         # Distance Obervation
         state = copy.deepcopy(self.scan_ranges)
         # Goal Related Obervation
-        state.append(float(self.robot.distance_to_goal))
-        state.append(float(self.robot.goal_angle))
+        dtg = self.robot.distance_to_goal / MAX_GOAL_DISTANCE
+        state.append(float(dtg))
+        atg = self.robot.goal_angle / math.pi
+        state.append(float(atg))
         # # Robot Observation
-        state.append(float(self.robot.x))
-        state.append(float(self.robot.y))
-        state.append(float(self.robot.linear_velocity))
-        state.append(float(self.robot.angular_velocity))
-        # # Obstacle Observation
-        state.append(float(self.obstacle_pos_x))
-        state.append(float(self.obstacle_pos_y))
-        state.append(float(self.obstacle_vel_x))
-        state.append(float(self.obstacle_vel_y))
-        # self.get_logger().info(f'Obstacle vel: {self.obstacle_vel_x:.2f}, {self.obstacle_vel_y:.2f}')
+        x = self.robot.x / ARENA_LENGTH
+        state.append(float(x))
+        y = self.robot.y / ARENA_WIDTH
+        state.append(float(y))
+        vel_x = self.robot.linear_velocity / SPEED_LINEAR_MAX
+        state.append(float(vel_x))
+        vel_y = self.robot.angular_velocity / SPEED_ANGULAR_MAX
+        state.append(float(vel_y))
+        # Obstacle Observation
+        obstacle_x = self.obstacle_pos_x / ARENA_LENGTH
+        state.append(float(obstacle_x))
+        obstacle_y = self.obstacle_pos_y / ARENA_WIDTH
+        state.append(float(obstacle_y))
+        obstacle_vel_x = self.obstacle_vel_x / SPEED_LINEAR_MAX
+        state.append(float(obstacle_vel_x))
+        obstacle_vel_y = self.obstacle_vel_y / SPEED_LINEAR_MAX
+        state.append(float(obstacle_vel_y))
+        self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Vx: {vel_x:.2f} Vy: {vel_y:.2f} Ox: {obstacle_x:.2f} Oy: {obstacle_y:.2f} Ovx: {obstacle_vel_x:.2f} Ovy: {obstacle_vel_y:.2f}')
+        # self.get_logger().info(f'State: {state}')
         self.local_step += 1
         return state
     
@@ -451,6 +467,7 @@ class DRLGazebo(Node):
             action_linear = request.action[LINEAR_VELOCITY_LOC] * SPEED_LINEAR_MAX
         else:
             action_linear = (request.action[LINEAR_VELOCITY_LOC] + 1) / 2 * SPEED_LINEAR_MAX
+
         action_angular = request.action[ANGULAR_VELOCITY_LOC] * SPEED_ANGULAR_MAX
 
         # Publish action cmd

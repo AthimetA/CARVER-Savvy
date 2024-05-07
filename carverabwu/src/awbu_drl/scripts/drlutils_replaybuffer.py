@@ -3,11 +3,13 @@ import random
 from collections import deque
 import itertools
 
+from settings.constparams import BUFFER_SIZE
+
 
 class ReplayBuffer:
-    def __init__(self, size):
-        self.buffer = deque(maxlen=size)
+    def __init__(self, size=BUFFER_SIZE):
         self.max_size = size
+        self.buffer = deque(maxlen=self.max_size)
 
     def sample(self, batchsize):
         batch = []

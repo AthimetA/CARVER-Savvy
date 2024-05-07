@@ -166,11 +166,13 @@ class DrlAgent(Node):
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')
             self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
         # Start the process
-        self.timer_hz = 50.0 * self.sim_speed # Scale the simulation speed
+        self.timer_hz = 30.0 * self.sim_speed # Scale the simulation speed
         self.timer_period = 1e9/self.timer_hz # Convert to nanoseconds
         self.episode_start_time = 0.0
         self.episode_done = False
         self.agent_status = "IDLE"
+
+        self.episode_radom_action = False
 
         self.process_start_time = time.perf_counter_ns()
 
@@ -256,13 +258,14 @@ class DrlAgent(Node):
 
     def init_episode(self):
         state, _, _, _, _ = self.step(action=[], previous_action=[0.0, 0.0])
+
+        # x % chance of random action
+        if np.random.rand() < 0.5:
+            self.episode_radom_action = True
+        else:
+            self.episode_radom_action = False
+
         return state
-    
-    def get_random_action(self):
-        # Get a random action
-        vl = np.random.uniform(0.0, 6.0)
-        vw = np.random.randint(-3, 3)
-        return [5.0*self.test, 0.0]
     
     def agent_process(self):
         while (True):
@@ -311,6 +314,10 @@ class DrlAgent(Node):
                         action = self.model.get_action_random()
                     else:
                         action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
+                        # if self.episode_radom_action:
+                        #     action = self.model.get_action_random()
+                        # else:
+                        #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
 
                     # Set the current action 
                     action_current = action

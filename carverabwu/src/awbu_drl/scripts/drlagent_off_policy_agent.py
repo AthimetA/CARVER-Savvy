@@ -45,7 +45,7 @@ class OffPolicyAgent(ABC):
         self.tau                = TAU
         # Other parameters
         self.step_time          = STEP_TIME
-        self.loss_function      = torchf.smooth_l1_loss
+        self.loss_function      = torchf.mse_loss
         self.epsilon            = 1.0
         self.epsilon_decay      = EPSILON_DECAY
         self.epsilon_minimum    = EPSILON_MINIMUM
