@@ -25,7 +25,7 @@ import sys
 import time
 import numpy as np
 
-from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL
+from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, TAU
 
 from awbu_interfaces.srv import DrlStep, EnvReady
 from std_srvs.srv import Empty
@@ -115,7 +115,7 @@ class DrlAgent(Node):
             del self.model
             self.model = self.sm.load_model()
             self.model.device = self.device
-            self.model.tau = 0.10
+            self.model.tau = TAU
             self.sm.load_weights(self.model.networks)
             
             # Load the replay buffer
@@ -264,7 +264,7 @@ class DrlAgent(Node):
         state, _, _, _, _ = self.step(action=[], previous_action=[0.0, 0.0])
 
         # x % chance of random action
-        if np.random.rand() < 0.20:
+        if np.random.rand() < 0.10:
             self.episode_radom_action = True
             self.get_logger().info(bcolors.WARNING + "Random action episode" + bcolors.ENDC)
         else:
@@ -313,8 +313,10 @@ class DrlAgent(Node):
 
                 elif self.agent_status == "EPISODE STARTED":
                     
-                    # # Get the current action
-                    # action = self.get_random_action()
+                    ## Implement update of the positon and orientation of the robot
+                    ## CODE HERE
+
+                    ## END OF CODE
 
                     if self.training and self.total_steps < self.observe_steps:
                         action = self.model.get_action_random()

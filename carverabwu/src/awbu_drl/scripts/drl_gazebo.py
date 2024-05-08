@@ -329,7 +329,7 @@ class DRLGazebo(Node):
         state.append(float(dtg))
         atg = self.robot.goal_angle / math.pi
         state.append(float(atg))
-        # # Robot Observation
+        # Robot Observation
         x = self.robot.x / ARENA_LENGTH
         state.append(float(x))
         y = self.robot.y / ARENA_WIDTH
