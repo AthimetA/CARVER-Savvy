@@ -9,6 +9,9 @@ class Reward():
         self.initial_distance_to_goal = 0
         self.waypoint_reached = False
 
+        self.action_linear_prev = 0
+        self.action_angular_prev = 0
+
     def reward_initalize(self, init_distance_to_goal, init_angle_to_goal):
         # Update the initial distance and angle to goal
         self.distance_to_goal = init_distance_to_goal
@@ -16,6 +19,9 @@ class Reward():
 
         self.initial_distance_to_goal = init_distance_to_goal
         self.waypoint_reached = False
+
+        self.action_linear_prev = 0
+        self.action_angular_prev = 0
 
     # def get_reward(self,
     # status,  # Status of the robot (SUCCESS, COLLISION, TUMBLE, TIMEOUT)
@@ -62,12 +68,23 @@ class Reward():
     
     def get_reward(self,
     status,  # Status of the robot (SUCCESS, COLLISION, TUMBLE, TIMEOUT)
+    action_linear,  # Linear velocity
+    action_angular,  # Angular velocity
     distance_to_goal,  # Distance to the goal
     angle_to_goal,  # Angle to the goal
     omega,  # Angular velocity
     ):
         # Step reward for each action
         R_STEP = -5
+
+        # Reward for Change in linear velocity
+        R_LINEAR = - 1 * abs(action_linear - self.action_linear_prev)
+
+        self.action_linear_prev = action_linear
+
+        # Reward for Change in angular velocity
+        R_ANGULAR = - 1 * abs(action_angular - self.action_angular_prev)
+        self.action_angular_prev = action_angular
 
         # Reward for the angle to the goal
         #[-3.14, 0]
@@ -104,9 +121,9 @@ class Reward():
             R_STATUS = 0
 
         # Total reward
-        reward = R_STEP + R_ANGLE + R_DISTANCE + R_OMEGA + R_STATUS + R_WAYPOINT
+        reward = R_STEP + R_ANGLE + R_DISTANCE + R_OMEGA + R_STATUS + R_WAYPOINT + R_LINEAR + R_ANGULAR
 
 
-        return float(reward) , [R_STEP, R_ANGLE, R_DISTANCE, R_OMEGA, R_STATUS, R_WAYPOINT]
+        return float(reward) , [R_STEP, R_ANGLE, R_DISTANCE, R_OMEGA, R_STATUS, R_WAYPOINT, R_LINEAR, R_ANGULAR]
 
     

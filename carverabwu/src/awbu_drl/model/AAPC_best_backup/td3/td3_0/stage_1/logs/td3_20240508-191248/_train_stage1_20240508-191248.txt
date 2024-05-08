@@ -1,2 +1,0 @@
-episode, reward, success, duration, steps, total_steps, memory length, avg_critic_loss, avg_actor_loss
-301, 3358.274995699525, 1, 1.2224317530000235, 76, 43367,                                             25600, 66133.8828125, 967.8934936523438
