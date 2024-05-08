@@ -81,6 +81,17 @@ PATH_INTERVAL_PER_EPISODE = 2
 MAX_OBS_SPEED_X = (ARENA_LENGTH / EPISODE_TIMEOUT_SECONDS) * PATH_INTERVAL_PER_EPISODE
 MAX_OBS_SPEED_Y = (ARENA_WIDTH / EPISODE_TIMEOUT_SECONDS) * PATH_INTERVAL_PER_EPISODE
 
+from env_utils import read_stage
+
+state = read_stage()
+if state == 1:
+    INTIAL_ROBOT_X = -5.0
+    INTIAL_ROBOT_Y = 0.0
+else:
+    INTIAL_ROBOT_X = 0.0
+    INTIAL_ROBOT_Y = 0.0
+
+
 class DRLGazebo(Node):
     def __init__(self):
         super().__init__('drl_gazebo')
@@ -91,7 +102,7 @@ class DRLGazebo(Node):
         
         '''
 
-        self.entity_name = 'goal_box'
+        self.entity_name = 'goal_area'
 
         '''
         
@@ -100,7 +111,7 @@ class DRLGazebo(Node):
         '''
         
         # --------------- Robot --------------- #
-        self.robot = Robot()
+        self.robot = Robot(initial_x=INTIAL_ROBOT_X, initial_y=INTIAL_ROBOT_Y)
         # --------------- Goal --------------- #
         self.goal_ready = False
         self.goal_x, self.goal_y = 0.0, 0.0
@@ -229,7 +240,6 @@ class DRLGazebo(Node):
 
     def obstacle_start(self):
         req = ObstacleStart.Request()
-        req.empty = True
         while not self.obstacle_start_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         self.obstacle_start_client.call_async(req)
@@ -339,7 +349,7 @@ class DRLGazebo(Node):
         state.append(float(obstacle_vel_x))
         obstacle_vel_y = self.obstacle_vel_y / SPEED_LINEAR_MAX
         state.append(float(obstacle_vel_y))
-        self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
+        # self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
         # self.get_logger().info(f'State: {state}')
         self.local_step += 1
         return state
@@ -399,7 +409,7 @@ class DRLGazebo(Node):
         self.goal_x, self.goal_y = self.goal_manager.generate_goal_pose(self.robot.x, self.robot.y, OBSTACLE_RADIUS)
 
         # Set the goal entity
-        # self.set_entity_state(self.goal_x, self.goal_y)
+        self.set_entity_state(self.goal_x, self.goal_y)
 
         # Clear the obstacle distances
         self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
@@ -427,9 +437,7 @@ class DRLGazebo(Node):
         
         self.get_logger().info(f"=====================================")
         # self.get_logger().info(bcolors.OKBLUE + f"New episode started, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}" + bcolors.ENDC)
-        loc = "Top" if self.goal_x > 0 else "Bottom" 
-        loc += " Right" if self.goal_y < 0 else " Left"
-        self.get_logger().info(bcolors.OKBLUE + f"Goal location: {loc} ({self.goal_x:.2f}, {self.goal_y:.2f})" + bcolors.ENDC)
+        self.get_logger().info(bcolors.OKBLUE + f"Goal location: ({self.goal_x:.2f}, {self.goal_y:.2f}) DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°" + bcolors.ENDC)
 
         self.reward_manager.reward_initalize(self.robot.distance_to_goal, self.robot.goal_angle)
 
@@ -491,8 +499,10 @@ class DRLGazebo(Node):
             angle_to_goal       = self.robot.goal_angle,
             omega               = action_angular,
         )
-        self.get_logger().info(f"R_STEP: {R_STEP}, R_ANGLE: {R_ANGLE}, R_DISTANCE: {R_DISTANCE}, R_OMEGA: {R_OMEGA}, R_STATUS: {R_STATUS}, R_WAYPOINT: {R_WAYPOINT}, Total Reward: {reward_out}")
-
+        # self.get_logger().info(f"R_STEP: {R_STEP}, R_ANGLE: {R_ANGLE}, R_DISTANCE: {R_DISTANCE}, R_OMEGA: {R_OMEGA}, R_STATUS: {R_STATUS}, R_WAYPOINT: {R_WAYPOINT}, Total Reward: {reward_out}")
+        if R_WAYPOINT != 0:
+            self.get_logger().info(bcolors.OKCYAN+ f"Waypoint reached, Reward: {reward_out:.2f}" + bcolors.ENDC)
+            self.get_logger().info(f"DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°")
         response.reward = reward_out
         response.done = self._EP_done
         response.success = self._EP_succeed

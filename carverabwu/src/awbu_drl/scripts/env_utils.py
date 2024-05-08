@@ -66,20 +66,13 @@ stage = read_stage()
 
 if stage == 1:
     PREDEFINED_GOAL_LOCATIONS = [
-        [-1.0,0.0],
-        [3.0,0.0],
-        [6.0,0.0],
-
-        [-1.0,0.0], 
-        [3.0,0.0],
-        [6.0,0.0],
-
+        [-1.0,0.0],[-1.0,0.0],[-1.0,0.0],[-1.0,0.0],[-1.0,0.0],[-1.0,0.0],
+        [3.0,0.0],[3.0,0.0],[3.0,0.0],
+        [6.0,0.0],[6.0,0.0],[6.0,0.0],
         [6.0,5.0],
-        [6.0,-5.0],
-                              
+        [6.0,-5.0],                 
     ]
 else:
-
     PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\
                                     [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
                                     ]
@@ -164,21 +157,31 @@ class GoalManager:
                 # Random goal generation within the arena
                 goal_x = random.uniform(-ARENA_LENGTH/2, ARENA_LENGTH/2)
                 goal_y = random.uniform(-ARENA_WIDTH/2, ARENA_WIDTH/2)
+
+                # Check if the goal is valid and far enough from the previous goal
+                if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE:
+                        break
+                else:
+                    continue 
+
             elif ENABLE_DYNAMIC_GOALS:
                 # Dynamic goal generation within a radius of the robot position
                 goal_x = random.uniform(robot_x - DYNAMIC_GOAL_RADIUS, robot_x + DYNAMIC_GOAL_RADIUS)
                 goal_y = random.uniform(robot_y - DYNAMIC_GOAL_RADIUS, robot_y + DYNAMIC_GOAL_RADIUS)
+
+                # Check if the goal is valid and far enough from the previous goal
+                if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE:
+                        break
+                else:
+                    continue 
+
             else:
                 # Get the goal from the predefined list
                 index = random.randint(0, len(PREDEFINED_GOAL_LOCATIONS) - 1)
                 goal_x = PREDEFINED_GOAL_LOCATIONS[index][0]
                 goal_y = PREDEFINED_GOAL_LOCATIONS[index][1]
+                break
 
-            # Check if the goal is valid and far enough from the previous goal
-            if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE:
-                    break
-            else:
-                continue 
         if iterations >= MAX_ITERATIONS:
             goal_x = 0.0 # Default goal
             goal_y = 0.0 # Default goal
@@ -189,9 +192,13 @@ class GoalManager:
         return self.goal_x, self.goal_y
     
 class Robot:
-    def __init__(self):
-        self.x = 0.0
-        self.y = 0.0
+    def __init__(self, initial_x: float = 0.0, initial_y: float = 0.0):
+
+        self.initial_x = initial_x
+        self.initial_y = initial_y
+
+        self.x = self.initial_x
+        self.y = self.initial_y
         self.row = 0.0
         self.pitch = 0.0
         self.theta = 0.0
@@ -218,8 +225,8 @@ class Robot:
 
     def reset(self):
         # Reset the robot position
-        self.x = 0.0
-        self.y = 0.0
+        self.x = self.initial_x
+        self.y = self.initial_y
         self.theta = 0.0
 
         self.distance_traveled = 0.0
