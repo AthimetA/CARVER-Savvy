@@ -485,13 +485,13 @@ class DRLGazebo(Node):
         # Check if the episode is done
         self.episode_check()
         # Calculate reward
-        reward_out, [R_STEP, R_ANGLE, R_DISTANCE, R_OMEGA, R_STATUS] = self.reward_manager.get_reward(
+        reward_out, [R_STEP, R_ANGLE, R_DISTANCE, R_OMEGA, R_STATUS, R_WAYPOINT] = self.reward_manager.get_reward(
             status              = self._EP_succeed,
             distance_to_goal    = self.robot.distance_to_goal,
             angle_to_goal       = self.robot.goal_angle,
             omega               = action_angular,
         )
-        self.get_logger().info(f"R_STEP: {R_STEP}, R_ANGLE: {R_ANGLE}, R_DISTANCE: {R_DISTANCE}, R_OMEGA: {R_OMEGA}, R_STATUS: {R_STATUS}, reward: {reward_out}")
+        self.get_logger().info(f"R_STEP: {R_STEP}, R_ANGLE: {R_ANGLE}, R_DISTANCE: {R_DISTANCE}, R_OMEGA: {R_OMEGA}, R_STATUS: {R_STATUS}, R_WAYPOINT: {R_WAYPOINT}, Total Reward: {reward_out}")
 
         response.reward = reward_out
         response.done = self._EP_done

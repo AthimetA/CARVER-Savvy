@@ -9,10 +9,10 @@ from matplotlib.ticker import MaxNLocator
 
 matplotlib.use('TkAgg')
 class Graph():
-    def __init__(self):
+    def __init__(self, session_dir):
         plt.show()
 
-        self.session_dir = '' # Waiting for session_dir
+        self.session_dir = session_dir
         self.legend_labels = ['Unknown', 'Success', 'Collision', 'Timeout', 'Tumble']
         self.legend_colors = ['b', 'g', 'r', 'c', 'm']
 
@@ -68,7 +68,7 @@ class Graph():
                 self.ax[0][0].plot(xaxis, outcome_history, color=self.legend_colors[i], label=self.legend_labels[i])
                 i += 1
             if not self.legend_set:
-                self.ax[0][0].legend()
+                # self.ax[0][0].legend()
                 self.legend_set = True
 
         # Plot critic loss

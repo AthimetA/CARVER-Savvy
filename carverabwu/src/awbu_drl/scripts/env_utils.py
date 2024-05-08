@@ -62,6 +62,27 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+stage = read_stage()
+
+if stage == 1:
+    PREDEFINED_GOAL_LOCATIONS = [
+        [-1.0,0.0],
+        [3.0,0.0],
+        [6.0,0.0],
+
+        [-1.0,0.0], 
+        [3.0,0.0],
+        [6.0,0.0],
+
+        [6.0,5.0],
+        [6.0,-5.0],
+                              
+    ]
+else:
+
+    PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\
+                                    [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
+                                    ]
 
 class GoalManager:
     def __init__(self, obstacle_name: list = ['wall_outler', 'pillar_1', 'pillar_2', 'wall_inner_1']):
@@ -133,10 +154,6 @@ class GoalManager:
         MAX_ITERATIONS = 100
         GOAL_SEPARATION_DISTANCE = 5.0
         DYNAMIC_GOAL_RADIUS = float(radius) if radius > GOAL_SEPARATION_DISTANCE else GOAL_SEPARATION_DISTANCE
-        PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\
-                                     [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
-                                    #  [3.0,0.0]
-                                     ]
         self.prev_goal_x = self.goal_x
         self.prev_goal_y = self.goal_y
         iterations = 0
