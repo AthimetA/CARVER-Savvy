@@ -120,8 +120,8 @@ class DrlAgent(Node):
             self.sm.load_weights(self.model.networks)
             
             # Load the replay buffer
-            if self.training:
-                self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size)
+            # if self.training:
+            #     self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size)
             # # Load the graph data
             # self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
 
@@ -136,8 +136,8 @@ class DrlAgent(Node):
         # Initialize the graph
         self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode)
         # Load the graph data
-        if self.load_session:
-            self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
+        # if self.load_session:
+        #     self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
         self.get_logger().info(bcolors.OKBLUE + "Graph Initialized" + bcolors.ENDC)
 
         # Update graph session dir

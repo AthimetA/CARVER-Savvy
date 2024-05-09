@@ -90,7 +90,7 @@ class Reward():
 
         # Reward for the angle to the goal
         # #[-3.14, 0]
-        R_ANGLE = -1 * abs(angle_to_goal) * 5.0
+        R_ANGLE = -1 * abs(angle_to_goal)
 
         # Reward for the distance to the goal
         R_DISTANCE = -1 * abs(distance_to_goal)
