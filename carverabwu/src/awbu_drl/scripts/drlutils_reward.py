@@ -90,7 +90,7 @@ class Reward():
 
         # Reward for the angle to the goal
         # #[-3.14, 0]
-        R_ANGLE = -1 * abs(angle_to_goal)
+        R_ANGLE = -1 * abs(angle_to_goal) * 5.0
 
         # Reward for the distance to the goal
         R_DISTANCE = -1 * abs(distance_to_goal)
@@ -109,7 +109,7 @@ class Reward():
         # Reward for the angular velocity
         # Penalty for angular velocity to prevent spinning in place
         # [-SPEED_ANGULAR_MAX, 0]
-        R_OMEGA = -1 * np.abs(omega)
+        # R_OMEGA = -1 * np.abs(omega)
 
         # Waypoint reward
         if not self.waypoint_reached and distance_to_goal < self.initial_distance_to_goal * 0.5:
@@ -129,9 +129,9 @@ class Reward():
             R_STATUS = 0
 
         # Total reward
-        reward = R_STEP + R_ANGLE + R_DISTANCE + R_OMEGA + R_STATUS + R_WAYPOINT 
+        reward = R_STEP + R_ANGLE + R_DISTANCE + R_STATUS + R_WAYPOINT 
 
 
-        return float(reward) , [R_STEP, R_ANGLE, R_DISTANCE, R_OMEGA, R_STATUS, R_WAYPOINT, 0.0 ,0.0]
+        return float(reward) , [R_DISTANCE, R_ANGLE, R_WAYPOINT]
 
     

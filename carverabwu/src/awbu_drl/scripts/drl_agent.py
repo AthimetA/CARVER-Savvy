@@ -134,7 +134,7 @@ class DrlAgent(Node):
         self.get_logger().info(bcolors.OKBLUE + "Storage Manager Initialized" + bcolors.ENDC)
 
         # Initialize the graph
-        self.graph = Graph(session_dir=self.sm.session_dir)
+        self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode)
         # Load the graph data
         if self.load_session:
             self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
@@ -265,7 +265,7 @@ class DrlAgent(Node):
         state, _, _, _, _ = self.step(action=[], previous_action=[0.0, 0.0])
 
         # x % chance of random action
-        if np.random.rand() < 0.10:
+        if np.random.rand() < 0.01:
             self.episode_radom_action = True
             self.get_logger().info(bcolors.WARNING + "Random action episode" + bcolors.ENDC)
         else:

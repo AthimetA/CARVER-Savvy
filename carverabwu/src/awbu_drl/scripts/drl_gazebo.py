@@ -493,7 +493,7 @@ class DRLGazebo(Node):
         # Check if the episode is done
         self.episode_check()
         # Calculate reward
-        reward_out, [R_STEP, R_ANGLE, R_DISTANCE, R_OMEGA, R_STATUS, R_WAYPOINT, R_LINEAR, R_ANGULAR] = self.reward_manager.get_reward(
+        reward_out, [R_DISTANCE, R_ANGLE, R_WAYPOINT] = self.reward_manager.get_reward(
             status              = self._EP_succeed,
             action_linear       = action_linear,
             action_angular      = action_angular,
@@ -501,8 +501,7 @@ class DRLGazebo(Node):
             angle_to_goal       = self.robot.goal_angle,
             omega               = action_angular,
         )
-        # self.get_logger().info(f"R_LINEAR: {R_LINEAR:.2f} R_ANGULAR: {R_ANGULAR:.2f}")
-        # self.get_logger().info(f"R_STEP: {R_STEP}, R_ANGLE: {R_ANGLE}, R_DISTANCE: {R_DISTANCE}, R_OMEGA: {R_OMEGA}, R_STATUS: {R_STATUS}, R_WAYPOINT: {R_WAYPOINT}, Total Reward: {reward_out}")
+        # self.get_logger().info(f"R_DISTANCE: {R_DISTANCE:.2f} R_ANGLE: {R_ANGLE:.2f}")
         if R_WAYPOINT != 0:
             self.get_logger().info(bcolors.OKCYAN+ f"Waypoint reached, Reward: {reward_out:.2f}" + bcolors.ENDC)
             self.get_logger().info(f"DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°")

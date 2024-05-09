@@ -9,8 +9,10 @@ from matplotlib.ticker import MaxNLocator
 
 matplotlib.use('TkAgg')
 class Graph():
-    def __init__(self, session_dir):
+    def __init__(self, session_dir, first_episode = 0):
         plt.show()
+
+        self.first_episode = first_episode
 
         self.session_dir = session_dir
         self.legend_labels = ['Unknown', 'Success', 'Collision', 'Timeout', 'Tumble']
@@ -36,7 +38,6 @@ class Graph():
         self.legend_set = False
 
     def clear_graph(self):
-        self.global_steps = 0
         self.data_outcome_history = []
         self.data_rewards = []
         self.data_loss_critic = []
@@ -44,16 +45,18 @@ class Graph():
         self.graphdata = [self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor]
 
         self.outcome_histories = []
-        self.legend_set = False
 
-        self.ax[0][0].cla()
-        self.ax[0][1].cla()
-        self.ax[1][0].cla()
-        self.ax[1][1].cla()
+        self.ax[0][0].clear()
+        self.ax[0][1].clear()
+        self.ax[1][0].clear()
+        self.ax[1][1].clear()
+
+        self.legend_set = False
 
     def set_graphdata(self, graphdata, episode):
         self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor = [graphdata[i] for i in range(len(self.graphdata))]
         self.graphdata = [self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor]
+        self.clear_graph()
         self.draw_plots(episode)
         return self.global_steps
 
@@ -65,7 +68,10 @@ class Graph():
         self.data_loss_actor.append(loss_actor_sum / step)
         self.graphdata = [self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor]
 
-    def draw_plots(self, episode):
+    def draw_plots(self, ep):
+        
+        episode = ep - self.first_episode
+
         xaxis = np.array(range(1, episode + 1))
 
         # Plot outcome history
