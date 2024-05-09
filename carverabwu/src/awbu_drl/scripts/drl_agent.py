@@ -265,7 +265,7 @@ class DrlAgent(Node):
         state, _, _, _, _ = self.step(action=[], previous_action=[0.0, 0.0])
 
         # x % chance of random action
-        if np.random.rand() < 0.20:
+        if np.random.rand() < 0.40:
             self.episode_radom_action = True
             self.get_logger().info(bcolors.WARNING + "Random action episode" + bcolors.ENDC)
         else:
@@ -325,8 +325,14 @@ class DrlAgent(Node):
                         # action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
                         if self.episode_radom_action:
 
-                            action = self.model.get_action_random()
+                            # action = self.model.get_action_random()
                             # action = [1.0,0.0]
+
+                            if np.random.rand() < 0.5:
+                                action = self.model.get_action_random()
+
+                            else:
+                                action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
 
                         else:
                             action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
