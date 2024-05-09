@@ -35,6 +35,22 @@ class Graph():
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         self.legend_set = False
 
+    def clear_graph(self):
+        self.global_steps = 0
+        self.data_outcome_history = []
+        self.data_rewards = []
+        self.data_loss_critic = []
+        self.data_loss_actor = []
+        self.graphdata = [self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor]
+
+        self.outcome_histories = []
+        self.legend_set = False
+
+        self.ax[0][0].cla()
+        self.ax[0][1].cla()
+        self.ax[1][0].cla()
+        self.ax[1][1].cla()
+
     def set_graphdata(self, graphdata, episode):
         self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor = [graphdata[i] for i in range(len(self.graphdata))]
         self.graphdata = [self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor]
