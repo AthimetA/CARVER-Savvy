@@ -86,12 +86,11 @@ HIDDEN_SIZE     = 512       # Number of neurons in hidden layers
 BATCH_SIZE      = 256       # Number of samples per training batch
 BUFFER_SIZE     = BATCH_SIZE * 100 # Number of samples stored in replay buffer before FIFO
 DISCOUNT_FACTOR = 0.99
-# LEARNING_RATE   = 0.003
-LEARNING_RATE   = 0.001
+LEARNING_RATE   = 0.003
 # TAU             = 0.003
-# TAU             = 0.10
+TAU             = 0.10
 # TAU             = 0.025
-TAU             = 0.001
+# TAU             = 0.001
 
 OBSERVE_STEPS   = BATCH_SIZE # At training start random actions are taken for N steps for better exploration
 # OBSERVE_STEPS   = 250     # At training start random actions are taken for N steps for better exploration
