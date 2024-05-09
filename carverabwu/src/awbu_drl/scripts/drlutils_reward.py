@@ -77,7 +77,7 @@ class Reward():
     omega,  # Angular velocity
     ):
         # Step reward for each action
-        R_STEP = -5
+        R_STEP = - 2
 
         # # Reward for Change in linear velocity
         # R_LINEAR = - 1 * abs(action_linear - self.action_linear_prev)
@@ -93,14 +93,17 @@ class Reward():
         R_ANGLE = -1 * abs(angle_to_goal)
 
         # Reward for the distance to the goal
-        if distance_to_goal < self.distance_to_goal:
-            R_DISTANCE = np.abs(self.distance_to_goal - distance_to_goal) * 200
+        R_DISTANCE = -1 * abs(distance_to_goal)
 
-        else:
-            # R_DISTANCE = -1 * np.abs(self.distance_to_goal - distance_to_goal) * 200
-            R_DISTANCE = 0
+        # Reward for the distance to the goal
+        # if distance_to_goal < self.distance_to_goal:
+        #     R_DISTANCE = np.abs(self.distance_to_goal - distance_to_goal) * 200
 
-        self.distance_to_goal = distance_to_goal
+        #     self.distance_to_goal = distance_to_goal
+
+        # else:
+        #     # R_DISTANCE = -1 * np.abs(self.distance_to_goal - distance_to_goal) * 200
+        #     R_DISTANCE = 0
 
 
         # Reward for the angular velocity
@@ -111,17 +114,17 @@ class Reward():
         # Waypoint reward
         if not self.waypoint_reached and distance_to_goal < self.initial_distance_to_goal * 0.5:
             self.waypoint_reached = True
-            R_WAYPOINT = 2000
+            R_WAYPOINT = 50
         else:
             R_WAYPOINT = 0
 
         # Reward for status
         if status == SUCCESS:
-            R_STATUS = 2500
+            R_STATUS = 250
         elif status == COLLISION:
-            R_STATUS = -4000
+            R_STATUS = -250
         elif status == TIMEOUT:
-            R_STATUS = -2500
+            R_STATUS = -250
         else:
             R_STATUS = 0
 

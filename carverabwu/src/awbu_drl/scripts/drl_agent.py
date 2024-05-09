@@ -324,7 +324,10 @@ class DrlAgent(Node):
                     else:
                         # action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
                         if self.episode_radom_action:
+
                             action = self.model.get_action_random()
+                            # action = [1.0,0.0]
+
                         else:
                             action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
 
