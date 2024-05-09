@@ -67,10 +67,10 @@ stage = read_stage()
 if stage == 1:
     PREDEFINED_GOAL_LOCATIONS = [
         # [-1.0,0.0],
-        [3.0,0.0],
-        [6.0,0.0],
-        [6.0,5.0],
-        [6.0,-5.0],                 
+        [1.0,0.0],
+        [5.0,0.0],
+        [5.0,5.0],
+        [5.0,-5.0],                 
     ]
 else:
     PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\

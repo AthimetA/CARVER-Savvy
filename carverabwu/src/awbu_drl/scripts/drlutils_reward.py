@@ -7,6 +7,7 @@ class Reward():
         self.angle_to_goal = 0
 
         self.initial_distance_to_goal = 0
+        self.initial_angle_to_goal = 0
         self.waypoint_reached = False
 
         self.action_linear_prev = 0
@@ -18,6 +19,7 @@ class Reward():
         self.angle_to_goal = init_angle_to_goal
 
         self.initial_distance_to_goal = init_distance_to_goal
+        self.initial_angle_to_goal = init_angle_to_goal
         self.waypoint_reached = False
 
         self.action_linear_prev = 0
@@ -87,21 +89,30 @@ class Reward():
         self.action_angular_prev = action_angular
 
         # Reward for the angle to the goal
-        #[-3.14, 0]
-        R_ANGLE = -1 * abs(angle_to_goal)
+        # #[-3.14, 0]
+        # R_ANGLE = -1 * abs(angle_to_goal)
+
+        if angle_to_goal < self.angle_to_goal:
+            R_ANGLE = np.abs(self.angle_to_goal - angle_to_goal) * 100
+
+            self.angle_to_goal = angle_to_goal
+
+        else:
+            R_ANGLE = -1 * np.abs(self.angle_to_goal - angle_to_goal) * 100
 
         # Reward for the distance to the goal
         if distance_to_goal < self.distance_to_goal:
             R_DISTANCE = np.abs(self.distance_to_goal - distance_to_goal) * 100
+
+            self.distance_to_goal = distance_to_goal
+
         else:
             R_DISTANCE = -1 * np.abs(self.distance_to_goal - distance_to_goal) * 100
-
-        self.distance_to_goal = distance_to_goal
 
         # Reward for the angular velocity
         # Penalty for angular velocity to prevent spinning in place
         # [-SPEED_ANGULAR_MAX, 0]
-        R_OMEGA = -1 * np.abs(omega) * 2
+        R_OMEGA = -1 * np.abs(omega)
 
         # Waypoint reward
         if not self.waypoint_reached and distance_to_goal < self.initial_distance_to_goal * 0.5:
@@ -114,7 +125,7 @@ class Reward():
         if status == SUCCESS:
             R_STATUS = 2500
         elif status == COLLISION:
-            R_STATUS = -2500
+            R_STATUS = -4000
         elif status == TIMEOUT:
             R_STATUS = -1000
         else:

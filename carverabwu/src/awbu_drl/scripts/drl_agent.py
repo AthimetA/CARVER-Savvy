@@ -25,7 +25,7 @@ import sys
 import time
 import numpy as np
 
-from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, TAU
+from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, TAU, LEARNING_RATE
 
 from awbu_interfaces.srv import DrlStep, EnvReady
 from std_srvs.srv import Empty
@@ -115,6 +115,7 @@ class DrlAgent(Node):
             del self.model
             self.model = self.sm.load_model()
             self.model.device = self.device
+            self.model.learning_rate = LEARNING_RATE
             self.model.tau = TAU
             self.sm.load_weights(self.model.networks)
             
@@ -264,7 +265,7 @@ class DrlAgent(Node):
         state, _, _, _, _ = self.step(action=[], previous_action=[0.0, 0.0])
 
         # x % chance of random action
-        if np.random.rand() < 0.10:
+        if np.random.rand() < 0.50:
             self.episode_radom_action = True
             self.get_logger().info(bcolors.WARNING + "Random action episode" + bcolors.ENDC)
         else:
