@@ -88,7 +88,7 @@ class TD3(OffPolicyAgent):
         super().__init__(device, sim_speed)
 
         # DRL parameters
-        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.7, min_sigma=0.4, decay_period=500_000)
+        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.1, min_sigma=0.01, decay_period=500_000)
 
         # TD3 parameters
         self.policy_noise   = POLICY_NOISE
@@ -119,10 +119,10 @@ class TD3(OffPolicyAgent):
         action = self.actor(state, visualize)
         if is_training:
             noise = torch.from_numpy(copy.deepcopy(self.noise.get_noise(step))).to(self.device)
-            print(f'Action: {action.cpu().data.numpy()}, Noise: {noise.cpu().data.numpy()}')
+            # print(f'Action: {action.cpu().data.numpy()}, Noise: {noise.cpu().data.numpy()}')
             action = torch.clamp(torch.add(action, noise), -1.0, 1.0)
-            print(f'Action after noise: {action.cpu().data.numpy()}')
-            print('-' * 50)
+            # print(f'Action after noise: {action.cpu().data.numpy()}')
+            # print('-' * 50)
         return action.detach().cpu().data.numpy().tolist()
 
     def get_action_random(self):

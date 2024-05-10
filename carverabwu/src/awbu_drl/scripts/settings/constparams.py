@@ -14,7 +14,7 @@ GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N epis
 # ===================================================================== #
 #                             ROBOTS PARAMS                             #
 # ===================================================================== #
-NUM_SCAN_SAMPLES = 90
+NUM_SCAN_SAMPLES = 45
 
 
 # ===================================================================== #
@@ -32,7 +32,7 @@ TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
 LIDAR_DISTANCE_CAP          = 5.0   # meters
-THRESHOLD_COLLISION         = 0.75  # meters
+THRESHOLD_COLLISION         = 0.50  # meters
 THREHSOLD_GOAL              = 0.50  # meters
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
 LINEAR_VELOCITY_LOC       = 0     # 0 = no noise, 1 = noise enabled
@@ -81,15 +81,15 @@ REAL_THRESHOLD_GOAL         = 0.35  # meters, minimum distance to goal that coun
 # DRL parameters
 REWARD_FUNCTION = "A"       # Defined in reward.py
 ACTION_SIZE     = 2         # Not used for DQN, see DQN_ACTION_SIZE
-HIDDEN_SIZE     = 512       # Number of neurons in hidden layers
+HIDDEN_SIZE     = 128       # Number of neurons in hidden layers
 
-BATCH_SIZE      = 256       # Number of samples per training batch
+BATCH_SIZE      = 128       # Number of samples per training batch
 BUFFER_SIZE     = BATCH_SIZE * 100 # Number of samples stored in replay buffer before FIFO
 DISCOUNT_FACTOR = 0.99
-LEARNING_RATE   = 0.003
-# LEARNING_RATE   = 0.01
-# TAU             = 0.003
-TAU             = 0.10
+# LEARNING_RATE   = 0.003
+LEARNING_RATE   = 0.001
+TAU             = 0.010
+# TAU             = 0.10
 # TAU             = 0.05
 # TAU             = 0.001
 
