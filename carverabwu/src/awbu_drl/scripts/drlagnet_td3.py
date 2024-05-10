@@ -88,7 +88,7 @@ class TD3(OffPolicyAgent):
         super().__init__(device, sim_speed)
 
         # DRL parameters
-        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.1, min_sigma=0.1, decay_period=8000000)
+        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.7, min_sigma=0.4, decay_period=500_000)
 
         # TD3 parameters
         self.policy_noise   = POLICY_NOISE
@@ -108,12 +108,21 @@ class TD3(OffPolicyAgent):
         self.hard_update(self.actor_target, self.actor)
         self.hard_update(self.critic_target, self.critic)
 
+    def get_action_with_epsilon_greedy(self, state, is_training, step, visualize=False):
+        if is_training and np.random.rand() <= self.epsilon:
+            return self.get_action_random()
+        else:
+            return self.get_action(state, is_training, step, visualize)
+
     def get_action(self, state, is_training, step, visualize=False):
         state = torch.from_numpy(np.asarray(state, np.float32)).to(self.device)
         action = self.actor(state, visualize)
         if is_training:
             noise = torch.from_numpy(copy.deepcopy(self.noise.get_noise(step))).to(self.device)
+            print(f'Action: {action.cpu().data.numpy()}, Noise: {noise.cpu().data.numpy()}')
             action = torch.clamp(torch.add(action, noise), -1.0, 1.0)
+            print(f'Action after noise: {action.cpu().data.numpy()}')
+            print('-' * 50)
         return action.detach().cpu().data.numpy().tolist()
 
     def get_action_random(self):
@@ -147,7 +156,7 @@ class TD3(OffPolicyAgent):
         # Optimize the critic
         self.critic_optimizer.zero_grad()
         loss_critic.backward()
-        nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=2.0, norm_type=2)
+        # nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=2.0, norm_type=2)
         self.critic_optimizer.step()
 
         # Delayed policy updates
@@ -158,7 +167,7 @@ class TD3(OffPolicyAgent):
             # Optimize the actor
             self.actor_optimizer.zero_grad()
             loss_actor.backward()
-            nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=2.0, norm_type=2)
+            # nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=2.0, norm_type=2)
             self.actor_optimizer.step()
 
             # Update the frozen target models

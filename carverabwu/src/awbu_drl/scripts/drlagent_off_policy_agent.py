@@ -82,8 +82,6 @@ class OffPolicyAgent(ABC):
         sample_d = torch.from_numpy(sample_d).to(self.device)
         result = self.train(sample_s, sample_a, sample_r, sample_ns, sample_d)
         self.iteration += 1
-        if self.epsilon and self.epsilon > self.epsilon_minimum:
-            self.epsilon *= self.epsilon_decay
         return result
 
     def create_network(self, type, name):
@@ -138,7 +136,7 @@ class Network(torch.nn.Module, ABC):
 
 
 class OUNoise(object):
-    def __init__(self, action_space, mu=0.0, theta=0.15, max_sigma=0.99, min_sigma=0.01, decay_period=600000):
+    def __init__(self, action_space, mu=0.0, theta=0.15, max_sigma=0.7, min_sigma=0.4, decay_period=600_000):
         self.mu = mu
         self.theta = theta
         self.sigma = max_sigma

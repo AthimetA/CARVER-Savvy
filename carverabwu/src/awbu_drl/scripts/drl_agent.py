@@ -268,12 +268,16 @@ class DrlAgent(Node):
         state, _, _, _, _ = self.step(action=[], previous_action=[0.0, 0.0])
 
         # x % chance of random action
-        if np.random.rand() < 0.70:
-            self.episode_radom_action = True
-            self.get_logger().info(bcolors.WARNING + "Random action episode" + bcolors.ENDC)
-        else:
-            self.episode_radom_action = False
-            self.get_logger().info(bcolors.OKGREEN + "Normal action episode" + bcolors.ENDC)
+        # if np.random.rand() < 0.90:
+        #     self.episode_radom_action = True
+        #     self.get_logger().info(bcolors.WARNING + "Random action episode" + bcolors.ENDC)
+        # else:
+        #     self.episode_radom_action = False
+        #     self.get_logger().info(bcolors.OKGREEN + "Normal action episode" + bcolors.ENDC)
+
+        if self.model.epsilon and self.model.epsilon > self.model.epsilon_minimum:
+            self.model.epsilon *= self.model.epsilon_decay
+            self.get_logger().info(f"Epsilon: {self.model.epsilon}")
 
         return state
     
@@ -325,20 +329,31 @@ class DrlAgent(Node):
                     if self.training and self.total_steps < self.observe_steps:
                         action = self.model.get_action_random()
                     else:
-                        # action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
-                        if self.episode_radom_action:
+                        # action = self.model.get_action_with_epsilon_greedy(
+                        #     state=state,
+                        #     is_training=self.training,
+                        #     step=self.total_steps,
+                        #     visualize=ENABLE_VISUAL,
+                        # )
+                        action = self.model.get_action(
+                            state=state,
+                            is_training=self.training,
+                            step=self.total_steps,
+                            visualize=ENABLE_VISUAL,
+                        )
+                        # if self.episode_radom_action:
 
-                            action = self.model.get_action_random()
-                            # action = [1.0,0.0]
+                        #     action = self.model.get_action_random()
+                        #     # action = [1.0,0.0]
 
-                            # if np.random.rand() < 0.5:
-                            #     action = self.model.get_action_random()
+                        #     # if np.random.rand() < 0.5:
+                        #     #     action = self.model.get_action_random()
 
-                            # else:
-                            #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
+                        #     # else:
+                        #     #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
 
-                        else:
-                            action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
+                        # else:
+                        #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
 
                     # Set the current action 
                     action_current = action

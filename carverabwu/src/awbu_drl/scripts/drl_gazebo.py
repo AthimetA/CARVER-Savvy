@@ -394,6 +394,7 @@ class DRLGazebo(Node):
         return state
     
     def episode_check(self):
+        # self.get_logger().info(f"Obstacle distance: {self.obstacle_distance_nearest:.2f}")
         # Success
         if self.robot.distance_to_goal < THREHSOLD_GOAL:
             self.get_logger().info(bcolors.OKGREEN + "Episode done, Agent reached the goal!" + bcolors.ENDC)
@@ -464,7 +465,6 @@ class DRLGazebo(Node):
         # Start the obstacles
         self.obstacle_start()
 
-    
         # Reset the episode variables
         self.reset_deadline = True
 

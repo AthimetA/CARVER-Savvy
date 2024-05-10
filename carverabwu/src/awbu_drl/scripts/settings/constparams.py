@@ -14,7 +14,7 @@ GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N epis
 # ===================================================================== #
 #                             ROBOTS PARAMS                             #
 # ===================================================================== #
-NUM_SCAN_SAMPLES = 180
+NUM_SCAN_SAMPLES = 90
 
 
 # ===================================================================== #
@@ -31,7 +31,7 @@ TOPIC_ODOM = '/abwubot/odom'
 TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
-LIDAR_DISTANCE_CAP          = 10.0   # meters
+LIDAR_DISTANCE_CAP          = 5.0   # meters
 THRESHOLD_COLLISION         = 0.75  # meters
 THREHSOLD_GOAL              = 0.50  # meters
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
@@ -87,16 +87,17 @@ BATCH_SIZE      = 256       # Number of samples per training batch
 BUFFER_SIZE     = BATCH_SIZE * 100 # Number of samples stored in replay buffer before FIFO
 DISCOUNT_FACTOR = 0.99
 LEARNING_RATE   = 0.003
+# LEARNING_RATE   = 0.01
 # TAU             = 0.003
-# TAU             = 0.10
-TAU             = 0.05
+TAU             = 0.10
+# TAU             = 0.05
 # TAU             = 0.001
 
 OBSERVE_STEPS   = BATCH_SIZE # At training start random actions are taken for N steps for better exploration
 # OBSERVE_STEPS   = 250     # At training start random actions are taken for N steps for better exploration
 STEP_TIME       = 0.01      # Delay between steps, can be set to 0
 EPSILON_DECAY   = 0.9995    # Epsilon decay per step
-EPSILON_MINIMUM = 0.20
+EPSILON_MINIMUM = 0.40
 
 # DQN parameters
 DQN_ACTION_SIZE = 5
