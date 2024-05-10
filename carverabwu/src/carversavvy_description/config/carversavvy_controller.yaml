@@ -6,9 +6,9 @@ controller_manager:
     # If x4 Simulator is used, update_rate is 250 Hz
     # update_rate: 250 # Hz
     # If x8 Simulator is used, update_rate is 125 Hz
-    # update_rate: 125 # Hz
+    update_rate: 125 # Hz
     # If x10 Simulator is used, update_rate is 125 Hz
-    update_rate: 100 # Hz
+    # update_rate: 100 # Hz
 
     # update_rate: 1000 # Hz
 

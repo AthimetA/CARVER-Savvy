@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP, POLICY_UPDATE_FREQUENCY
+
 from drlagent_off_policy_agent import OffPolicyAgent, Network, OUNoise
 
 LINEAR = 0
@@ -119,29 +120,52 @@ class TD3(OffPolicyAgent):
         return [np.clip(np.random.uniform(-1.0, 1.0), -1.0, 1.0)] * self.action_size
 
     def train(self, state, action, reward, state_next, done):
-        noise = (torch.randn_like(action) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
-        action_next = (self.actor_target(state_next) + noise).clamp(-1.0, 1.0)
-        Q1_next, Q2_next = self.critic_target(state_next, action_next)
-        Q_next = torch.min(Q1_next, Q2_next)
 
-        Q_target = reward + (1 - done) * self.discount_factor * Q_next
+        with torch.no_grad():
+            # Select action according to policy and add clipped noise
+            noise = (
+                 torch.randn_like(action) * self.policy_noise
+            ).clamp(-self.noise_clip, self.noise_clip)
+
+            action_next = (
+                 self.actor_target(state_next) + noise
+            ).clamp(-1.0, 1.0)
+
+            # Compute the target Q value
+            Q1_next, Q2_next = self.critic_target(state_next, action_next)
+            # Take the minimum of the two Q values
+            Q_next = torch.min(Q1_next, Q2_next)
+            # Compute the target Q value
+            Q_target = reward + (1 - done) * self.discount_factor * Q_next
+
+        # Get current Q estimates
         Q1, Q2 = self.critic(state, action)
 
+        # Compute critic loss
         loss_critic = self.loss_function(Q1, Q_target) + self.loss_function(Q2, Q_target)
+
+        # Optimize the critic
         self.critic_optimizer.zero_grad()
         loss_critic.backward()
         nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=2.0, norm_type=2)
         self.critic_optimizer.step()
 
+        # Delayed policy updates
         if self.iteration % self.policy_freq == 0:
             # optimize actor
             loss_actor = -1 * self.critic.Q1_forward(state, self.actor(state)).mean()
+
+            # Optimize the actor
             self.actor_optimizer.zero_grad()
             loss_actor.backward()
             nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=2.0, norm_type=2)
             self.actor_optimizer.step()
 
+            # Update the frozen target models
             self.soft_update(self.actor_target, self.actor, self.tau)
             self.soft_update(self.critic_target, self.critic, self.tau)
+
+            # Visualize the network
             self.last_actor_loss = loss_actor.mean().detach().cpu()
         return [loss_critic.mean().detach().cpu(), self.last_actor_loss]
+    

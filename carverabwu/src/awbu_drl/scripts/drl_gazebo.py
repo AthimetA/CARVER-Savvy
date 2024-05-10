@@ -322,38 +322,43 @@ class DRLGazebo(Node):
     #     # state.append(float(self.robot.goal_angle) / math.pi)                                        # range: [-1, 1]
     #     # state.append(float(action_linear_previous))                                                 # range: [-1, 1]
     #     # state.append(float(action_angular_previous))                                                # range: [-1, 1]
+    #     self.local_step += 1
+    #     return state
+
+    # def get_state(self, action_linear_previous: float, action_angular_previous: float):
     #     # Distance Obervation
     #     state = copy.deepcopy(self.scan_ranges)
     #     # Goal Related Obervation
     #     dtg = self.robot.distance_to_goal / MAX_GOAL_DISTANCE
-    #     state.append(float(dtg))
     #     atg = self.robot.goal_angle / math.pi
-    #     state.append(float(atg))
     #     # Robot Observation
     #     x = self.robot.x / ARENA_LENGTH
-    #     state.append(float(x))
     #     y = self.robot.y / ARENA_WIDTH
-    #     state.append(float(y))
     #     theta = self.robot.theta / math.pi
-    #     state.append(float(theta))
     #     vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
-    #     state.append(float(vel))
     #     omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
-    #     state.append(float(omega))
     #     # Obstacle Observation
     #     obstacle_x = self.obstacle_pos_x / ARENA_LENGTH
-    #     state.append(float(obstacle_x))
     #     obstacle_y = self.obstacle_pos_y / ARENA_WIDTH
-    #     state.append(float(obstacle_y))
     #     obstacle_vel_x = self.obstacle_vel_x / SPEED_LINEAR_MAX
-    #     state.append(float(obstacle_vel_x))
     #     obstacle_vel_y = self.obstacle_vel_y / SPEED_LINEAR_MAX
+    #     # Append the state
+    #     state.append(float(dtg))
+    #     state.append(float(atg))
+    #     state.append(float(x))
+    #     state.append(float(y))
+    #     state.append(float(theta))
+    #     state.append(float(vel))
+    #     state.append(float(omega))
+    #     state.append(float(obstacle_x))
+    #     state.append(float(obstacle_y))
+    #     state.append(float(obstacle_vel_x))
     #     state.append(float(obstacle_vel_y))
     #     # self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
     #     # self.get_logger().info(f'State: {state}')
     #     self.local_step += 1
     #     return state
-
+    
     def get_state(self, action_linear_previous: float, action_angular_previous: float):
         # Distance Obervation
         state = copy.deepcopy(self.scan_ranges)
@@ -361,28 +366,28 @@ class DRLGazebo(Node):
         dtg = self.robot.distance_to_goal / MAX_GOAL_DISTANCE
         atg = self.robot.goal_angle / math.pi
         # Robot Observation
-        x = self.robot.x / ARENA_LENGTH
-        y = self.robot.y / ARENA_WIDTH
         theta = self.robot.theta / math.pi
         vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
         omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
-        # Obstacle Observation
-        obstacle_x = self.obstacle_pos_x / ARENA_LENGTH
-        obstacle_y = self.obstacle_pos_y / ARENA_WIDTH
-        obstacle_vel_x = self.obstacle_vel_x / SPEED_LINEAR_MAX
-        obstacle_vel_y = self.obstacle_vel_y / SPEED_LINEAR_MAX
+        # Relative Obstacle Observation
+        relative_robot_obstacle_distance = np.sqrt((self.obstacle_pos_x - self.robot.x)**2 + (self.obstacle_pos_y - self.robot.y)**2) / LIDAR_DISTANCE_CAP
+        relative_robot_obstacle_angle = math.atan2(self.obstacle_pos_y - self.robot.y, self.obstacle_pos_x - self.robot.x) / math.pi
+        # Relative Linear and Angular velocity
+        obstacle_linear_vel = np.sqrt(self.obstacle_vel_x**2 + self.obstacle_vel_y**2)
+        obstacle_angular_vel = math.atan2(self.obstacle_vel_y, self.obstacle_vel_x)
+        relative_robot_obstacle_linear_vel = (obstacle_linear_vel - self.robot.linear_velocity) / SPEED_LINEAR_MAX
+        relative_robot_obstacle_angular_vel = (obstacle_angular_vel - self.robot.angular_velocity) / SPEED_ANGULAR_MAX
+
         # Append the state
         state.append(float(dtg))
         state.append(float(atg))
-        state.append(float(x))
-        state.append(float(y))
         state.append(float(theta))
         state.append(float(vel))
         state.append(float(omega))
-        state.append(float(obstacle_x))
-        state.append(float(obstacle_y))
-        state.append(float(obstacle_vel_x))
-        state.append(float(obstacle_vel_y))
+        state.append(float(relative_robot_obstacle_distance))
+        state.append(float(relative_robot_obstacle_angle))
+        state.append(float(relative_robot_obstacle_linear_vel))
+        state.append(float(relative_robot_obstacle_angular_vel))
         # self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
         # self.get_logger().info(f'State: {state}')
         self.local_step += 1

@@ -4,7 +4,7 @@
 
 ENABLE_BACKWARD          = False    # Enable backward movement of the robot
 ENABLE_STACKING          = False    # Enable processing multiple consecutive scan frames at every observation step
-ENABLE_VISUAL            = False    # Meant to be used only during evaluation/testing phase
+ENABLE_VISUAL            = True    # Meant to be used only during evaluation/testing phase
 ENABLE_TRUE_RANDOM_GOALS = False    # If false, goals are selected semi-randomly from a list of known valid goal positions
 ENABLE_DYNAMIC_GOALS     = False    # If true, goal difficulty (distance) is adapted according to current success rate
 MODEL_STORE_INTERVAL     = 100      # Store the model weights every N episodes
@@ -14,7 +14,7 @@ GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N epis
 # ===================================================================== #
 #                             ROBOTS PARAMS                             #
 # ===================================================================== #
-NUM_SCAN_SAMPLES = 360
+NUM_SCAN_SAMPLES = 180
 
 
 # ===================================================================== #
@@ -31,7 +31,7 @@ TOPIC_ODOM = '/abwubot/odom'
 TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
-LIDAR_DISTANCE_CAP          = 5.0   # meters
+LIDAR_DISTANCE_CAP          = 10.0   # meters
 THRESHOLD_COLLISION         = 0.75  # meters
 THREHSOLD_GOAL              = 0.50  # meters
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
@@ -43,7 +43,7 @@ ARENA_LENGTH                = 15   # meters
 ARENA_WIDTH                 = 15   # meters
 
 # General
-EPISODE_TIMEOUT_SECONDS     = 40    # Number of seconds after which episode timeout occurs
+EPISODE_TIMEOUT_SECONDS     = 20    # Number of seconds after which episode timeout occurs
 SPEED_LINEAR_MAX            = 2.0  # m/s
 SPEED_ANGULAR_MAX           = 2.0   # rad/s
 
@@ -105,8 +105,10 @@ TARGET_UPDATE_FREQUENCY = 1000
 # DDPG parameters
 
 # TD3 parameters
-POLICY_NOISE            = 0.4
-POLICY_NOISE_CLIP       = 0.6
+# POLICY_NOISE            = 0.4
+# POLICY_NOISE_CLIP       = 0.6
+POLICY_NOISE            = 0.2
+POLICY_NOISE_CLIP       = 0.4
 POLICY_UPDATE_FREQUENCY = 2
 
 # Stacking

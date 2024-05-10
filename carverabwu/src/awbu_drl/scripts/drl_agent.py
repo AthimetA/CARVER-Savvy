@@ -26,6 +26,7 @@ import time
 import numpy as np
 
 from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, TAU, LEARNING_RATE
+from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP
 
 from awbu_interfaces.srv import DrlStep, EnvReady
 from std_srvs.srv import Empty
@@ -114,14 +115,16 @@ class DrlAgent(Node):
             # Delete the model
             del self.model
             self.model = self.sm.load_model()
+            self.model.policy_noise = POLICY_NOISE
+            self.model.noise_clip = POLICY_NOISE_CLIP
             self.model.device = self.device
             self.model.learning_rate = LEARNING_RATE
             self.model.tau = TAU
             self.sm.load_weights(self.model.networks)
             
             # Load the replay buffer
-            # if self.training:
-            #     self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size)
+            if self.training:
+                self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size)
             # # Load the graph data
             # self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
 
@@ -136,8 +139,8 @@ class DrlAgent(Node):
         # Initialize the graph
         self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode)
         # Load the graph data
-        # if self.load_session:
-        #     self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
+        if self.load_session:
+            self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
         self.get_logger().info(bcolors.OKBLUE + "Graph Initialized" + bcolors.ENDC)
 
         # Update graph session dir
@@ -171,7 +174,7 @@ class DrlAgent(Node):
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')
             self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
         # Start the process
-        self.timer_hz = 30.0 * self.sim_speed # Scale the simulation speed
+        self.timer_hz = 25.0 * self.sim_speed # Scale the simulation speed
         self.timer_period = 1e9/self.timer_hz # Convert to nanoseconds
         self.episode_start_time = 0.0
         self.episode_done = False
@@ -265,7 +268,7 @@ class DrlAgent(Node):
         state, _, _, _, _ = self.step(action=[], previous_action=[0.0, 0.0])
 
         # x % chance of random action
-        if np.random.rand() < 0.01:
+        if np.random.rand() < 0.70:
             self.episode_radom_action = True
             self.get_logger().info(bcolors.WARNING + "Random action episode" + bcolors.ENDC)
         else:
@@ -325,14 +328,14 @@ class DrlAgent(Node):
                         # action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
                         if self.episode_radom_action:
 
-                            # action = self.model.get_action_random()
+                            action = self.model.get_action_random()
                             # action = [1.0,0.0]
 
-                            if np.random.rand() < 0.5:
-                                action = self.model.get_action_random()
+                            # if np.random.rand() < 0.5:
+                            #     action = self.model.get_action_random()
 
-                            else:
-                                action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
+                            # else:
+                            #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
 
                         else:
                             action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)

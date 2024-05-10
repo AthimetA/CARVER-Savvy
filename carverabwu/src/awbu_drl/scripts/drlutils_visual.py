@@ -86,7 +86,7 @@ if ENABLE_VISUAL:
             self.bar_graph_action_angular.setOpts(height=[actions[1]])
             for i in range(len(hidden)):
                 self.hidden_bar_graphs[i].setOpts(height=self.prepare_data(hidden[i]))
-            pg.QtGui.QApplication.processEvents()
+            pg.QtGui.QGuiApplication.processEvents()
             if self.iteration % 100 == 0:
                 self.update_bias(biases)
             self.iteration += 1
@@ -104,7 +104,7 @@ if ENABLE_VISUAL:
 
 
     def test():
-        win = DrlVisual(None)
+        win = DrlVisual(30, 512)
         i = 200
         while (i):
             starttime = time.perf_counter()
@@ -112,7 +112,7 @@ if ENABLE_VISUAL:
             vals2 = np.random.rand(2)
             vals3 = [np.random.rand(512)] * 2
             vals4 = [np.random.rand(512)] * 2
-            win.update_layers(vals1, vals2, vals3)
+            win.update_layers(vals1, vals2, vals3, vals4)
             win.update_bias(vals4)
             win.update_reward(i*10*vals1[0])
             print(f"time: {time.perf_counter() - starttime}")

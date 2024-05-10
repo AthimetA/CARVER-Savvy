@@ -66,14 +66,14 @@
       <real_time_factor>4</real_time_factor>
        -->
       <!-- Physics x8 realtime-->
-      <!-- <max_step_size>0.008</max_step_size>
+      <max_step_size>0.008</max_step_size>
       <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>8</real_time_factor> -->
+      <real_time_factor>8</real_time_factor>
 
       <!-- Physics x10 realtime-->
-      <max_step_size>0.010</max_step_size>
+      <!-- <max_step_size>0.010</max_step_size>
       <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>10</real_time_factor>
+      <real_time_factor>10</real_time_factor> -->
 
       <ode>
         <solver>
