@@ -427,10 +427,12 @@ class DRLGazebo(Node):
         if ENABLE_DYNAMIC_GOALS:
             if status == SUCCESS:
                 # Increase the goal radius
-                self._dynamic_goals_radius *= 1.1
+                self._dynamic_goals_radius *= 1.01
+                self.get_logger().info(bcolors.OKGREEN + f"Goal reached, increasing goal radius to {self._dynamic_goals_radius:.2f}" + bcolors.ENDC)
             else:
                 # Decrease the goal radius
-                self._dynamic_goals_radius *= 0.9
+                self._dynamic_goals_radius *= 0.99
+                self.get_logger().info(bcolors.FAIL + f"Goal not reached, decreasing goal radius to {self._dynamic_goals_radius:.2f}" + bcolors.ENDC)
     
     def initalize_episode(self, response: DrlStep.Response):
         '''

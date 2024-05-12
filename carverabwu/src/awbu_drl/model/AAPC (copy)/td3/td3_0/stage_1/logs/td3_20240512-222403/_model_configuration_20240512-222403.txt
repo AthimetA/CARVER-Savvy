@@ -1,5 +1,5 @@
 device = cuda
-simulation_speed = 4
+simulation_speed = 8
 state_size = 54
 action_size = 2
 hidden_size = 128
@@ -10,7 +10,7 @@ discount_factor = 0.99
 learning_rate = 0.001
 tau = 0.01
 step_time = 0.01
-loss_function = <function mse_loss at 0x76baabd76b00>
+loss_function = <function mse_loss at 0x77eae916eb00>
 epsilon = 1.0
 epsilon_decay = 0.9995
 epsilon_minimum = 0.4
@@ -47,7 +47,7 @@ networks = [Actor(
   (l8): Linear(in_features=128, out_features=1, bias=True)
 )]
 iteration = 0
-noise = <drlagent_off_policy_agent.OUNoise object at 0x76ba9d4a3e80>
+noise = <drlagent_off_policy_agent.OUNoise object at 0x77eae6192380>
 policy_noise = 0.2
 noise_clip = 0.4
 policy_freq = 2

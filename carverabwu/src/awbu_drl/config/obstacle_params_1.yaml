@@ -11,12 +11,12 @@ cylinder_obstacle_1:
   TargetPose: [-8.00, -2.00 , 0.50]
 
 cylinder_obstacle_2:
-  InitialPose: [0.0 ,-8.0, 0.50]
-  TargetPose: [0.0, 3.00, 0.50]
+  InitialPose: [0.0 ,-4.0, 0.50]
+  TargetPose: [0.0, -8.00, 0.50]
 
 cylinder_obstacle_3:
   InitialPose: [9.0 ,9.0, 0.50]
-  TargetPose: [-6.5, -6.00 , 0.50]
+  TargetPose: [4.2, 4.2 , 0.50]
 
 cylinder_obstacle_4:
   InitialPose: [-8.0 ,8.0, 0.50]
