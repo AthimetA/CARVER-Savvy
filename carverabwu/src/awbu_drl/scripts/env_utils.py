@@ -97,7 +97,6 @@ class GoalManager:
     def __init__(self, obstacle_name: list = OBSTACLE_NAME):
         self.obstacle_name = obstacle_name
         self.obstacle_coordinates = self.get_obstacle_coordinates(self.obstacle_name)
-
         self.goal_x, self.goal_y = 0.0, 0.0
 
     '''
@@ -117,12 +116,19 @@ class GoalManager:
         tree = ET.parse(path)
         root = tree.getroot()
         obstacle_coordinates = []
+        # Base Position of the obstacle
+        base_pose = root.find('model').find('pose').text.split(" ")
+        base_pose_x = float(base_pose[0])
+        base_pose_y = float(base_pose[1])
+        print(bcolors.OKGREEN + f"Obstacle name: {name}, base pose: {base_pose_x, base_pose_y}" + bcolors.ENDC)
+
         # Get the coordinates of the walls
         for wall in root.find('model').findall('link'):
             pose = wall.find('pose').text.split(" ")
             size = wall.find('collision').find('geometry').find('box').find('size').text.split()
-            pose_x = float(pose[0])
-            pose_y = float(pose[1])
+            # Get Position of the wall and add the base position
+            pose_x = float(pose[0]) + base_pose_x
+            pose_y = float(pose[1]) + base_pose_y
             # Check if the wall is rotated
             # If the wall is rotated the size is swapped for x and y
             rotation = float(pose[-1])
@@ -143,7 +149,7 @@ class GoalManager:
             wall_points = [top_right, bottom_right, bottom_left, top_left]
             obstacle_coordinates.append(wall_points)
 
-        print(f"Obstacle name: {name}, coordinates: {obstacle_coordinates}\n")
+        print(f"Coordinates: {obstacle_coordinates}\n")
         return obstacle_coordinates
     
     '''
