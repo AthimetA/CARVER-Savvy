@@ -9,6 +9,8 @@ from geometry_msgs.msg import Quaternion
 
 from settings.constparams import ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS, ENABLE_TRUE_RANDOM_GOALS
 
+from settings.constparams import DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN
+
 from settings.constparams import SUCCESS, COLLISION, TIMEOUT, TUMBLE
 
 COLLITION_MARGIN = 0.5 # Margin to be added to the obstacles to calculate the collision [m]
@@ -71,13 +73,9 @@ Read the stage from the file
 STAGE = read_stage()
 
 if STAGE == 1:
-    PREDEFINED_GOAL_LOCATIONS = [
-        # [-1.0,0.0],
-        # [1.0,0.0],
-        [4.0,0.0],
-        [4.0,4.0],
-        [4.0,-4.0],                 
-    ]
+    PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\
+                                    [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
+                                    ]
 
     OBSTACLE_NAME = ['wall_outler', 'wall_single_5m_1', 'wall_single_5m_2', 'wall_single_5m_3', 'wall_single_5m_4',\
                     'wall_Lshape_2_1',\
@@ -90,7 +88,13 @@ else:
                                     [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
                                     ]
     
-
+    # PREDEFINED_GOAL_LOCATIONS = [
+    #     # [-1.0,0.0],
+    #     # [1.0,0.0],
+    #     [4.0,0.0],
+    #     [4.0,4.0],
+    #     [4.0,-4.0],                 
+    # ]
     OBSTACLE_NAME = ['wall_outler']
 
 class GoalManager:
@@ -121,7 +125,6 @@ class GoalManager:
         base_pose_x = float(base_pose[0])
         base_pose_y = float(base_pose[1])
         print(bcolors.OKGREEN + f"Obstacle name: {name}, base pose: {base_pose_x, base_pose_y}" + bcolors.ENDC)
-
         # Get the coordinates of the walls
         for wall in root.find('model').findall('link'):
             pose = wall.find('pose').text.split(" ")
@@ -132,10 +135,10 @@ class GoalManager:
             # Check if the wall is rotated
             # If the wall is rotated the size is swapped for x and y
             rotation = float(pose[-1])
-            if rotation == 0 or rotation == 3.14159:
+            if rotation == 0 or rotation == 3.14159: # No rotation
                 size_x = float(size[0]) + COLLITION_MARGIN * 2
                 size_y = float(size[1]) + COLLITION_MARGIN * 2
-            else:
+            else: # Rotated 90 degrees [rotation = 1.5708 or 4.71239]
                 size_x = float(size[1]) + COLLITION_MARGIN * 2
                 size_y = float(size[0]) + COLLITION_MARGIN * 2
             # Calculate the corners of the obstacle
@@ -169,8 +172,8 @@ class GoalManager:
 
     def generate_goal_pose(self, robot_x: float, robot_y: float, radius: float)->None:
         MAX_ITERATIONS = 100
-        GOAL_SEPARATION_DISTANCE = 5.0
-        DYNAMIC_GOAL_RADIUS = float(radius) if radius > GOAL_SEPARATION_DISTANCE else GOAL_SEPARATION_DISTANCE
+        GOAL_SEPARATION_DISTANCE = 2.0
+        DYNAMIC_GOAL_RADIUS = float(radius) if radius > DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN else DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN
         self.prev_goal_x = self.goal_x
         self.prev_goal_y = self.goal_y
         iterations = 0

@@ -49,7 +49,7 @@ from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_CLOCK
 # Arena dimensions
 from settings.constparams import ARENA_LENGTH, ARENA_WIDTH
 # Obstacle settings
-from settings.constparams import MAX_NUMBER_OBSTACLES, OBSTACLE_RADIUS 
+from settings.constparams import MAX_NUMBER_OBSTACLES, DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT 
 # General
 from settings.constparams import EPISODE_TIMEOUT_SECONDS, SPEED_LINEAR_MAX, SPEED_ANGULAR_MAX,\
                                  LINEAR_VELOCITY_LOC, ANGULAR_VELOCITY_LOC
@@ -153,6 +153,7 @@ class DRLGazebo(Node):
         
         '''
         self.goal_manager = GoalManager()
+        self._dynamic_goals_radius = DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT
         self.reward_manager = Reward()
 
 
@@ -422,6 +423,14 @@ class DRLGazebo(Node):
         # Reset the episode deadline
         self.episode_deadline = np.inf
         self._EP_done = True
+        # If Dynamic goals are enabled
+        if ENABLE_DYNAMIC_GOALS:
+            if status == SUCCESS:
+                # Increase the goal radius
+                self._dynamic_goals_radius *= 1.1
+            else:
+                # Decrease the goal radius
+                self._dynamic_goals_radius *= 0.9
     
     def initalize_episode(self, response: DrlStep.Response):
         '''
@@ -446,7 +455,7 @@ class DRLGazebo(Node):
         self.reset_simulation()
 
         # Generate a new goal
-        self.goal_x, self.goal_y = self.goal_manager.generate_goal_pose(self.robot.x, self.robot.y, OBSTACLE_RADIUS)
+        self.goal_x, self.goal_y = self.goal_manager.generate_goal_pose(self.robot.x, self.robot.y, self._dynamic_goals_radius)
 
         # Set the goal entity
         self.set_entity_state(self.goal_x, self.goal_y)
