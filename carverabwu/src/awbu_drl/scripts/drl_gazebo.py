@@ -83,8 +83,8 @@ MAX_OBS_SPEED_Y = (ARENA_WIDTH / EPISODE_TIMEOUT_SECONDS) * PATH_INTERVAL_PER_EP
 
 from env_utils import read_stage
 
-state = read_stage()
-if state == 1:
+STAGE = read_stage()
+if STAGE == 1:
     INTIAL_ROBOT_X = -5.0
     INTIAL_ROBOT_Y = 0.0
 else:

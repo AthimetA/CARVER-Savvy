@@ -62,9 +62,15 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-stage = read_stage()
+'''
 
-if stage == 1:
+Read the stage from the file
+
+'''
+
+STAGE = read_stage()
+
+if STAGE == 1:
     PREDEFINED_GOAL_LOCATIONS = [
         # [-1.0,0.0],
         # [1.0,0.0],
@@ -72,13 +78,23 @@ if stage == 1:
         [4.0,4.0],
         [4.0,-4.0],                 
     ]
+
+    OBSTACLE_NAME = ['wall_outler', 'wall_single_5m_1', 'wall_single_5m_2', 'wall_single_5m_3', 'wall_single_5m_4',\
+                    'wall_Lshape_2_1',\
+                    'pillar_1_1', 'pillar_1_2', 'pillar_2_1',
+    ]
+
+
 else:
     PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\
                                     [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
                                     ]
+    
+
+    OBSTACLE_NAME = ['wall_outler']
 
 class GoalManager:
-    def __init__(self, obstacle_name: list = ['wall_outler', 'pillar_1', 'pillar_2', 'wall_inner_1']):
+    def __init__(self, obstacle_name: list = OBSTACLE_NAME):
         self.obstacle_name = obstacle_name
         self.obstacle_coordinates = self.get_obstacle_coordinates(self.obstacle_name)
 
@@ -97,7 +113,7 @@ class GoalManager:
         return obstacle_coordinates
     
     def _sdf_obstacle_reader(self, name: str)->list:
-        path = os.environ['SIM_MODEL_PATH'] + name + '/model.sdf'
+        path = os.environ['SIM_MODEL_PATH'] + f'stage_{STAGE}/{name}/model.sdf'
         tree = ET.parse(path)
         root = tree.getroot()
         obstacle_coordinates = []
@@ -126,6 +142,8 @@ class GoalManager:
             # Create a list of the corners
             wall_points = [top_right, bottom_right, bottom_left, top_left]
             obstacle_coordinates.append(wall_points)
+
+        print(f"Obstacle name: {name}, coordinates: {obstacle_coordinates}\n")
         return obstacle_coordinates
     
     '''

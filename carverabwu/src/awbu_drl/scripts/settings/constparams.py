@@ -39,8 +39,8 @@ LINEAR_VELOCITY_LOC       = 0     # 0 = no noise, 1 = noise enabled
 ANGULAR_VELOCITY_LOC      = 1     # 0 = no noise, 1 = noise enabled
 
 # Arena
-ARENA_LENGTH                = 15   # meters
-ARENA_WIDTH                 = 15   # meters
+ARENA_LENGTH                = 20   # meters
+ARENA_WIDTH                 = 20   # meters
 
 # General
 EPISODE_TIMEOUT_SECONDS     = 20    # Number of seconds after which episode timeout occurs
