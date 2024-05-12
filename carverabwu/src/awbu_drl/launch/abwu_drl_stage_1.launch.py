@@ -89,7 +89,7 @@ def generate_launch_description():
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description',
                                    '-entity', 'abwubot',
-                                   '-x', '-5.0',
+                                   '-x', '0.0',
                                     '-y', '0.0',
                                     '-z', '0.0',
                                     '-R', '0.0',

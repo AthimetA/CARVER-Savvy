@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
-  <model name='wall_inner_1'>
+  <model name='wall_Lshape_1'>
     <pose>1.0 1.5 0 0 0 -1.570795</pose>
     <link name='Wall_0'>
       <collision name='Wall_0_Collision'>

@@ -123,7 +123,7 @@
     <!-- Goal -->
     <include>
       <uri>model://goal_area</uri>
-      <pose>9.0 9.0 0.0 0 0 0</pose>
+      <pose>0.0 0.0 0.0 0 0 0</pose>
     </include>
 
     <!-- Walls -->
@@ -132,16 +132,78 @@
       <uri>model://wall_outler</uri>
     </include>
 
+
+    <!-- Top Left Area -->
+    <include>
+      <uri>model://wall_single_5m</uri>
+      <name>wall_single_5m_1</name>
+      <pose>4.0 9.5 0.0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://wall_single_5m</uri>
+      <name>wall_single_5m_2</name>
+      <pose>5.5 2.5 0.0 0 0 1.57</pose>
+    </include>
+
+    <!-- Top Right Area -->
+    <include>
+      <uri>model://wall_Lshape_2</uri>
+      <name>wall_Lshape_2</name>
+      <pose>4.5 -3.5 0.0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://pillar_2</uri>
+      <pose>5.0 -5.0 0.0 0 0 0</pose>
+    </include>
+
+    <!-- Bottom Left Area -->
+    <include>
+      <uri>model://pillar_1</uri>
+      <name>pillar_1_1</name>
+      <pose>1.0 5.0 0.0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://pillar_1</uri>
+      <name>pillar_1_2</name>
+      <pose>-5.0 5.0 0.0 0 0 0</pose>
+    </include>
+
+    <!-- Bottom Right Area -->
+    <include>
+      <uri>model://wall_single_5m</uri>
+      <name>wall_single_5m_3</name>
+      <pose>-2.0 -5.5 0.0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://wall_single_5m</uri>
+      <name>wall_single_5m_4</name>
+      <pose>-9.5 1.0 0.0 0 0 1.57</pose>
+    </include>
+
     <!-- Obstacle -->
 
     <include>
       <uri>model://cylinder_obstacle_1</uri>
-      <pose>3.0 5.0 0.5 0 0 0</pose>
+      <pose>-8.0 -8.0 0.5 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://cylinder_obstacle_2</uri>
-      <pose>3.0 -5.0 0.5 0 0 0</pose>
+      <pose>0.0 -8.0 0.5 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_3</uri>
+      <pose>9.0 9.0 0.5 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_4</uri>
+      <pose>-8.0 8.0 0.5 0 0 0</pose>
     </include>
 
 
