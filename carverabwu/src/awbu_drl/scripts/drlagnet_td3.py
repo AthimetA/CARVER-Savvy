@@ -88,7 +88,7 @@ class TD3(OffPolicyAgent):
         super().__init__(device, sim_speed)
 
         # DRL parameters
-        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.1, min_sigma=0.01, decay_period=500_000)
+        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.7, min_sigma=0.1, decay_period=500_000)
 
         # TD3 parameters
         self.policy_noise   = POLICY_NOISE

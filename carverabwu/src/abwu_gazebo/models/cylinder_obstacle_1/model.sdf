@@ -1,7 +1,23 @@
 <?xml version='1.0'?>
 <sdf version='1.7'>
   <model name='cylinder_obstacle_1'>
+<!-- 
+    <plugin name="random" filename="libRandomVelocityPlugin.so">
+
+      <link>link_1</link>
+
+      <initial_velocity>0 0.5 0</initial_velocity>
+
+      <velocity_factor>0.5</velocity_factor>
+
+      <update_period>5</update_period>
+
+      <min_z>0</min_z>
+      <max_z>0</max_z>
+    </plugin> -->
+
     <link name='link_1'>
+
       <inertial>
         <mass>1</mass>
         <inertia>
@@ -14,11 +30,13 @@
         </inertia>
         <pose>0 0 0 0 -0 0</pose>
       </inertial>
+
       <pose>-0 0 0 0 -0 0</pose>
       <gravity>1</gravity>
       <self_collide>0</self_collide>
       <kinematic>1</kinematic>
       <enable_wind>0</enable_wind>
+
       <visual name='visual'>
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
@@ -28,20 +46,6 @@
           </cylinder>
         </geometry>
         <material>
-<!-- 
-          <lighting>1</lighting>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <shader type='pixel'>
-            <normal_map>__default__</normal_map>
-          </shader>
-          <ambient>0.3 0.3 0.3 1</ambient>
-          <diffuse>0.7 0.7 0.7 1</diffuse>
-          <specular>0.01 0.01 0.01 1</specular>
-          <emissive>0 0 0 1</emissive> -->
-
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
             <name>Gazebo/Blue</name>
@@ -50,6 +54,7 @@
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
       </visual>
+
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
@@ -106,7 +111,9 @@
           </contact>
         </surface>
       </collision>
+  
     </link>
+    
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
   </model>

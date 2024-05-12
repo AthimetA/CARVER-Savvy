@@ -42,6 +42,7 @@ install(DIRECTORY
   scripts
   config
   launch
+  obstacles
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

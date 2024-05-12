@@ -52,8 +52,8 @@ SPEED_ANGULAR_MAX           = 2.0   # rad/s
 OBSTACLE_RADIUS             = 0.16  # meters
 MAX_NUMBER_OBSTACLES        = 6
 
-DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT         = 4.00  # meters
-DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN          = 3.00  # meters
+DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT         = 10.00  # meters
+DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN          = 5.00  # meters
 
 # ===================================================================== #
 #                       DRL ALGORITHM SETTINGS                          #

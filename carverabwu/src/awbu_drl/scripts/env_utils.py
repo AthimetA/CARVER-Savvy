@@ -13,7 +13,7 @@ from settings.constparams import DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN
 
 from settings.constparams import SUCCESS, COLLISION, TIMEOUT, TUMBLE
 
-COLLITION_MARGIN = 0.5 # Margin to be added to the obstacles to calculate the collision [m]
+COLLITION_MARGIN = 1.5 # Margin to be added to the obstacles to calculate the collision [m]
 
 def get_simulation_speed(stage):
     tree = ET.parse(os.getenv('ABWUDRL_BASE_PATH') + '/src/abwu_gazebo/worlds/abwu_drl_stage_' + str(stage) + '.world')
@@ -172,7 +172,8 @@ class GoalManager:
 
     def generate_goal_pose(self, robot_x: float, robot_y: float, radius: float)->None:
         MAX_ITERATIONS = 100
-        GOAL_SEPARATION_DISTANCE = 2.0
+        GOAL_SEPARATION_FROM_ROBOT_DISTANCE = 3.0
+        GOAL_SEPARATION_DISTANCE = 5.0
         DYNAMIC_GOAL_RADIUS = float(radius) if radius > DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN else DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN
         self.prev_goal_x = self.goal_x
         self.prev_goal_y = self.goal_y
@@ -197,7 +198,7 @@ class GoalManager:
                 goal_y = random.uniform(robot_y - DYNAMIC_GOAL_RADIUS, robot_y + DYNAMIC_GOAL_RADIUS)
 
                 # Check if the goal is valid and far enough from the previous goal
-                if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE:
+                if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE and math.sqrt((goal_x - robot_x)**2 + (goal_y - robot_y)**2) > GOAL_SEPARATION_FROM_ROBOT_DISTANCE:
                         break
                 else:
                     continue 

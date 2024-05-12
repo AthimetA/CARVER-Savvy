@@ -154,6 +154,7 @@ class DRLGazebo(Node):
         '''
         self.goal_manager = GoalManager()
         self._dynamic_goals_radius = DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT
+        self._dynamic_goals_reset_flag = True
         self.reward_manager = Reward()
 
 
@@ -427,10 +428,12 @@ class DRLGazebo(Node):
         if ENABLE_DYNAMIC_GOALS:
             if status == SUCCESS:
                 # Increase the goal radius
+                self._dynamic_goals_reset_flag = False # Do not reset the simulation
                 self._dynamic_goals_radius *= 1.01
                 self.get_logger().info(bcolors.OKGREEN + f"Goal reached, increasing goal radius to {self._dynamic_goals_radius:.2f}" + bcolors.ENDC)
             else:
                 # Decrease the goal radius
+                self._dynamic_goals_reset_flag = True # Reset the simulation
                 self._dynamic_goals_radius *= 0.99
                 self.get_logger().info(bcolors.FAIL + f"Goal not reached, decreasing goal radius to {self._dynamic_goals_radius:.2f}" + bcolors.ENDC)
     
@@ -454,7 +457,12 @@ class DRLGazebo(Node):
         self.pause_simulation()
 
         # Reset the simulation
-        self.reset_simulation()
+        if ENABLE_DYNAMIC_GOALS:
+            # If dynamic goals are enabled, reset the simulation only when episode is not successful
+            if self._dynamic_goals_reset_flag:
+                self.reset_simulation()
+        else:
+            self.reset_simulation()
 
         # Generate a new goal
         self.goal_x, self.goal_y = self.goal_manager.generate_goal_pose(self.robot.x, self.robot.y, self._dynamic_goals_radius)

@@ -98,7 +98,7 @@
         <argument>model_states:=model_states_plug</argument>
         <argument>link_states:=link_states_plug</argument>
       </ros>
-      <update_rate>10.0</update_rate>
+      <update_rate>30.0</update_rate>
     </plugin>
 
     <!-- A camera -->
@@ -170,7 +170,7 @@
 
     <!-- Obstacle -->
 
-    <include>
+    <!-- <include>
       <uri>model://cylinder_obstacle_1</uri>
       <pose>-8.0 -8.0 0.5 0 0 0</pose>
     </include>
@@ -188,7 +188,7 @@
     <include>
       <uri>model://cylinder_obstacle_4</uri>
       <pose>-8.0 8.0 0.5 0 0 0</pose>
-    </include>
+    </include> -->
 
 
   </world>

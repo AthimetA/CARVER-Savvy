@@ -76,6 +76,7 @@ def generate_launch_description():
     description_file_subpath = f'description/{robot_name}.urdf.xacro'
     xacro_file = os.path.join(get_package_share_directory(description_package_name),description_file_subpath) # Use xacro to process the file
     robot_description_raw = xacro.process_file(xacro_file).toxml()
+
     # ROBOT STATE PUBLISHER NODE:
     node_robot_state_publisher = Node(     # Configure the node
         package='robot_state_publisher',
@@ -97,7 +98,6 @@ def generate_launch_description():
                                     '-Y', '0.0',],
                         output='screen',
                         )
-    
 
     # Joint state broadcaster:
     joint_state_broadcaster_spawner = Node(
@@ -136,7 +136,9 @@ def generate_launch_description():
         executable='abwu_forward_kinematic.py',
         name='AbwuFKNode',
     )
-
+    
+    # Add Obstacle description
+    drl_package_name = 'awbu_drl'
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -158,5 +160,4 @@ def generate_launch_description():
                 ]
             )
         ),
-
     ])
