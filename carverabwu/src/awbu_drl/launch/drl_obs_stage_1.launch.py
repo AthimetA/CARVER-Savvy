@@ -34,7 +34,7 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        namespace='obstacle_1',
+        namespace='cylinder_obstacle_1',
         parameters=[{'use_sim_time': use_sim_time}],
         arguments=[obstacle_1_description_file]
     )
@@ -50,7 +50,7 @@ def generate_launch_description():
                                     '-R', '0.0',
                                     '-P', '0.0',
                                     '-Y', '0.0',
-                                    '-robot_namespace', 'obstacle_1'],
+                                    '-robot_namespace', 'cylinder_obstacle_1'],
                         output='screen',
                         )
     
@@ -67,7 +67,7 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        namespace='obstacle_2',
+        namespace='cylinder_obstacle_2',
         parameters=[{'use_sim_time': use_sim_time}],
         arguments=[obstacle_2_description_file]
     )
@@ -83,7 +83,7 @@ def generate_launch_description():
                                     '-R', '0.0',
                                     '-P', '0.0',
                                     '-Y', '0.0',
-                                    '-robot_namespace', 'obstacle_2'],
+                                    '-robot_namespace', 'cylinder_obstacle_2'],
                         output='screen',
                         )
     
@@ -100,7 +100,7 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        namespace='obstacle_3',
+        namespace='cylinder_obstacle_3',
         parameters=[{'use_sim_time': use_sim_time}],
         arguments=[obstacle_3_description_file]
     )
@@ -116,7 +116,7 @@ def generate_launch_description():
                                     '-R', '0.0',
                                     '-P', '0.0',
                                     '-Y', '0.0',
-                                    '-robot_namespace', 'obstacle_3'],
+                                    '-robot_namespace', 'cylinder_obstacle_3'],
                         output='screen',
                         )
     
@@ -133,7 +133,7 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        namespace='obstacle_4',
+        namespace='cylinder_obstacle_4',
         parameters=[{'use_sim_time': use_sim_time}],
         arguments=[obstacle_4_description_file]
     )
@@ -149,7 +149,7 @@ def generate_launch_description():
                                     '-R', '0.0',
                                     '-P', '0.0',
                                     '-Y', '0.0',
-                                    '-robot_namespace', 'obstacle_4'],
+                                    '-robot_namespace', 'cylinder_obstacle_4'],
                         output='screen',
                         )
 
