@@ -24,7 +24,7 @@ from awbu_interfaces.srv import ObstacleStart
 
 from env_utils import get_simulation_speed, read_stage
 
-OBSTACLE_VELOCITY_SCALING = 2.0
+OBSTACLE_VELOCITY_SCALING = 0.5
 
 from ament_index_python import get_package_share_directory
 class ObstacleHandler(Node):
@@ -51,25 +51,19 @@ class ObstacleHandler(Node):
         self.obstacle_control_pub_list = [self.create_publisher(Twist, f'/{obstacle}/cmd_vel', 10) for obstacle in self.obstacle_list]
 
         # Control loop
-        self.new_velo_time = 5.0 # seconds # Time to update the velocity
+        self.new_velo_time = 2.5 # seconds # Time to update the velocity
         self.control_loop_period = self.new_velo_time / self.sim_speed
         self.twist_list = [Twist() for _ in range(len(self.obstacle_list))]
 
         self.timer = self.create_timer(self.control_loop_period, self.timer_callback)
-        self.timer_velo = self.create_timer(1.0 / (30.0 * self.sim_speed), self.velo_pub_timer)
 
-    def velo_pub_timer(self):
-        # Publish the velocity
-        for i, pub in enumerate(self.obstacle_control_pub_list):
-            pub.publish(self.twist_list[i])
-
-        self.get_logger().info(f'Published: {self.twist_list}')
 
     def timer_callback(self):
         # Generate new velocity
-        for twist in self.twist_list:
-            twist.linear.x = np.random.uniform(-1.0, 1.0) * OBSTACLE_VELOCITY_SCALING
-            twist.angular.z = np.random.uniform(-1.0, 1.0) * OBSTACLE_VELOCITY_SCALING
+        for obs_idx, obstacle in enumerate(self.obstacle_list):
+            self.twist_list[obs_idx].linear.x = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
+            self.twist_list[obs_idx].angular.z = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
+            self.obstacle_control_pub_list[obs_idx].publish(self.twist_list[obs_idx])
 
 
     def obstacle_start_callback(self, request: ObstacleStart.Request, response: ObstacleStart.Response):

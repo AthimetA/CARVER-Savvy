@@ -168,7 +168,7 @@ def generate_launch_description():
                     diff_drive_controllers,
                     abwu_inverse_kinemetic,
                     abwu_forward_kinematic,
-                    # obstacle_stage_1,
+                    obstacle_stage_1,
                 ]
             )
         ),

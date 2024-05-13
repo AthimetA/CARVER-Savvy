@@ -14,7 +14,7 @@ GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N epis
 # ===================================================================== #
 #                             ROBOTS PARAMS                             #
 # ===================================================================== #
-NUM_SCAN_SAMPLES = 45
+NUM_SCAN_SAMPLES = 90
 
 
 # ===================================================================== #
@@ -31,7 +31,7 @@ TOPIC_ODOM = '/abwubot/odom'
 TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
-LIDAR_DISTANCE_CAP          = 5.0   # meters
+LIDAR_DISTANCE_CAP          = 10.0   # meters
 THRESHOLD_COLLISION         = 0.50  # meters
 THREHSOLD_GOAL              = 0.50  # meters
 
