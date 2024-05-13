@@ -122,7 +122,7 @@ class Reward():
         if status == SUCCESS:
             R_STATUS = 250
         elif status == COLLISION:
-            R_STATUS = -250
+            R_STATUS = -500
         elif status == TIMEOUT:
             R_STATUS = -250
         else:
