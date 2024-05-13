@@ -137,8 +137,19 @@ def generate_launch_description():
         name='AbwuFKNode',
     )
     
-    # Add Obstacle description
+    # Add Obstacle launch file
     drl_package_name = 'awbu_drl'
+
+    obstacle_stage_1_launch_file = os.path.join(
+        get_package_share_directory(drl_package_name),
+        'launch',
+        'drl_obs_stage_1.launch.py'
+    )
+
+    # Launch the obstacle stage 1
+    obstacle_stage_1 = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(obstacle_stage_1_launch_file)
+    )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -157,6 +168,7 @@ def generate_launch_description():
                     diff_drive_controllers,
                     abwu_inverse_kinemetic,
                     abwu_forward_kinematic,
+                    obstacle_stage_1,
                 ]
             )
         ),
