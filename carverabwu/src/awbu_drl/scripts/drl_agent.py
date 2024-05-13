@@ -277,7 +277,7 @@ class DrlAgent(Node):
 
         if self.model.epsilon and self.model.epsilon > self.model.epsilon_minimum:
             self.model.epsilon *= self.model.epsilon_decay
-            self.get_logger().info(f"Epsilon: {self.model.epsilon}")
+            # self.get_logger().info(f"Epsilon: {self.model.epsilon}")
 
         return state
     

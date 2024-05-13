@@ -24,7 +24,7 @@ from awbu_interfaces.srv import ObstacleStart
 
 from env_utils import get_simulation_speed, read_stage
 
-OBSTACLE_VELOCITY_SCALING = 0.5
+OBSTACLE_VELOCITY_SCALING = 1.5
 
 from ament_index_python import get_package_share_directory
 class ObstacleHandler(Node):
@@ -35,6 +35,7 @@ class ObstacleHandler(Node):
         
         # Initialise services servers
         self.obstacle_start_srv = self.create_service(ObstacleStart, '/obstacle_start', self.obstacle_start_callback)
+        self.obstacle_status = False
 
         # Gazebo service client
         self.get_model_list_client      = self.create_client(GetModelList, '/get_model_list')
@@ -59,15 +60,17 @@ class ObstacleHandler(Node):
 
 
     def timer_callback(self):
-        # Generate new velocity
-        for obs_idx, obstacle in enumerate(self.obstacle_list):
-            self.twist_list[obs_idx].linear.x = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
-            self.twist_list[obs_idx].angular.z = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
-            self.obstacle_control_pub_list[obs_idx].publish(self.twist_list[obs_idx])
+        if self.obstacle_status:
+            # Generate new velocity
+            for obs_idx, obstacle in enumerate(self.obstacle_list):
+                self.twist_list[obs_idx].linear.x = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
+                self.twist_list[obs_idx].angular.z = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
+                self.obstacle_control_pub_list[obs_idx].publish(self.twist_list[obs_idx])
 
 
     def obstacle_start_callback(self, request: ObstacleStart.Request, response: ObstacleStart.Response):
         response.obstacle_status = True
+        self.obstacle_status = True
         return response
 
     def get_model_list(self):
