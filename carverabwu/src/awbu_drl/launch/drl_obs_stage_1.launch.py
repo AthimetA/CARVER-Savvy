@@ -22,147 +22,83 @@ def generate_launch_description():
     # Add Obstacle description
     drl_package_name = 'awbu_drl'
 
-    obstacle_1_description_file = os.path.join(
+    obstacle_bot_description_file = os.path.join(
         get_package_share_directory(drl_package_name),
         'obstacles',
-        'cylinder_obstacle_1.urdf'
+        'obstacle_bot.urdf.xacro'
     )
+    robot_description_raw = xacro.process_file(obstacle_bot_description_file).toxml()
 
     # ROBOT STATE PUBLISHER NODE:
-    node_robot_state_publisher = Node(     # Configure the node
-        name='obstacle_1_state_publisher',
+    node_robot_state_publisher = Node(
+        namespace='obstacle_bot',
+        name='obstacle_bot_state_publisher',
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        namespace='cylinder_obstacle_1',
-        parameters=[{'use_sim_time': use_sim_time}],
-        arguments=[obstacle_1_description_file]
+        parameters=[{'robot_description': robot_description_raw,
+        'use_sim_time': use_sim_time}]
     )
 
     # SPAWN ROBOT TO GAZEBO:
-    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        name='spawn_obstacle_1',
-                        arguments=['-entity', 'cylinder_obstacle_1',
-                                    '-file', obstacle_1_description_file,
-                                    '-x', '-8.0',
+    spawn_entity_1 = Node(package='gazebo_ros', executable='spawn_entity.py', name='spawn_entity_1',
+                        arguments=['-topic', 'obstacle_bot/robot_description',
+                                   '-entity', 'obstacle_bot_1',
+                                   '-x', '-8.0',
                                     '-y', '-8.0',
                                     '-z', '0.0',
                                     '-R', '0.0',
                                     '-P', '0.0',
                                     '-Y', '0.0',
-                                    '-robot_namespace', 'cylinder_obstacle_1'],
+                                    '-robot_namespace', 'obstacle_bot_1',],
                         output='screen',
                         )
     
-    # Obstacle 2
-    obstacle_2_description_file = os.path.join(
-        get_package_share_directory(drl_package_name),
-        'obstacles',
-        'cylinder_obstacle_2.urdf'
-    )
-
-    # ROBOT STATE PUBLISHER NODE:
-    node_robot_state_publisher_2 = Node(     # Configure the node
-        name='obstacle_2_state_publisher',
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        namespace='cylinder_obstacle_2',
-        parameters=[{'use_sim_time': use_sim_time}],
-        arguments=[obstacle_2_description_file]
-    )
-
-    # SPAWN ROBOT TO GAZEBO:
-    spawn_entity_2 = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        name='spawn_obstacle_2',
-                        arguments=['-entity', 'cylinder_obstacle_2',
-                                    '-file', obstacle_2_description_file,
-                                    '-x', '0.0',
+    spawn_entity_2 = Node(package='gazebo_ros', executable='spawn_entity.py', name='spawn_entity_2',
+                        arguments=['-topic', 'obstacle_bot/robot_description',
+                                   '-entity', 'obstacle_bot_2',
+                                   '-x', '0.0',
                                     '-y', '-4.0',
                                     '-z', '0.0',
                                     '-R', '0.0',
                                     '-P', '0.0',
                                     '-Y', '0.0',
-                                    '-robot_namespace', 'cylinder_obstacle_2'],
+                                    '-robot_namespace', 'obstacle_bot_2',],
                         output='screen',
                         )
     
-    # Obstacle 3
-    obstacle_3_description_file = os.path.join(
-        get_package_share_directory(drl_package_name),
-        'obstacles',
-        'cylinder_obstacle_3.urdf'
-    )
-
-    # ROBOT STATE PUBLISHER NODE:
-    node_robot_state_publisher_3 = Node(     # Configure the node
-        name='obstacle_3_state_publisher',
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        namespace='cylinder_obstacle_3',
-        parameters=[{'use_sim_time': use_sim_time}],
-        arguments=[obstacle_3_description_file]
-    )
-
-    # SPAWN ROBOT TO GAZEBO:    
-    spawn_entity_3 = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        name='spawn_obstacle_3',
-                        arguments=['-entity', 'cylinder_obstacle_3',
-                                    '-file', obstacle_3_description_file,
-                                    '-x', '9.0',
+    spawn_entity_3 = Node(package='gazebo_ros', executable='spawn_entity.py', name='spawn_entity_3',
+                        arguments=['-topic', 'obstacle_bot/robot_description',
+                                   '-entity', 'obstacle_bot_3',
+                                   '-x', '9.0',
                                     '-y', '9.0',
                                     '-z', '0.0',
                                     '-R', '0.0',
                                     '-P', '0.0',
                                     '-Y', '0.0',
-                                    '-robot_namespace', 'cylinder_obstacle_3'],
+                                    '-robot_namespace', 'obstacle_bot_3',],
                         output='screen',
                         )
     
-    # Obstacle 4
-    obstacle_4_description_file = os.path.join(
-        get_package_share_directory(drl_package_name),
-        'obstacles',
-        'cylinder_obstacle_4.urdf'
-    )
-
-    # ROBOT STATE PUBLISHER NODE:
-    node_robot_state_publisher_4 = Node(     # Configure the node
-        name='obstacle_4_state_publisher',
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        namespace='cylinder_obstacle_4',
-        parameters=[{'use_sim_time': use_sim_time}],
-        arguments=[obstacle_4_description_file]
-    )
-
-    # SPAWN ROBOT TO GAZEBO:
-    spawn_entity_4 = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        name='spawn_obstacle_4',
-                        arguments=['-entity', 'cylinder_obstacle_4',
-                                    '-file', obstacle_4_description_file,
-                                    '-x', '-8.0',
-                                    '-y', '8.0',
-                                    '-z', '0.0',
-                                    '-R', '0.0',
-                                    '-P', '0.0',
-                                    '-Y', '0.0',
-                                    '-robot_namespace', 'cylinder_obstacle_4'],
+    spawn_entity_4 = Node(package='gazebo_ros', executable='spawn_entity.py', name='spawn_entity_4',
+                        arguments=['-topic', 'obstacle_bot/robot_description',
+                                      '-entity', 'obstacle_bot_4',
+                                      '-x', '-8.0',
+                                        '-y', '8.0',
+                                        '-z', '0.0',
+                                        '-R', '0.0',
+                                        '-P', '0.0',
+                                        '-Y', '0.0',
+                                        '-robot_namespace', 'obstacle_bot_4',],
                         output='screen',
                         )
-
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         # Robot
         node_robot_state_publisher,
-        spawn_entity,
-        node_robot_state_publisher_2,
+        spawn_entity_1,
         spawn_entity_2,
-        node_robot_state_publisher_3,
         spawn_entity_3,
-        node_robot_state_publisher_4,
-        spawn_entity_4
+        spawn_entity_4,
     ])
