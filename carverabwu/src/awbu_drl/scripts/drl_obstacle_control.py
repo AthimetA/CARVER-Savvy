@@ -24,7 +24,7 @@ from awbu_interfaces.srv import ObstacleStart
 
 from env_utils import get_simulation_speed, read_stage
 
-OBSTACLE_VELOCITY_SCALING = 1.5
+OBSTACLE_VELOCITY_SCALING = 1.0
 
 from ament_index_python import get_package_share_directory
 class ObstacleHandler(Node):
@@ -52,7 +52,7 @@ class ObstacleHandler(Node):
         self.obstacle_control_pub_list = [self.create_publisher(Twist, f'/{obstacle}/cmd_vel', 10) for obstacle in self.obstacle_list]
 
         # Control loop
-        self.new_velo_time = 2.5 # seconds # Time to update the velocity
+        self.new_velo_time = 5.0 # seconds # Time to update the velocity
         self.control_loop_period = self.new_velo_time / self.sim_speed
         self.twist_list = [Twist() for _ in range(len(self.obstacle_list))]
 

@@ -58,7 +58,7 @@ def generate_launch_description():
                         arguments=['-topic', 'obstacle_bot/robot_description',
                                    '-entity', 'obstacle_bot_2',
                                    '-x', '0.0',
-                                    '-y', '-4.0',
+                                    '-y', '-7.0',
                                     '-z', '0.0',
                                     '-R', '0.0',
                                     '-P', '0.0',
