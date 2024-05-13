@@ -37,7 +37,7 @@ class TestNode(Node):
         super().__init__('TestNodeA')
 
         # Cmd_vel publisher
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.cmd_vel_pub = self.create_publisher(Twist, '/obstacle_1/cmd_vel', 10)
 
         # Odometry subscriber
         self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
@@ -51,12 +51,14 @@ class TestNode(Node):
 
     def timer_callback(self):
         # Create a new Twist message
-        msg = Twist()
-        msg.linear.x = 0.5
-        msg.angular.z = 0.5
+        vel = Twist()
+        vel.linear.x = 0.5
+        vel.angular.z = 0.5
 
         # Publish the message
-        self.cmd_vel_pub.publish(msg)
+        self.cmd_vel_pub.publish(vel)
+
+        self.get_logger().info(f'Published: {vel}')
         
 def main(args=None):
     rclpy.init(args=args)
