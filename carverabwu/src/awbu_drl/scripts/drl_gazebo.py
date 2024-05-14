@@ -554,14 +554,17 @@ class DRLGazebo(Node):
         # Check if the episode is done
         self.episode_check()
         # Calculate reward
-        reward_out, [R_DISTANCE, R_ANGLE, R_WAYPOINT] = self.reward_manager.get_reward(
+        reward_out, [R_DISTANCE, R_ANGLE, R_WAYPOINT, R_OBSTACLE] = self.reward_manager.get_reward(
             status              = self._EP_succeed,
             action_linear       = action_linear, # not used
             action_angular      = action_angular, # not used
             distance_to_goal    = self.robot.distance_to_goal / MAX_GOAL_DISTANCE, # Normalize the distance
             angle_to_goal       = self.robot.goal_angle / math.pi, # Normalize the angle
             omega               = action_angular, # not used
+            min_obstacle_dist   = self.obstacle_distance_nearest # the obstacle distance
         )
+        if R_OBSTACLE != 0:
+            self.get_logger().info(bcolors.WARNING + f"Obstacle detected at {self.obstacle_distance_nearest:.2f} meters, reward: {reward_out:.2f}, DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°" + bcolors.ENDC)
         if R_WAYPOINT != 0:
             self.get_logger().info(bcolors.OKCYAN+ f"Waypoint reached at {self.robot.distance_to_goal:.2f} meters, reward: {reward_out:.2f}, DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°" + bcolors.ENDC)
         response.reward = reward_out

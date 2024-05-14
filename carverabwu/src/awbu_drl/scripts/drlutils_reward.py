@@ -149,6 +149,7 @@ class Reward():
     distance_to_goal,  # Distance to the goal
     angle_to_goal,  # Angle to the goal
     omega,  # Angular velocity
+    min_obstacle_dist,  # Minimum distance to the obstacle
     ):
         # Step reward for each action
         R_STEP = - 2
@@ -172,6 +173,12 @@ class Reward():
             if self.waypoint_idx == 4:
                 self.waypoint_reached = True
 
+        # Reward for the Minimum distance to the obstacle
+        if min_obstacle_dist > THRESHOLD_COLLISION * 2:
+            R_OBSTACLE = 0
+        else:
+            R_OBSTACLE = -4
+
         # Reward for status
         if status == SUCCESS:
             R_STATUS = 250
@@ -183,7 +190,7 @@ class Reward():
             R_STATUS = 0
 
         # Total reward
-        reward = R_STEP + R_ANGLE + R_DISTANCE + R_STATUS + R_WAYPOINT 
+        reward = R_STEP + R_ANGLE + R_DISTANCE + R_STATUS + R_WAYPOINT + R_OBSTACLE
 
 
-        return float(reward) , [R_DISTANCE, R_ANGLE, R_WAYPOINT]
+        return float(reward) , [R_DISTANCE, R_ANGLE, R_WAYPOINT, R_OBSTACLE]

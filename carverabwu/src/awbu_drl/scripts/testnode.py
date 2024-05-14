@@ -20,7 +20,7 @@ from nav_msgs.msg import Odometry
 
 from gazebo_msgs.srv import GetEntityState, GetModelList
 
-from settings.constparams import LIDAR_DISTANCE_CAP
+from settings.constparams import LIDAR_DISTANCE_CAP, NUM_SCAN_SAMPLES
 
 from env_utils import get_simulation_speed, read_stage
 
@@ -36,29 +36,27 @@ class TestNode(Node):
         # Initialize the node with the name 'TestNodeA'
         super().__init__('TestNodeA')
 
-        # Cmd_vel publisher
-        self.cmd_vel_pub = self.create_publisher(Twist, '/obstacle_1/cmd_vel', 10)
+        # Create a subscriber to the scan topic
+        self.scan_sub = self.create_subscription(LaserScan, 'scan', self.scan_callback, 10)
+        self.scan_ranges = np.zeros(NUM_SCAN_SAMPLES)
+        self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
 
-        # Odometry subscriber
-        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+    def scan_callback(self, msg: LaserScan):
+        if len(msg.ranges) != NUM_SCAN_SAMPLES:
+            print(f"more or less scans than expected! check model.sdf, got: {len(msg.ranges)}, expected: {NUM_SCAN_SAMPLES}")
+        # normalize laser values
+        self.obstacle_distance_nearest = 1
+        for i in range(NUM_SCAN_SAMPLES):
+                # Normalize the scan values
+                self.scan_ranges[i] = np.clip(float(msg.ranges[i]) / LIDAR_DISTANCE_CAP, 0, 1)
+                # Check for obstacles
+                if self.scan_ranges[i] < self.obstacle_distance_nearest:
+                    self.obstacle_distance_nearest = self.scan_ranges[i]
+        # Scale the obstacle distance
+        self.obstacle_distance_nearest *= LIDAR_DISTANCE_CAP
 
-        # Timer to publish cmd_vel
-        self.timer = self.create_timer(0.1, self.timer_callback)
-
-    def odom_callback(self, msg):
-        # Print the received message
-        self.get_logger().info(f'Received: {msg}')
-
-    def timer_callback(self):
-        # Create a new Twist message
-        vel = Twist()
-        vel.linear.x = 0.5
-        vel.angular.z = 0.5
-
-        # Publish the message
-        self.cmd_vel_pub.publish(vel)
-
-        self.get_logger().info(f'Published: {vel}')
+        self.get_logger().info(f'Nearest obstacle distance: {self.obstacle_distance_nearest}')
+        self.get_logger().info(f'Normalized scan ranges: \n{self.scan_ranges}')
         
 def main(args=None):
     rclpy.init(args=args)
