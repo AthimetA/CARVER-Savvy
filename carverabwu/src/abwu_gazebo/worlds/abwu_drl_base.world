@@ -118,9 +118,9 @@
 
     <!-- Walls -->
 
-    <include>
+    <!-- <include>
       <uri>model://wall_outler</uri>
-    </include>
+    </include> -->
 
 
   </world>

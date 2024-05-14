@@ -41,6 +41,14 @@ class TestNode(Node):
         self.scan_ranges = np.zeros(NUM_SCAN_SAMPLES)
         self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
 
+
+        # The index of the scan starting from the back of the robot [index 0 is 180 degrees relative to the front of the robot]
+        DEG_PER_SCAN = 360 / NUM_SCAN_SAMPLES
+        self.font_angle_fov = 45 # degrees
+        # Find the index of the scan that is the front of the robot
+        self.front_scan_start_index = int((180 - self.font_angle_fov) / DEG_PER_SCAN)
+        self.front_scan_end_index = int((180 + self.font_angle_fov) / DEG_PER_SCAN)
+        
     def scan_callback(self, msg: LaserScan):
         if len(msg.ranges) != NUM_SCAN_SAMPLES:
             print(f"more or less scans than expected! check model.sdf, got: {len(msg.ranges)}, expected: {NUM_SCAN_SAMPLES}")
@@ -55,8 +63,18 @@ class TestNode(Node):
         # Scale the obstacle distance
         self.obstacle_distance_nearest *= LIDAR_DISTANCE_CAP
 
-        self.get_logger().info(f'Nearest obstacle distance: {self.obstacle_distance_nearest}')
-        self.get_logger().info(f'Normalized scan ranges: \n{self.scan_ranges}')
+        # Font scan
+        front_scan = np.asarray(self.scan_ranges[self.front_scan_start_index:self.front_scan_end_index])
+
+
+        self.get_logger().info(f'Nearest obstacle distance: {self.obstacle_distance_nearest/ LIDAR_DISTANCE_CAP}')
+        # self.get_logger().info(f'Normalized scan ranges: \n{self.scan_ranges}')
+        self.get_logger().info(f'Front scan: \n{front_scan}')
+
+        reward = front_scan - 1.0
+        self.get_logger().info(f'Reward: \n{reward}')
+        reward_sum = np.sum(reward)
+        self.get_logger().info(f'Reward sum: {reward_sum}')
         
 def main(args=None):
     rclpy.init(args=args)
