@@ -81,6 +81,10 @@ if STAGE == 1:
                     'wall_Lshape_2_1',\
                     'pillar_1_1', 'pillar_1_2', 'pillar_2_1',
     ]
+elif STAGE == 2:
+
+    PREDEFINED_GOAL_LOCATIONS = [ [7.0, 0.0]]
+    OBSTACLE_NAME = ['wall_outler']
 
 
 else:

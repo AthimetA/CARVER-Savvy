@@ -85,7 +85,10 @@ from env_utils import read_stage
 
 STAGE = read_stage()
 if STAGE == 1:
-    INTIAL_ROBOT_X = -5.0
+    INTIAL_ROBOT_X = 0.0
+    INTIAL_ROBOT_Y = 0.0
+elif STAGE == 2:
+    INTIAL_ROBOT_X = -8.0
     INTIAL_ROBOT_Y = 0.0
 else:
     INTIAL_ROBOT_X = 0.0
@@ -497,7 +500,7 @@ class DRLGazebo(Node):
         # self.get_logger().info(bcolors.OKBLUE + f"New episode started, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}" + bcolors.ENDC)
         self.get_logger().info(bcolors.OKBLUE + f"Goal location: ({self.goal_x:.2f}, {self.goal_y:.2f}) DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°" + bcolors.ENDC)
 
-        self.reward_manager.reward_initalize(self.robot.distance_to_goal/ MAX_GOAL_DISTANCE, self.robot.goal_angle / math.pi)
+        self.reward_manager.reward_initalize(self.robot.distance_to_goal / MAX_GOAL_DISTANCE, self.robot.goal_angle / math.pi)
 
         # Unpause the simulation
         self.episode_start_time = self.time_sec
@@ -559,10 +562,8 @@ class DRLGazebo(Node):
             angle_to_goal       = self.robot.goal_angle / math.pi, # Normalize the angle
             omega               = action_angular, # not used
         )
-        # self.get_logger().info(f"R_DISTANCE: {R_DISTANCE:.2f} R_ANGLE: {R_ANGLE:.2f}")
         if R_WAYPOINT != 0:
-            self.get_logger().info(bcolors.OKCYAN+ f"Waypoint reached, Reward: {reward_out:.2f}" + bcolors.ENDC)
-            self.get_logger().info(f"DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°")
+            self.get_logger().info(bcolors.OKCYAN+ f"Waypoint reached at {self.robot.distance_to_goal:.2f} meters, reward: {reward_out:.2f}, DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°" + bcolors.ENDC)
         response.reward = reward_out
         response.done = self._EP_done
         response.success = self._EP_succeed
