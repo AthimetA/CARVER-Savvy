@@ -42,10 +42,10 @@ def generate_launch_description():
 
     spawn_entity_list = [
         # Left side
-        ('obstacle_bot_1', 6.9, 8.6, 0.0, 0.0, 0.0, -1.5708),
-        ('obstacle_bot_2', 3.0, 5.1, 0.0, 0.0, 0.0, -1.5708),
+        ('obstacle_bot_1', 5.8, 6.2, 0.0, 0.0, 0.0, -1.5708),
+        ('obstacle_bot_2', 3.0, 2.0, 0.0, 0.0, 0.0, -1.5708),
         ('obstacle_bot_3', 0.0, 5.7, 0.0, 0.0, 0.0, -1.5708),
-        ('obstacle_bot_4', -2.8, 4.8, 0.0, 0.0, 0.0, -1.5708),
+        ('obstacle_bot_4', -2.8, 3.0, 0.0, 0.0, 0.0, -1.5708),
         ('obstacle_bot_5', -5.7, 6.5, 0.0, 0.0, 0.0, -1.5708),
         # Right side
         ('obstacle_bot_6', 4.2, -5.4, 0.0, 0.0, 0.0, 1.5708),
