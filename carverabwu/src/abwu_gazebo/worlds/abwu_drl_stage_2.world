@@ -61,9 +61,9 @@
       <real_time_factor>3</real_time_factor> -->
 
       <!-- Physics x4 realtime-->
-      <!-- <max_step_size>0.004</max_step_size>
+      <max_step_size>0.004</max_step_size>
       <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>4</real_time_factor> -->
+      <real_time_factor>4</real_time_factor>
       
       <!-- Physics x8 realtime-->
       <!-- <max_step_size>0.008</max_step_size>
@@ -71,9 +71,9 @@
       <real_time_factor>8</real_time_factor> -->
 
       <!-- Physics x10 realtime-->
-      <max_step_size>0.010</max_step_size>
+      <!-- <max_step_size>0.010</max_step_size>
       <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>10</real_time_factor>
+      <real_time_factor>10</real_time_factor> -->
 
       <ode>
         <solver>
@@ -98,7 +98,7 @@
         <argument>model_states:=model_states_plug</argument>
         <argument>link_states:=link_states_plug</argument>
       </ros>
-      <update_rate>10.0</update_rate>
+      <update_rate>30.0</update_rate>
     </plugin>
 
     <!-- A camera -->
@@ -122,50 +122,15 @@
 
     <!-- Goal -->
     <include>
-      <uri>model://goal_box</uri>
-      <pose>8.0 8.0 0.0 0 0 0</pose>
+      <uri>model://goal_area</uri>
+      <pose>6.0 0.0 0.0 0 0 0</pose>
     </include>
 
     <!-- Walls -->
 
     <include>
-      <uri>model://wall_outler</uri>
+      <uri>model://stage_2//wall_outler</uri>
     </include>
-
-    <include>
-      <uri>model://pillar_1</uri>
-    </include>
-
-    <include>
-      <uri>model://pillar_2</uri>
-    </include>
-
-    <include>
-      <uri>model://wall_inner_1</uri>
-    </include>
-
-    <!-- Obstacle -->
-
-    <include>
-      <uri>model://cylinder_obstacle_1</uri>
-      <pose>5.5 6.0 0.5 0 0 0</pose> 
-    </include>
-
-    <include>
-      <uri>model://cylinder_obstacle_2</uri>
-      <pose>-6.0 -4.0 0.5 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://cylinder_obstacle_3</uri>
-      <pose>-5.5 3.5 0.5 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://cylinder_obstacle_4</uri>
-      <pose>0 -6.5 0.5 0 0 0</pose>
-    </include>
-
 
   </world>
 </sdf>

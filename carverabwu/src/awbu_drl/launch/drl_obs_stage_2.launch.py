@@ -40,12 +40,19 @@ def generate_launch_description():
         'use_sim_time': use_sim_time}]
     )
 
-    # Obstacles
     spawn_entity_list = [
-        ('obstacle_bot_1', -8.0, -7.0, 0.0, 0.0, 0.0, 0.0),
-        ('obstacle_bot_2', 0.0, -7.0, 0.0, 0.0, 0.0, 0.0),
-        ('obstacle_bot_3', 7.0, 6.0, 0.0, 0.0, 0.0, 0.0),
-        ('obstacle_bot_4', -8.5, 8.0, 0.0, 0.0, 0.0, 0.0),
+        # Left side
+        ('obstacle_bot_1', 3.0, 5.1, 0.0, 0.0, 0.0, 0.0),
+        ('obstacle_bot_2', 1.6, 7.7, 0.0, 0.0, 0.0, 0.0),
+        ('obstacle_bot_3', 0.0, 5.7, 0.0, 0.0, 0.0, 0.0),
+        ('obstacle_bot_4', -2.8, 4.8, 0.0, 0.0, 0.0, 0.0),
+        ('obstacle_bot_5', -5.0, 6.2, 0.0, 0.0, 0.0, 0.0),
+        # Right side
+        ('obstacle_bot_6', 4.2, -5.4, 0.0, 0.0, 0.0, 0.0),
+        ('obstacle_bot_7', 1.5, -3.7, 0.0, 0.0, 0.0, 0.0),
+        ('obstacle_bot_8', -1.3, -6.2, 0.0, 0.0, 0.0, 0.0),
+        ('obstacle_bot_9', -4.0, -4.0, 0.0, 0.0, 0.0, 0.0),
+        ('obstacle_bot_10', -6.5, -8.0, 0.0, 0.0, 0.0, 0.0),
     ]
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #

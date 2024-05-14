@@ -30,7 +30,7 @@ def generate_launch_description():
 
     # ***** GAZEBO ***** #   
     # DECLARE Gazebo WORLD file:
-    world_file_name = "abwu_drl_stage_1.world"
+    world_file_name = "abwu_drl_stage_2.world"
     world_file_path = os.path.join(
         get_package_share_directory(world_package_name),
         'worlds',
@@ -90,7 +90,7 @@ def generate_launch_description():
     spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
                         arguments=['-topic', 'robot_description',
                                    '-entity', 'abwubot',
-                                   '-x', '0.0',
+                                   '-x', '-8.0',
                                     '-y', '0.0',
                                     '-z', '0.0',
                                     '-R', '0.0',
@@ -140,18 +140,18 @@ def generate_launch_description():
     # Add Obstacle launch file
     drl_package_name = 'awbu_drl'
 
-    obstacle_stage_1_launch_file = os.path.join(
+    obstacle_stage_launch_file = os.path.join(
         get_package_share_directory(drl_package_name),
         'launch',
-        'drl_obs_stage_1.launch.py'
+        'drl_obs_stage_2.launch.py'
     )
 
     # Launch the obstacle stage 1
-    obstacle_stage_1 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(obstacle_stage_1_launch_file)
+    obstacle_stage = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(obstacle_stage_launch_file)
     )
-
-    stage_temp_file_init(number=1)
+        
+    stage_temp_file_init(number=2)
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -170,7 +170,7 @@ def generate_launch_description():
                     diff_drive_controllers,
                     abwu_inverse_kinemetic,
                     abwu_forward_kinematic,
-                    obstacle_stage_1,
+                    obstacle_stage,
                 ]
             )
         ),

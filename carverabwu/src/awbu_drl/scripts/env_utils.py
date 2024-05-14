@@ -22,16 +22,16 @@ def get_simulation_speed(stage):
 
 def read_stage(stage=None):
 
-    file_path = os.getenv('ABWUDRL_BASE_PATH') +'/tmp/abwu_current_stage.txt'
+    # file_path = os.getenv('ABWUDRL_BASE_PATH') +'/tmp/abwu_current_stage.txt'
 
-    if not os.path.exists(file_path):
-        print("\033[1m" + "\033[93m" + "Stage file does not exist, creating a new one with default stage 1" + "\033[0m")
-        # Create directory if it does not exist
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        # Create the file
-        with open(file_path, 'w') as f:
-            f.write('1')
-
+    # if not os.path.exists(file_path):
+    #     print("\033[1m" + "\033[93m" + "Stage file does not exist, creating a new one with default stage 1" + "\033[0m")
+    #     # Create directory if it does not exist
+    #     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    #     # Create the file
+    #     with open(file_path, 'w') as f:
+    #         f.write('1')
+    
     if stage is None:
         with open(os.getenv('ABWUDRL_BASE_PATH') +'/tmp/abwu_current_stage.txt', 'r') as f:
             stage = f.read()
