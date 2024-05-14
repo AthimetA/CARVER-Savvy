@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="robot">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="carversavvy">
 
     <xacro:include filename="carversavvy_core_perfect.urdf.xacro" />
     <xacro:carversavvy_core/>
