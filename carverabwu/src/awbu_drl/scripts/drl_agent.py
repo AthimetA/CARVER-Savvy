@@ -176,7 +176,7 @@ class DrlAgent(Node):
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')
             self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
         # Start the process
-        self.timer_hz = 25.0 * self.sim_speed # Scale the simulation speed
+        self.timer_hz = 50.0 * self.sim_speed # Scale the simulation speed
         self.timer_period = 1e9/self.timer_hz # Convert to nanoseconds
         self.episode_start_time = 0.0
         self.episode_done = False

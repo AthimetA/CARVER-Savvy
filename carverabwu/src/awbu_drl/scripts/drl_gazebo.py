@@ -36,10 +36,10 @@ from rclpy.qos import QoSProfile
 from rclpy.node import Node
 
 import xml.etree.ElementTree as ET
-from settings.constparams import ENABLE_TRUE_RANDOM_GOALS, ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS
+from settings.constparams import ENABLE_TRUE_RANDOM_GOALS, ARENA_LENGTH, ARENA_WIDTH
 
 # GENERAL SETTINGS
-from settings.constparams import ENABLE_BACKWARD, ENABLE_DYNAMIC_GOALS
+from settings.constparams import ENABLE_BACKWARD, ENABLE_DYNAMIC_GOALS 
 # ENVIRONMENT SETTINGS 
 # Sensor
 from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_CLOCK, TOPIC_OBSTACLES_ODOM,\
@@ -49,7 +49,7 @@ from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_CLOCK
 # Arena dimensions
 from settings.constparams import ARENA_LENGTH, ARENA_WIDTH
 # Obstacle settings
-from settings.constparams import MAX_NUMBER_OBSTACLES, DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT 
+from settings.constparams import MAX_NUMBER_OBSTACLES, DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT , DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN, DYNAMIC_GOAL_SEPARATION_DISTANCE_MAX
 # General
 from settings.constparams import EPISODE_TIMEOUT_SECONDS, SPEED_LINEAR_MAX, SPEED_ANGULAR_MAX,\
                                  LINEAR_VELOCITY_LOC, ANGULAR_VELOCITY_LOC
@@ -439,7 +439,8 @@ class DRLGazebo(Node):
                 self._dynamic_goals_reset_flag = True # Reset the simulation
                 self._dynamic_goals_radius *= 0.99
                 self.get_logger().info(bcolors.FAIL + f"Goal not reached, decreasing goal radius to {self._dynamic_goals_radius:.2f}" + bcolors.ENDC)
-    
+            self._dynamic_goals_radius = np.clip(self._dynamic_goals_radius, DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN, DYNAMIC_GOAL_SEPARATION_DISTANCE_MAX)
+
     def initalize_episode(self, response: DrlStep.Response):
         '''
 
