@@ -131,8 +131,12 @@ class Network(torch.nn.Module, ABC):
     def init_weights(n, m):
         if isinstance(m, torch.nn.Linear):
             # --- define weights initialization here (optional) ---
-            torch.nn.init.xavier_uniform_(m.weight)
-            m.bias.data.fill_(0.01)
+            # torch.nn.init.xavier_uniform_(m.weight)
+            # m.bias.data.fill_(0.01)
+
+            # Kaiming He initialization
+            torch.nn.init.kaiming_normal_(m.weight, nonlinearity='leaky_relu')
+            m.bias.data.fill_(0.0)
 
 
 class OUNoise(object):
