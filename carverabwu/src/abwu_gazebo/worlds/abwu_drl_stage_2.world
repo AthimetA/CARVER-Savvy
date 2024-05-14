@@ -123,7 +123,7 @@
     <!-- Goal -->
     <include>
       <uri>model://goal_area</uri>
-      <pose>6.0 0.0 0.0 0 0 0</pose>
+      <pose>7.0 0.0 0.0 0 0 0</pose>
     </include>
 
     <!-- Walls -->

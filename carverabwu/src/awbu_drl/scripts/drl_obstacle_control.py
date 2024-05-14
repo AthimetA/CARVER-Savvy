@@ -22,7 +22,7 @@ from settings.constparams import TOPIC_CLOCK
 
 from awbu_interfaces.srv import ObstacleStart
 
-from env_utils import get_simulation_speed, read_stage
+from env_utils import get_simulation_speed, read_stage, bcolors
 
 OBSTACLE_VELOCITY_SCALING = 1.0
 
@@ -31,6 +31,7 @@ class ObstacleHandler(Node):
     def __init__(self):
         super().__init__('ObstacleHandler')
         self.stage = read_stage()
+        self.get_logger().info(bcolors.OKGREEN + f'Stage: {self.stage}' + bcolors.ENDC)
         self.sim_speed = get_simulation_speed(stage=self.stage)
         
         # Initialise services servers
@@ -60,6 +61,13 @@ class ObstacleHandler(Node):
 
 
     def timer_callback(self):
+
+        if self.stage == 1:
+            self.stage_1_obstacle_control()
+        elif self.stage == 2:
+            self.stage_2_obstacle_control()
+
+    def stage_1_obstacle_control(self):
         if self.obstacle_status:
             # Generate new velocity
             for obs_idx, obstacle in enumerate(self.obstacle_list):
@@ -67,6 +75,13 @@ class ObstacleHandler(Node):
                 self.twist_list[obs_idx].angular.z = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
                 self.obstacle_control_pub_list[obs_idx].publish(self.twist_list[obs_idx])
 
+    def stage_2_obstacle_control(self):
+        if self.obstacle_status:
+            # Half of the obstacles move in the +x direction and the other half in the -x direction
+            for obs_idx, obstacle in enumerate(self.obstacle_list):
+                self.twist_list[obs_idx].linear.x = np.random.uniform(-0.1, 0.5) * OBSTACLE_VELOCITY_SCALING
+                # self.twist_list[obs_idx].angular.z = np.random.uniform(-0.01, 0.01) * OBSTACLE_VELOCITY_SCALING
+                self.obstacle_control_pub_list[obs_idx].publish(self.twist_list[obs_idx])
 
     def obstacle_start_callback(self, request: ObstacleStart.Request, response: ObstacleStart.Response):
         response.obstacle_status = True

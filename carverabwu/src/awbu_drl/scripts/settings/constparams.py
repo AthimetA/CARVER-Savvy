@@ -31,7 +31,7 @@ TOPIC_ODOM = '/abwubot/odom'
 TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
-LIDAR_DISTANCE_CAP          = 10.0   # meters
+LIDAR_DISTANCE_CAP          = 12.0   # meters
 THRESHOLD_COLLISION         = 0.50  # meters
 THREHSOLD_GOAL              = 1.0  # meters
 

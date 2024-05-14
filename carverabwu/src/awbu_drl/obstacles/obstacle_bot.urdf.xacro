@@ -168,13 +168,42 @@
         <material>Gazebo/Blue</material>
     </gazebo>
 
+    <!-- Font indicator link -->
+
+    <joint name="font_indicator_joint" type="fixed">
+        <parent link="chassis"/>
+        <child link="font_indicator"/>
+        <origin xyz="${chassis_radius - 0.1} 0 ${chassis_length}" rpy="0 0 0"/>
+    </joint>
+
+    <link name="font_indicator">
+        <visual>
+            <geometry>
+                <cylinder radius="0.1" length="0.1"/>
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder radius="0.1" length="0.1"/>
+            </geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="0.1" length="0.1" radius="0.1">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:inertial_cylinder>
+    </link>
+
+    <gazebo reference="font_indicator">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
+
     <gazebo>
         <plugin name="diff_drive" filename="libgazebo_ros_diff_drive.so">
 
             <!-- Wheel Information -->
             <left_joint>left_wheel_joint</left_joint>
             <right_joint>right_wheel_joint</right_joint>
-            <wheel_separation>${chassis_length}</wheel_separation>
+            <wheel_separation>${(chassis_radius - wheel_radius)*2}</wheel_separation>
             <wheel_diameter>${2*wheel_radius}</wheel_diameter>
 
 
