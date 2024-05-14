@@ -14,7 +14,7 @@ GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N epis
 # ===================================================================== #
 #                             ROBOTS PARAMS                             #
 # ===================================================================== #
-NUM_SCAN_SAMPLES = 45
+NUM_SCAN_SAMPLES = 90
 
 
 # ===================================================================== #
@@ -33,7 +33,7 @@ TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
 LIDAR_DISTANCE_CAP          = 10.0   # meters
 THRESHOLD_COLLISION         = 0.50  # meters
-THREHSOLD_GOAL              = 0.50  # meters
+THREHSOLD_GOAL              = 1.0  # meters
 
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
 LINEAR_VELOCITY_LOC       = 0     # 0 = no noise, 1 = noise enabled
@@ -44,7 +44,7 @@ ARENA_LENGTH                = 20   # meters
 ARENA_WIDTH                 = 20   # meters
 
 # General
-EPISODE_TIMEOUT_SECONDS     = 20    # Number of seconds after which episode timeout occurs
+EPISODE_TIMEOUT_SECONDS     = 40    # Number of seconds after which episode timeout occurs
 SPEED_LINEAR_MAX            = 2.0  # m/s
 SPEED_ANGULAR_MAX           = 2.0   # rad/s
 
@@ -64,15 +64,16 @@ ACTION_SIZE     = 2         # Not used for DQN, see DQN_ACTION_SIZE
 HIDDEN_SIZE     = 256       # Number of neurons in hidden layers
 
 BATCH_SIZE      = 128       # Number of samples per training batch
-BUFFER_SIZE     = BATCH_SIZE * 100 # Number of samples stored in replay buffer before FIFO
+BUFFER_SIZE     = BATCH_SIZE * 200 # Number of samples stored in replay buffer before FIFO
 DISCOUNT_FACTOR = 0.99
 LEARNING_RATE   = 0.001
 TAU             = 0.010
 
-OBSERVE_STEPS   = BATCH_SIZE * 50 # At training start random actions are taken for N steps for better exploration
+OBSERVE_STEPS   = BATCH_SIZE * 100 # At training start random actions are taken for N steps for better exploration
 STEP_TIME       = 0.01      # Delay between steps, can be set to 0
-EPSILON_DECAY   = 0.9995    # Epsilon decay per step
-EPSILON_MINIMUM = 0.40
+# EPSILON_DECAY   = 0.9995    # Epsilon decay per step
+EPSILON_DECAY   = 0.995    # Epsilon decay per step
+EPSILON_MINIMUM = 0.10
 
 # DQN parameters
 DQN_ACTION_SIZE = 5

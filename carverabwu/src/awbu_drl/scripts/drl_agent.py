@@ -26,7 +26,7 @@ import time
 import numpy as np
 
 from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, TAU, LEARNING_RATE
-from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP
+from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP, EPSILON_DECAY, EPSILON_MINIMUM
 
 from awbu_interfaces.srv import DrlStep, EnvReady
 from std_srvs.srv import Empty
@@ -120,6 +120,8 @@ class DrlAgent(Node):
             self.model.device = self.device
             self.model.learning_rate = LEARNING_RATE
             self.model.tau = TAU
+            self.model.epsilon_decay = EPSILON_DECAY
+            self.model.epsilon_minimum = EPSILON_MINIMUM
             self.sm.load_weights(self.model.networks)
             
             # Load the replay buffer
@@ -277,7 +279,7 @@ class DrlAgent(Node):
 
         if self.model.epsilon and self.model.epsilon > self.model.epsilon_minimum:
             self.model.epsilon *= self.model.epsilon_decay
-            # self.get_logger().info(f"Epsilon: {self.model.epsilon}")
+            self.get_logger().info(f"Epsilon: {self.model.epsilon}")
 
         return state
     
@@ -329,18 +331,18 @@ class DrlAgent(Node):
                     if self.training and self.total_steps < self.observe_steps:
                         action = self.model.get_action_random()
                     else:
-                        # action = self.model.get_action_with_epsilon_greedy(
-                        #     state=state,
-                        #     is_training=self.training,
-                        #     step=self.total_steps,
-                        #     visualize=ENABLE_VISUAL,
-                        # )
-                        action = self.model.get_action(
+                        action = self.model.get_action_with_epsilon_greedy(
                             state=state,
                             is_training=self.training,
                             step=self.total_steps,
                             visualize=ENABLE_VISUAL,
                         )
+                        # action = self.model.get_action(
+                        #     state=state,
+                        #     is_training=self.training,
+                        #     step=self.total_steps,
+                        #     visualize=ENABLE_VISUAL,
+                        # )
                         # if self.episode_radom_action:
 
                         #     action = self.model.get_action_random()

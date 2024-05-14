@@ -124,7 +124,8 @@ class GoalManager:
         base_pose = root.find('model').find('pose').text.split(" ")
         base_pose_x = float(base_pose[0])
         base_pose_y = float(base_pose[1])
-        print(bcolors.OKGREEN + f"Obstacle name: {name}, base pose: {base_pose_x, base_pose_y}" + bcolors.ENDC)
+        base_pose_theta = float(base_pose[-1])
+        print(bcolors.OKGREEN + f"Obstacle name: {name}, base pose: {base_pose_x, base_pose_y, base_pose_theta}" + bcolors.ENDC)
         # Get the coordinates of the walls
         for wall in root.find('model').findall('link'):
             pose = wall.find('pose').text.split(" ")
@@ -135,7 +136,7 @@ class GoalManager:
             # Check if the wall is rotated
             # If the wall is rotated the size is swapped for x and y
             rotation = float(pose[-1])
-            if rotation == 0 or rotation == 3.14159: # No rotation
+            if base_pose_theta == 0 or base_pose_theta == 3.14159: # No rotation
                 size_x = float(size[0]) + COLLITION_MARGIN * 2
                 size_y = float(size[1]) + COLLITION_MARGIN * 2
             else: # Rotated 90 degrees [rotation = 1.5708 or 4.71239]
