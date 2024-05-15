@@ -395,6 +395,7 @@ class DRLGazebo(Node):
         state.append(float(relative_robot_obstacle_angular_vel))
         # self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
         # self.get_logger().info(f'State: {state}')
+        self.get_logger().info(f'obstacle_distance_nearest: {self.obstacle_distance_nearest}')
         self.local_step += 1
         return state
     
