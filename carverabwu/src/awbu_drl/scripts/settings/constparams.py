@@ -65,7 +65,7 @@ ACTION_SIZE     = 2         # Not used for DQN, see DQN_ACTION_SIZE
 HIDDEN_SIZE     = 512       # Number of neurons in hidden layers
 
 BATCH_SIZE      = 256       # Number of samples per training batch
-BUFFER_SIZE     = BATCH_SIZE * 200 # Number of samples stored in replay buffer before FIFO
+BUFFER_SIZE     = BATCH_SIZE * 1000 # Number of samples stored in replay buffer before FIFO
 DISCOUNT_FACTOR = 0.99
 LEARNING_RATE   = 0.001
 TAU             = 0.010
