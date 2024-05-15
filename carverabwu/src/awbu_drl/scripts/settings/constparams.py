@@ -70,7 +70,7 @@ DISCOUNT_FACTOR = 0.99
 LEARNING_RATE   = 0.001
 TAU             = 0.010
 
-OBSERVE_STEPS   = BATCH_SIZE * 1 # At training start random actions are taken for N steps for better exploration
+OBSERVE_STEPS   = BATCH_SIZE * 100 # At training start random actions are taken for N steps for better exploration
 STEP_TIME       = 0.01      # Delay between steps, can be set to 0
 # EPSILON_DECAY   = 0.9995    # Epsilon decay per step
 EPSILON_DECAY   = 0.995    # Epsilon decay per step

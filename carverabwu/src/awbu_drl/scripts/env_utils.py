@@ -73,9 +73,23 @@ Read the stage from the file
 STAGE = read_stage()
 
 if STAGE == 1:
-    PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\
-                                    [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1],\
-                                    ]
+    PREDEFINED_GOAL_LOCATIONS = [
+        [4.0, 0.0],
+        [8.0, 0.0],
+        [-4.0, 0.0], 
+        [1.6, 5.4], 
+        [1.6, 8.1], 
+        [8.0, 7.8], 
+        [7.6, -7.3], 
+        [4.9, -4.2], 
+        [0.0, -8.0], 
+        [-4.3, -4.9], 
+        [-8.0, -7.5], 
+        [-8.4, -1.4],
+        [-8.2, 8.1], 
+        [-4.2, 8.2],
+        [-3.9, 5.17],  
+    ]
 
     OBSTACLE_NAME = ['wall_outler', 'wall_single_5m_1', 'wall_single_5m_2', 'wall_single_5m_3', 'wall_single_5m_4',\
                     'wall_Lshape_2_1',\
@@ -255,6 +269,14 @@ class Robot:
     def update_goal(self, goal_x: float, goal_y: float):
         self.goal_x = goal_x
         self.goal_y = goal_y
+
+    def reset_task_success(self):
+        # Reset the task success
+        self.distance_traveled = 0.0
+
+        self.distance_to_goal = self.calculate_distance(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
+        self.angle_to_goal = self.calculate_heading(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
+        self.goal_angle = self.calculate_angle(target_angle=self.angle_to_goal, angle=self.theta)
 
     def reset(self):
         # Reset the robot position
