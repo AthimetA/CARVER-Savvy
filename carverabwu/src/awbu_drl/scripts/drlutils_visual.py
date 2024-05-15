@@ -62,42 +62,29 @@ if ENABLE_VISUAL:
             self.bar_graph_angular = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.bar_graph_angular.setRotation(-90)
             self.angular_item.addItem(self.bar_graph_angular)
+            # XY Plane
+            self.xy_plane_item = self.addPlot(title="X, Y Position"              , row = 2, col = 0, colspan=3, rowspan=2)
+            self.xy_plane_item.setXRange(-1, 1, padding=0)
+            self.xy_plane_item.setYRange(-1, 1, padding=0)
+            self.xy_plane_item.showGrid(x=True, y=True)
             # X,Y position
-            self.xy_position_item = self.addPlot(title="X,Y Position"            , row = 2, col = 0, colspan=1)
-            self.xy_position_item.setXRange(-1, 1, padding=0)
-            self.xy_position_item.setYRange(-1, 1, padding=0)
-            self.scatter_xy_position = pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 0, 0, 255))
-            self.xy_position_item.addItem(self.scatter_xy_position)
+            self.scatter_xy_position = pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(0, 255, 0, 255))
+            self.xy_plane_item.addItem(self.scatter_xy_position)
             # Vx 
-            self.vx_item = self.addPlot(title="Vx"                              , row = 2, col = 1, colspan=1)
-            self.vx_item.setXRange(-1, 1, padding=0)
-            self.vx_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_vx = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.vx_item.addItem(self.bar_graph_vx)
+            self.arrow_vx = pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#00FF00", 'width': 2}))
+            self.xy_plane_item.addItem(self.arrow_vx)
             # Vy
-            self.vy_item = self.addPlot(title="Vy"                              , row = 2, col = 2, colspan=1)
-            self.vy_item.setXRange(-1, 1, padding=0)
-            self.vy_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_vy = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.vy_item.addItem(self.bar_graph_vy)
+            self.arrow_vy = pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#00FF00", 'width': 2}))
+            self.xy_plane_item.addItem(self.arrow_vy)
             # ObsX, ObsY
-            self.obs_xy_item = self.addPlot(title="ObsX, ObsY"                   , row = 3, col = 0, colspan=1)
-            self.obs_xy_item.setXRange(-1, 1, padding=0)
-            self.obs_xy_item.setYRange(-1, 1, padding=0)
-            self.scatter_obstacle_xy = pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(0, 255, 0, 255))
-            self.obs_xy_item.addItem(self.scatter_obstacle_xy)
+            self.scatter_obstacle_xy = pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 0, 0, 255))
+            self.xy_plane_item.addItem(self.scatter_obstacle_xy)
             # Obs Vx
-            self.obs_vx_item = self.addPlot(title="Obs Vx"                       , row = 3, col = 1, colspan=1)
-            self.obs_vx_item.setXRange(-1, 1, padding=0)
-            self.obs_vx_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_obstacle_vx = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.obs_vx_item.addItem(self.bar_graph_obstacle_vx)
+            self.arrow_obstacle_vx = pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#FF0000 ", 'width': 2}))
+            self.xy_plane_item.addItem(self.arrow_obstacle_vx)
             # Obs Vy
-            self.obs_vy_item = self.addPlot(title="Obs Vy"                       , row = 3, col = 2, colspan=1)
-            self.obs_vy_item.setXRange(-1, 1, padding=0)
-            self.obs_vy_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_obstacle_vy = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.obs_vy_item.addItem(self.bar_graph_obstacle_vy)
+            self.arrow_obstacle_vy = pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#FF0000 ", 'width': 2}))
+            self.xy_plane_item.addItem(self.arrow_obstacle_vy)
             # Last Action Linear
             self.last_action_linear_item = self.addPlot(title="Last Action Linear", row = 2, col = 3, colspan=1)
             self.last_action_linear_item.setXRange(-1, 1, padding=0)
@@ -176,22 +163,27 @@ if ENABLE_VISUAL:
             self.bar_graph_dtg.setOpts(height=[states_data[START_IDX]])
             self.bar_graph_atg.setOpts(height=[states_data[START_IDX-1]])
             self.bar_graph_theta.setOpts(height=[states_data[START_IDX-4]])
-            self.bar_graph_vx.setOpts(height=[states_data[START_IDX-5]])
-            self.bar_graph_vy.setOpts(height=[states_data[START_IDX-6]])
-            self.bar_graph_angular.setOpts(height=[states_data[START_IDX-7]])
-            self.bar_graph_obstacle_vx.setOpts(height=[states_data[START_IDX-10]])
-            self.bar_graph_obstacle_vy.setOpts(height=[states_data[START_IDX-11]])
-            self.bar_graph_last_action_linear.setOpts(height=[states_data[START_IDX-12]])
-            self.bar_graph_last_action_angular.setOpts(height=[states_data[START_IDX-13]])
-
-            # Plot the XY position
             x = states_data[START_IDX-2]
             y = states_data[START_IDX-3]
+            vx = states_data[START_IDX-5]
+            vy = states_data[START_IDX-6]
+            self.bar_graph_angular.setOpts(height=[states_data[START_IDX-7]])
             obs_x = states_data[START_IDX-8]
             obs_y = states_data[START_IDX-9]
-
+            obs_vx = states_data[START_IDX-10]
+            obs_vy = states_data[START_IDX-11]
+            self.bar_graph_last_action_linear.setOpts(height=[states_data[START_IDX-12]])
+            self.bar_graph_last_action_angular.setOpts(height=[states_data[START_IDX-13]])
+        
+            # Plot the XY position
             self.scatter_xy_position.setData(x=[x], y=[y])
             self.scatter_obstacle_xy.setData(x=[obs_x], y=[obs_y])
+            # Set the arrow position
+            # Calculate the new arrow end position based on velocity
+            self.arrow_vx.setData([x, x + vx], [y, y])
+            self.arrow_vy.setData([x, x], [y, y + vy])
+            self.arrow_obstacle_vx.setData([obs_x, obs_x + obs_vx], [obs_y, obs_y])
+            self.arrow_obstacle_vy.setData([obs_x, obs_x], [obs_y, obs_y + obs_vy])
 
             # Update the Actions
             actions = actions.detach().cpu().numpy().tolist()
