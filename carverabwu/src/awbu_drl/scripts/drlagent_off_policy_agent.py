@@ -33,7 +33,7 @@ class OffPolicyAgent(ABC):
         self.simulation_speed   = simulation_speed
 
         # Network structure
-        self.state_size         = NUM_SCAN_SAMPLES + 9
+        self.state_size         = NUM_SCAN_SAMPLES + 5 + 4 + 2
         self.action_size        = ACTION_SIZE
         self.hidden_size        = HIDDEN_SIZE
         self.input_size         = self.state_size
@@ -135,8 +135,8 @@ class Network(torch.nn.Module, ABC):
             # m.bias.data.fill_(0.01)
 
             # Kaiming He initialization
-            torch.nn.init.kaiming_normal_(m.weight, nonlinearity='leaky_relu')
-            m.bias.data.fill_(0.0)
+            torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+            m.bias.data.fill_(0.01)
 
 
 class OUNoise(object):

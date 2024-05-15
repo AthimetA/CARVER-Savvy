@@ -24,9 +24,9 @@ from env_utils import get_simulation_speed, read_stage
 
 sim_speed = get_simulation_speed(read_stage())
 
-TIME_STEP  = 1/(30 * sim_speed)
+TIME_STEP  = 1/(50 * sim_speed)
 ALPHA = 0.5 # for CP
-MIN_DISTANCE = 0.1 # for tracking Missing object using KALMAN
+MIN_DISTANCE = 0.05 # for tracking Missing object using KALMAN
 _RADIUS = 1 # object should have low radius
 
 class Object:
@@ -61,7 +61,8 @@ class Object:
         self.kf = utils.KalmanFilter(F = self.F, H = self.H, Q = self.Q, R = self.R)
         
         self._missing_frame = 0
-        self.max_missing_frame = 5
+        self.max_missing_frame = 3
+        self.CP = 0.0
 
     def predict_kf(self):
         return np.dot(self.H,  self.kf.predict())[0]
@@ -125,6 +126,8 @@ class Clustering(Node):
         self.scan = None
         self.time_sec = None
         self.position = None
+
+        self.past_time = 0.0
 
         
 
@@ -282,32 +285,34 @@ class Clustering(Node):
 
                         dt = self.time_sec - self.Previous_group[ID].time
 
-                        velo = (current_center - precenter) / dt
+                        if dt != 0.0 :
 
-                        cen_velo = [current_center[0] , current_center[1] , velo[0] , velo[1]]
-                        
-                        
-                        _x , _y , _vx , _vy = self.Previous_group[ID].predict_kf()
+                            velo = (current_center - precenter) / dt
 
-                        self.Current_group[ID].position = map_group[j]
-                        self.Current_group[ID].velocity = velo
-                        self.Current_group[ID].Predicted_KF = ( _x , _y , _vx , _vy)
-                        self.Current_group[ID].center = current_center
-                        self.Current_group[ID].radius = _radius_group[j]
-                        self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
-                        self.Current_group[ID]._missing_frame = 0
+                            cen_velo = [current_center[0] , current_center[1] , velo[0] , velo[1]]
+                            
+                            
+                            _x , _y , _vx , _vy = self.Previous_group[ID].predict_kf()
 
-                        # print("ID    " , ID )
-                        # print("Distance" , (current_center - precenter) )
-                        # print("velo" , velo)
-                        # print('velo KF' , self.Current_group[ID].velocity)
+                            self.Current_group[ID].position = map_group[j]
+                            self.Current_group[ID].velocity = velo
+                            self.Current_group[ID].Predicted_KF = ( _x , _y , _vx , _vy)
+                            self.Current_group[ID].center = current_center
+                            self.Current_group[ID].radius = _radius_group[j]
+                            self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
+                            self.Current_group[ID]._missing_frame = 0
 
-                        # if np.linalg.norm(np.array([_x,_y])- current_center) < 1: 
-                        #     pass
-                        # else : 
-                        self.Current_group[ID].type = _type_group[j]
-                        self.Current_group[ID].time = self.time_sec
-                        self.Current_group[ID].kf.update(np.array(cen_velo))
+                            # print("ID    " , ID )
+                            # print("Distance" , (current_center - precenter) )
+                            # print("velo" , velo)
+                            # print('velo KF' , self.Current_group[ID].velocity)
+
+                            # if np.linalg.norm(np.array([_x,_y])- current_center) < 1: 
+                            #     pass
+                            # else : 
+                            self.Current_group[ID].type = _type_group[j]
+                            self.Current_group[ID].time = self.time_sec
+                            self.Current_group[ID].kf.update(np.array(cen_velo))
                 
                 ### MISSING OBSTACLE 
                 #### this maybe obstacle but tracking failed to track so we check again 
@@ -346,40 +351,45 @@ class Clustering(Node):
                             abs(r - es_r[_index]) < MIN_DISTANCE and \
                             abs(es_r[_index]) < _RADIUS: 
                             print("THIS IS REAL OBSTACLE ID : {}".format(ID))
-                            
-                            self.Current_group[ID].position = wall_group[_index]
-                            # self.Current_group[ID].velocity = (_vx , _vy)
-                            self.Current_group[ID].velocity = (self.Previous_group[ID].velocity[0] , self.Previous_group[ID].velocity[1])
-                            self.Current_group[ID].center = (_x,_y)
-                            self.Current_group[ID].radius = es_r[_index]
-                            self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
-                            self.Current_group[ID]._missing_frame = 0
-                            self.Current_group[ID].Predicted_KF = ( _x , _y , _vx , _vy)
-
-                            # if np.linalg.norm(np.array([_x,_y])- current_center) < 1: 
-                            #     pass
-                            # else : 
-                            self.Current_group[ID].type = "Obstacle"
-                            self.Current_group[ID].time = self.time_sec
-
-                            precenter = np.array(self.Previous_group[ID].center)
-
-                            current_center = np.array(es_center[_index])
 
                             dt = self.time_sec -self.Previous_group[ID].time
 
-                            velo = (current_center - precenter) / dt
+                            if dt != 0.0 : 
+                                
+                                self.Current_group[ID].position = wall_group[_index]
+                                # self.Current_group[ID].velocity = (_vx , _vy)
+                                self.Current_group[ID].velocity = (self.Previous_group[ID].velocity[0] , self.Previous_group[ID].velocity[1])
+                                self.Current_group[ID].center = (_x,_y)
+                                self.Current_group[ID].radius = es_r[_index]
+                                self.Current_group[ID].kf = copy.deepcopy(self.Previous_group[ID].kf)
+                                self.Current_group[ID]._missing_frame = 0
+                                self.Current_group[ID].Predicted_KF = ( _x , _y , _vx , _vy)
 
-                            cen_velo = [current_center[0] , current_center[1] , velo[0] , velo[1]]
+                                # if np.linalg.norm(np.array([_x,_y])- current_center) < 1: 
+                                #     pass
+                                # else : 
+                                self.Current_group[ID].type = "Obstacle"
+                                self.Current_group[ID].time = self.time_sec
 
-                            self.Current_group[ID].kf.update(np.array(cen_velo))
+                                precenter = np.array(self.Previous_group[ID].center)
 
-                            fake_wall.append(wall_group[_index])
+                                current_center = np.array(es_center[_index])
 
-                            self.current_object +=1
+                            
+
+                                velo = (current_center - precenter) / dt
+
+                                cen_velo = [current_center[0] , current_center[1] , velo[0] , velo[1]]
+
+                                self.Current_group[ID].kf.update(np.array(cen_velo))
+
+                                fake_wall.append(wall_group[_index])
+
+                                self.current_object +=1
 
                         else : 
                             self.Current_group[ID]._missing_frame +=1
+                            self.Current_group[ID].time = self.time_sec
                             if self.Current_group[ID]._missing_frame > self.Current_group[ID].max_missing_frame  :
                                 del self.Current_group[ID]
 
@@ -451,7 +461,8 @@ class Clustering(Node):
                     print()
                     distance = np.array(self.Current_group[ID].center) - np.array(self.Previous_group[ID].center)
                     dt = self.time_sec - self.Previous_group[ID].time
-                    
+
+                    if dt < 1e-10 : continue
                     center_kf = [self.Current_group[ID].Predicted_KF [0] , self.Current_group[ID].Predicted_KF[1]]
                     velocity_kf = [self.Current_group[ID].Predicted_KF [2] , self.Current_group[ID].Predicted_KF[3]]
 
@@ -484,6 +495,8 @@ class Clustering(Node):
 
                     
                     CP = ALPHA * Pc_ttc + (1-ALPHA) * Pc_dto
+
+                    self.Current_group[ID].CP = CP
 
                     print("Pc_ttc : " ,Pc_ttc)
                     print("Pc_dto : " ,Pc_dto)
@@ -620,9 +633,9 @@ class Clustering(Node):
                 marker.type = Marker.CYLINDER
                 marker.action = Marker.ADD
                 
-                marker.scale.x = scaled_radius  # Cylinder diameter
-                marker.scale.y = scaled_radius  # Cylinder diameter
-                marker.scale.z = scaled_radius  # Cylinder height
+                marker.scale.x = 0.1  # Cylinder diameter
+                marker.scale.y = 0.1  # Cylinder diameter
+                marker.scale.z = 0.1  # Cylinder height
 
                 color = self.color_track[ID]
 
@@ -638,6 +651,38 @@ class Clustering(Node):
                 marker.id = a
                 a += 1
                 marker_array2.markers.append(marker)
+
+                marker = Marker()
+
+                marker = Marker()
+                marker.header.frame_id = "base_link"
+                marker.header.stamp = self.get_clock().now().to_msg()
+                marker.ns = "text_marker"
+                marker.type = Marker.TEXT_VIEW_FACING
+                marker.action = Marker.ADD
+
+                marker.pose.position.x = center[0]
+                marker.pose.position.y = center[1] + 2
+                marker.pose.position.z = 1.0
+
+                marker.pose.orientation.x = 0.0
+                marker.pose.orientation.y = 0.0
+                marker.pose.orientation.z = 0.0
+                marker.pose.orientation.w = 1.0
+
+                marker.scale.z = 0.5  # Height of the text in meters
+                marker.color.a = 1.0  # Alpha (0.0 is fully transparent, 1.0 is fully opaque)
+                marker.color.r = 1.0  # Red
+                marker.color.g = 1.0  # Green
+                marker.color.b = 1.0  # Blue
+
+                marker.text = "CP : {}".format(temp[ID].CP)
+                marker.id = a
+                a += 1
+                marker_array2.markers.append(marker)
+
+
+
 
         self.publisher2_.publish(marker_array2)
 
