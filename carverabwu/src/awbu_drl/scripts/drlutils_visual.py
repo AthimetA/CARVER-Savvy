@@ -26,7 +26,7 @@ if ENABLE_VISUAL:
 
             # -------------- States Plot -------------- #
             # Add plot to the layout
-            self.plot_item_states = self.addPlot(title="States", row = 0, col = 0, colspan=3)
+            self.plot_item_states = self.addPlot(title="States", row = 0, col = 0, colspan=7)
             # Set the range of the plot
             self.plot_item_states.setXRange(-1, self.state_size, padding=0)
             self.plot_item_states.setYRange(-1, 1, padding=0)
@@ -36,76 +36,82 @@ if ENABLE_VISUAL:
 
             # ----------- Details states ------------ #
             # Distance to Goal
-            self.dtg_item = self.addPlot(title="Distance to Goal", row = 1, col = 0, colspan=1)
+            self.dtg_item = self.addPlot(title="Distance to Goal"               , row = 1, col = 0, colspan=1)
             self.dtg_item.setXRange(-1, 1, padding=0)
             self.dtg_item.setYRange(-1, 1, padding=0)
             self.bar_graph_dtg = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.dtg_item.addItem(self.bar_graph_dtg)
             # Angle to Goal
-            self.atg_item = self.addPlot(title="Angle to Goal", row = 1, col = 1, colspan=1)
+            self.atg_item = self.addPlot(title="Angle to Goal"                  , row = 1, col = 1, colspan=1)
             self.atg_item.setXRange(-1, 1, padding=0)
             self.atg_item.setYRange(-1, 1, padding=0)
             self.bar_graph_atg = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.bar_graph_atg.setRotation(-90)
             self.atg_item.addItem(self.bar_graph_atg)
             # Theta
-            self.theta_item = self.addPlot(title="Theta", row = 1, col = 2, colspan=1)
+            self.theta_item = self.addPlot(title="Theta"                        , row = 1, col = 2, colspan=1)
             self.theta_item.setXRange(-1, 1, padding=0)
             self.theta_item.setYRange(-1, 1, padding=0)
             self.bar_graph_theta = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
+            self.bar_graph_theta.setRotation(-90)
             self.theta_item.addItem(self.bar_graph_theta)
-            # Robot linear velocity
-            self.linear_item = self.addPlot(title="Linear Velocity", row = 2, col = 0, colspan=1)
-            self.linear_item.setXRange(-1, 1, padding=0)
-            self.linear_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_linear = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.linear_item.addItem(self.bar_graph_linear)
             # Robot angular velocity
-            self.angular_item = self.addPlot(title="Angular Velocity", row = 2, col = 1, colspan=1)
+            self.angular_item = self.addPlot(title="Angular Velocity"           , row = 1, col = 3, colspan=1)
             self.angular_item.setXRange(-1, 1, padding=0)
             self.angular_item.setYRange(-1, 1, padding=0)
             self.bar_graph_angular = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.bar_graph_angular.setRotation(-90)
             self.angular_item.addItem(self.bar_graph_angular)
-            # Obstacle distance
-            self.obstacle_item = self.addPlot(title="Obstacle Distance", row = 2, col = 2, colspan=1)
-            self.obstacle_item.setXRange(-1, 1, padding=0)
-            self.obstacle_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_obstacle = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.obstacle_item.addItem(self.bar_graph_obstacle)
-            # Obstacle angle
-            self.obstacle_angle_item = self.addPlot(title="Obstacle Angle", row = 3, col = 2, colspan=1)
-            self.obstacle_angle_item.setXRange(-1, 1, padding=0)
-            self.obstacle_angle_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_obstacle_angle = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.bar_graph_obstacle_angle.setRotation(-90)
-            self.obstacle_angle_item.addItem(self.bar_graph_obstacle_angle)
-            # Obstacle linear velocity
-            self.obstacle_linear_item = self.addPlot(title="Obstacle Linear Velocity", row = 3, col = 0, colspan=1)
-            self.obstacle_linear_item.setXRange(-1, 1, padding=0)
-            self.obstacle_linear_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_obstacle_linear = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.obstacle_linear_item.addItem(self.bar_graph_obstacle_linear)
-            # Obstacle angular velocity
-            self.obstacle_angular_item = self.addPlot(title="Obstacle Angular Velocity", row = 3, col = 1, colspan=1)
-            self.obstacle_angular_item.setXRange(-1, 1, padding=0)
-            self.obstacle_angular_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_obstacle_angular = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
-            self.bar_graph_obstacle_angular.setRotation(-90)
-            self.obstacle_angular_item.addItem(self.bar_graph_obstacle_angular)
-            # Last action linear velocity
-            self.last_action_linear_item = self.addPlot(title="Last Action Linear", row = 0, col = 3, colspan=1)
+            # X,Y position
+            self.xy_position_item = self.addPlot(title="X,Y Position"            , row = 2, col = 0, colspan=1)
+            self.xy_position_item.setXRange(-1, 1, padding=0)
+            self.xy_position_item.setYRange(-1, 1, padding=0)
+            self.scatter_xy_position = pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 0, 0, 255))
+            self.xy_position_item.addItem(self.scatter_xy_position)
+            # Vx 
+            self.vx_item = self.addPlot(title="Vx"                              , row = 2, col = 1, colspan=1)
+            self.vx_item.setXRange(-1, 1, padding=0)
+            self.vx_item.setYRange(-1, 1, padding=0)
+            self.bar_graph_vx = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
+            self.vx_item.addItem(self.bar_graph_vx)
+            # Vy
+            self.vy_item = self.addPlot(title="Vy"                              , row = 2, col = 2, colspan=1)
+            self.vy_item.setXRange(-1, 1, padding=0)
+            self.vy_item.setYRange(-1, 1, padding=0)
+            self.bar_graph_vy = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
+            self.vy_item.addItem(self.bar_graph_vy)
+            # ObsX, ObsY
+            self.obs_xy_item = self.addPlot(title="ObsX, ObsY"                   , row = 3, col = 0, colspan=1)
+            self.obs_xy_item.setXRange(-1, 1, padding=0)
+            self.obs_xy_item.setYRange(-1, 1, padding=0)
+            self.scatter_obstacle_xy = pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(0, 255, 0, 255))
+            self.obs_xy_item.addItem(self.scatter_obstacle_xy)
+            # Obs Vx
+            self.obs_vx_item = self.addPlot(title="Obs Vx"                       , row = 3, col = 1, colspan=1)
+            self.obs_vx_item.setXRange(-1, 1, padding=0)
+            self.obs_vx_item.setYRange(-1, 1, padding=0)
+            self.bar_graph_obstacle_vx = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
+            self.obs_vx_item.addItem(self.bar_graph_obstacle_vx)
+            # Obs Vy
+            self.obs_vy_item = self.addPlot(title="Obs Vy"                       , row = 3, col = 2, colspan=1)
+            self.obs_vy_item.setXRange(-1, 1, padding=0)
+            self.obs_vy_item.setYRange(-1, 1, padding=0)
+            self.bar_graph_obstacle_vy = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
+            self.obs_vy_item.addItem(self.bar_graph_obstacle_vy)
+            # Last Action Linear
+            self.last_action_linear_item = self.addPlot(title="Last Action Linear", row = 2, col = 3, colspan=1)
             self.last_action_linear_item.setXRange(-1, 1, padding=0)
             self.last_action_linear_item.setYRange(-1, 1, padding=0)
             self.bar_graph_last_action_linear = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.last_action_linear_item.addItem(self.bar_graph_last_action_linear)
-            # Last action angular velocity
-            self.last_action_angular_item = self.addPlot(title="Last Action Angular", row = 0, col = 4, colspan=1)
+            # Last Action Angular
+            self.last_action_angular_item = self.addPlot(title="Last Action Angular", row = 3, col = 3, colspan=1)
             self.last_action_angular_item.setXRange(-1, 1, padding=0)
             self.last_action_angular_item.setYRange(-1, 1, padding=0)
             self.bar_graph_last_action_angular = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.bar_graph_last_action_angular.setRotation(-90)
             self.last_action_angular_item.addItem(self.bar_graph_last_action_angular)
+ 
 
             # -------------- Hidden Layers Output and Bias -------------- #
             self.hidden_plot_items = []
@@ -113,7 +119,7 @@ if ENABLE_VISUAL:
             self.hidden_line_plots = []
             i = 0
             for hidden_size in self.hidden_sizes:
-                plot_item = self.addPlot(title=f"Hidden layer {i}", row = i+1, col = 3, colspan=3)
+                plot_item = self.addPlot(title=f"Hidden layer {i}", row = i+1, col = 4, colspan=3)
                 plot_item.setXRange(-1, hidden_size, padding=0)
                 plot_item.setYRange(-0.2, 1.3, padding=0)
 
@@ -131,14 +137,14 @@ if ENABLE_VISUAL:
 
             # -------------- Output layers -------------- #
             # Action Linear
-            self.plot_item_action_linear = self.addPlot(title="Action Linear", row = 3, col = 3, colspan=1)
+            self.plot_item_action_linear = self.addPlot(title="Action Linear", row = 3, col = 4, colspan=1)
             self.plot_item_action_linear.setXRange(-20, 20, padding=0)
             self.plot_item_action_linear.setYRange(-1, 1, padding=0)
             self.bar_graph_action_linear = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
             self.plot_item_action_linear.addItem(self.bar_graph_action_linear)
 
             # Action Angular
-            self.plot_item_action_angular = self.addPlot(title="Action Angular", row = 3, col = 4, colspan=1)
+            self.plot_item_action_angular = self.addPlot(title="Action Angular", row = 3, col = 5, colspan=1)
             self.plot_item_action_angular.setXRange(-1, 1, padding=0)
             self.plot_item_action_angular.setYRange(-1.5, 1.5, padding=0)
             self.bar_graph_action_angular = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
@@ -146,7 +152,7 @@ if ENABLE_VISUAL:
             self.plot_item_action_angular.addItem(self.bar_graph_action_angular)
 
             # Accumulated Reward
-            self.plot_item_reward = self.addPlot(title="Accumlated Reward", row = 3, col = 5, colspan=1)
+            self.plot_item_reward = self.addPlot(title="Accumlated Reward", row = 3, col = 6, colspan=1)
             self.plot_item_reward.setXRange(-1, 1, padding=0)
             self.plot_item_reward.setYRange(-5000, 1000, padding=0)
             self.bar_graph_reward = pg.BarGraphItem(x=range(1), height=[0], width=0.5)
@@ -164,18 +170,28 @@ if ENABLE_VISUAL:
             # Update the states
             self.bar_graph_states.setOpts(height=states_data)
 
+            START_IDX = self.state_size - NUM_SCAN_SAMPLES - 1
+
             # Update the details states start from the end of the states_data
-            self.bar_graph_dtg.setOpts(height=[states_data[10]])
-            self.bar_graph_atg.setOpts(height=[states_data[9]])
-            self.bar_graph_theta.setOpts(height=[states_data[8]])
-            self.bar_graph_linear.setOpts(height=[states_data[7]])
-            self.bar_graph_angular.setOpts(height=[states_data[6]])
-            self.bar_graph_obstacle.setOpts(height=[states_data[5]])
-            self.bar_graph_obstacle_angle.setOpts(height=[states_data[4]])
-            self.bar_graph_obstacle_linear.setOpts(height=[states_data[3]])
-            self.bar_graph_obstacle_angular.setOpts(height=[states_data[2]])
-            self.bar_graph_last_action_linear.setOpts(height=[states_data[1]])
-            self.bar_graph_last_action_angular.setOpts(height=[states_data[0]])
+            self.bar_graph_dtg.setOpts(height=[states_data[START_IDX]])
+            self.bar_graph_atg.setOpts(height=[states_data[START_IDX-1]])
+            self.bar_graph_theta.setOpts(height=[states_data[START_IDX-4]])
+            self.bar_graph_vx.setOpts(height=[states_data[START_IDX-5]])
+            self.bar_graph_vy.setOpts(height=[states_data[START_IDX-6]])
+            self.bar_graph_angular.setOpts(height=[states_data[START_IDX-7]])
+            self.bar_graph_obstacle_vx.setOpts(height=[states_data[START_IDX-10]])
+            self.bar_graph_obstacle_vy.setOpts(height=[states_data[START_IDX-11]])
+            self.bar_graph_last_action_linear.setOpts(height=[states_data[START_IDX-12]])
+            self.bar_graph_last_action_angular.setOpts(height=[states_data[START_IDX-13]])
+
+            # Plot the XY position
+            x = states_data[START_IDX-2]
+            y = states_data[START_IDX-3]
+            obs_x = states_data[START_IDX-8]
+            obs_y = states_data[START_IDX-9]
+
+            self.scatter_xy_position.setData(x=[x], y=[y])
+            self.scatter_obstacle_xy.setData(x=[obs_x], y=[obs_y])
 
             # Update the Actions
             actions = actions.detach().cpu().numpy().tolist()

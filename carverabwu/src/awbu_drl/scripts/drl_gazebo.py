@@ -371,19 +371,46 @@ class DRLGazebo(Node):
         dtg = self.robot.distance_to_goal / MAX_GOAL_DISTANCE
         atg = self.robot.goal_angle / math.pi
         # Robot Observation
+        # X and Y components of the robot
         x = self.robot.x / ARENA_LENGTH
         y = self.robot.y / ARENA_WIDTH
+        # Calculate the velocity components
+        _vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
+        # Correcting the velocity components calculation
+        Vx = _vel * math.cos(self.robot.theta)
+        Vy = _vel * math.sin(self.robot.theta)
+        # Angular Components of the robot
         theta = self.robot.theta / math.pi
-        vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
         omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
-        # Relative Obstacle Observation
-        relative_robot_obstacle_distance = np.sqrt((self.obstacle_pos_x - self.robot.x)**2 + (self.obstacle_pos_y - self.robot.y)**2) / LIDAR_DISTANCE_CAP
-        relative_robot_obstacle_angle = math.atan2(self.obstacle_pos_y - self.robot.y, self.obstacle_pos_x - self.robot.x) / math.pi
-        # Relative Linear and Angular velocity
-        obstacle_linear_vel = np.sqrt(self.obstacle_vel_x**2 + self.obstacle_vel_y**2)
-        obstacle_angular_vel = math.atan2(self.obstacle_vel_y, self.obstacle_vel_x)
-        relative_robot_obstacle_linear_vel = (obstacle_linear_vel - self.robot.linear_velocity) / SPEED_LINEAR_MAX
-        relative_robot_obstacle_angular_vel = (obstacle_angular_vel - self.robot.angular_velocity) / SPEED_ANGULAR_MAX
+        # # Relative Obstacle Observation
+        # relative_robot_obstacle_distance = np.sqrt((self.obstacle_pos_x - self.robot.x)**2 + (self.obstacle_pos_y - self.robot.y)**2) / LIDAR_DISTANCE_CAP
+        # relative_robot_obstacle_angle = math.atan2(self.obstacle_pos_y - self.robot.y, self.obstacle_pos_x - self.robot.x) / math.pi
+        # # Relative Linear and Angular velocity
+        # obstacle_linear_vel = np.sqrt(self.obstacle_vel_x**2 + self.obstacle_vel_y**2)
+        # obstacle_angular_vel = math.atan2(self.obstacle_vel_y, self.obstacle_vel_x)
+        # relative_robot_obstacle_linear_vel = (obstacle_linear_vel - self.robot.linear_velocity) / SPEED_LINEAR_MAX
+        # relative_robot_obstacle_angular_vel = (obstacle_angular_vel - self.robot.angular_velocity) / SPEED_ANGULAR_MAX
+        # Obstacle Observation
+        obstacle_x = self.obstacle_pos_x / ARENA_LENGTH
+        obstacle_y = self.obstacle_pos_y / ARENA_WIDTH
+        obstacle_vel_x = self.obstacle_vel_x / SPEED_LINEAR_MAX
+        obstacle_vel_y = self.obstacle_vel_y / SPEED_LINEAR_MAX
+
+
+        # dtg = -2.0
+        # atg = -3.0
+        # x = -4.0
+        # y = -5.0
+        # theta = -6.0
+        # Vx = -7.0
+        # Vy = -8.0
+        # omega = -9.0
+        # obstacle_x = -10.0
+        # obstacle_y = -11.0
+        # obstacle_vel_x = -12.0
+        # obstacle_vel_y = -13.0
+        # action_linear_previous = -14.0
+        # action_angular_previous = -15.0
 
         # Append the state
         # Goal Related Obervation
@@ -392,14 +419,19 @@ class DRLGazebo(Node):
         # Robot Observation
         state.append(float(x))
         state.append(float(y))
-        state.append(float(theta))  
-        state.append(float(vel))
+        state.append(float(theta))
+        state.append(float(Vx))
+        state.append(float(Vy))
         state.append(float(omega))
-        # Last obstacle observation
-        state.append(float(relative_robot_obstacle_distance))
-        state.append(float(relative_robot_obstacle_angle))
-        state.append(float(relative_robot_obstacle_linear_vel))
-        state.append(float(relative_robot_obstacle_angular_vel))
+        # Obstacle observation
+        # state.append(float(relative_robot_obstacle_distance))
+        # state.append(float(relative_robot_obstacle_angle))
+        # state.append(float(relative_robot_obstacle_linear_vel))
+        # state.append(float(relative_robot_obstacle_angular_vel))
+        state.append(float(obstacle_x))
+        state.append(float(obstacle_y))
+        state.append(float(obstacle_vel_x))
+        state.append(float(obstacle_vel_y))
         # Last action observation
         state.append(float(action_linear_previous))
         state.append(float(action_angular_previous))
