@@ -36,12 +36,12 @@ def generate_launch_description():
     )
 
     # Joint State Publisher Node
-    # joint_state_publisher_node = Node(
-    #     package='joint_state_publisher',
-    #     executable='joint_state_publisher',
-    #     name='joint_state_publisher',
-    #     output='screen',
-    # )
+    joint_state_publisher_node = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        output='screen',
+    )
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
@@ -50,6 +50,43 @@ def generate_launch_description():
         output="screen",
         parameters=[{'use_sim_time': True}]
     )
+
+    # Velo Drive Controller
+    velo_drive_controllers = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["velocity_cont", "-c", "/controller_manager"],
+    )
+
+    '''
+    
+    CONTROLLER
+    
+    '''
+
+    control_package_name = 'carversavvy_control'
+    control_package_dir = get_package_share_directory(control_package_name)
+
+    # Forward Kinematics Node
+    carversavvy_forward_kinematic = Node(
+        package=control_package_name,
+        executable='carversavvy_forward_kinematic.py',
+        name='carversavvyFKNode',
+    )
+
+    # Robot Localization
+    ekf_parameters_file_dir = os.path.join(control_package_dir, 'config')
+    
+    ekf_filter_node_odom = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node',
+	        output='screen',
+            parameters=[
+                os.path.join(ekf_parameters_file_dir, 'carversavvy_ekf.yaml'),
+            ],
+            remappings=[('odometry/filtered', '/carversavvy/odom')]           
+           )
 
     # Rviz Node
     rviz_config_file = os.path.join(carversavvy_control_dir, 'rviz2', 'carversavvy_rviz2.rviz')
@@ -84,8 +121,14 @@ def generate_launch_description():
         node_robot_state_publisher,
         
         # Joint State Publisher Node
-        # joint_state_publisher_node,
-        joint_state_broadcaster_spawner,
+        joint_state_publisher_node,
+        # joint_state_broadcaster_spawner,
+
+        # velo_drive_controllers,
+
+        carversavvy_forward_kinematic,
+
+        ekf_filter_node_odom,
 
         # Rviz Node
         rviz_node,

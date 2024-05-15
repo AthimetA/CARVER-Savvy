@@ -78,7 +78,7 @@ class carversavvyTestNode(Node):
 
         elif mode == 2:
             self.timer_counter += 1
-            if self.timer_counter <= 5/self.time_period:
+            if self.timer_counter <= 10/self.time_period:
                 self.cmd_vel.linear.x = 0.2
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
@@ -90,7 +90,7 @@ class carversavvyTestNode(Node):
         elif mode == 3:
             self.timer_counter += 1
             if self.timer_counter <= 10/self.time_period:
-                self.cmd_vel.linear.x = (2*np.pi/4)/10
+                self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = -(2*np.pi/4)/10
                 self.cmd_pub.publish(self.cmd_vel)
             else:

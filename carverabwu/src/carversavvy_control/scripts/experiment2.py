@@ -140,7 +140,7 @@ class carversavvyExperimentTestNode(Node):
 
 
             # Create a folder if it doesn't exist
-            folder_name =  '/home/nuc11/CARVER-SAVVY/carverabwu/src/carversavvy_sensors/calibration'
+            folder_name =  '/home/nuc11/CARVER-SAVVY/carvercarversavvy/src/carversavvy_sensors/calibration'
             # Write the DataFrame to a CSV file inside the folder
             experiment_name = f'Experiment_2_id_{self.experiment_id}.csv'
             file_path = os.path.join(folder_name, experiment_name)

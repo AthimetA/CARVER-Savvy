@@ -31,6 +31,7 @@ install(PROGRAMS
   scripts/experiment1.py
   scripts/experiment2.py
   scripts/experiment3.py
+  scripts/carversavvy_forward_kinematic.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
