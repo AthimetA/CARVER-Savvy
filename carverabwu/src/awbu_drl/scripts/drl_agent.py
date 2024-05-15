@@ -46,6 +46,8 @@ from drlutils_storagemanager import StorageManager
 from drlutils_logger import Logger
 from drlutils_visual import *
 
+import torch.nn as nn
+
 class DrlAgent(Node):
     def __init__(self,
     algorithm : str = "td3",
@@ -54,9 +56,6 @@ class DrlAgent(Node):
     load_session : bool = True,
     ):
         super().__init__("DrlAgentNode")
-
-        self.test = -1
-
 
         '''
         
@@ -122,6 +121,7 @@ class DrlAgent(Node):
             self.model.tau = TAU
             self.model.epsilon_decay = EPSILON_DECAY
             self.model.epsilon_minimum = EPSILON_MINIMUM
+
             self.sm.load_weights(self.model.networks)
             
             # Load the replay buffer
@@ -318,8 +318,6 @@ class DrlAgent(Node):
 
                     # Start the episode timer
                     self.episode_start_time = time.perf_counter()
-
-                    self.test *= -1 # Toggle the test value
 
                 elif self.agent_status == "EPISODE STARTED":
                     

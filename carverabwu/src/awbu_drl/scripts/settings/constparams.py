@@ -62,7 +62,7 @@ DYNAMIC_GOAL_SEPARATION_DISTANCE_MAX          = 10.00  # meters
 
 # DRL parameters
 ACTION_SIZE     = 2         # Not used for DQN, see DQN_ACTION_SIZE
-HIDDEN_SIZE     = 256       # Number of neurons in hidden layers
+HIDDEN_SIZE     = 512       # Number of neurons in hidden layers
 
 BATCH_SIZE      = 256       # Number of samples per training batch
 BUFFER_SIZE     = BATCH_SIZE * 200 # Number of samples stored in replay buffer before FIFO
