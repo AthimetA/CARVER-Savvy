@@ -1,0 +1,43 @@
+{
+    "C_Cpp.errorSquiggles": "disabled",
+    "python.autoComplete.extraPaths": [
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/testbot_description/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/carversavvy_interfaces/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/carversavvy_description/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/carversavvy_control/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/awbu_interfaces/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/awbu_drl/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/abwu_simulation/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/abwu_gazebo/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/abwu_control/local/lib/python3.10/dist-packages",
+        "/home/nuc11/microros_ws/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/zhbbot/install/zhbbot_sensors/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/zhbbot/install/zhbbot_interfaces/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/zhbbot/install/zhbbot_description/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/zhbbot/install/zhbbot_control/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/pmzbsavy/install/pmzbsavy_description/local/lib/python3.10/dist-packages",
+        "/home/nuc11/ros2_ws/install/realsense2_camera_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/testbot_description/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/carversavvy_interfaces/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/carversavvy_description/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/carversavvy_control/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/awbu_interfaces/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/awbu_drl/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/abwu_simulation/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/abwu_gazebo/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/carverabwu/install/abwu_control/local/lib/python3.10/dist-packages",
+        "/home/nuc11/microros_ws/install/micro_ros_msgs/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/zhbbot/install/zhbbot_sensors/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/zhbbot/install/zhbbot_interfaces/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/zhbbot/install/zhbbot_description/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/zhbbot/install/zhbbot_control/local/lib/python3.10/dist-packages",
+        "/home/nuc11/CARVER-Savvy/pmzbsavy/install/pmzbsavy_description/local/lib/python3.10/dist-packages",
+        "/home/nuc11/ros2_ws/install/realsense2_camera_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
