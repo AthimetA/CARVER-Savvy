@@ -169,7 +169,7 @@ class Reward():
             # If the distance to the goal is less than the waypoint distance
             if distance_to_goal < self.waypoint_list[self.waypoint_idx]:
                 self.waypoint_idx += 1 # Move to the next waypoint
-                R_WAYPOINT = 25
+                R_WAYPOINT = 15
 
             # If the last waypoint is reached
             if self.waypoint_idx == 4:
@@ -182,7 +182,7 @@ class Reward():
         if status == SUCCESS:
             R_STATUS = 250
         elif status == COLLISION:
-            R_STATUS = -250
+            R_STATUS = -500
         elif status == TIMEOUT:
             R_STATUS = -150
         else:
