@@ -28,9 +28,6 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/test.py
-  scripts/experiment1.py
-  scripts/experiment2.py
-  scripts/experiment3.py
   scripts/carversavvy_forward_kinematic.py
   DESTINATION lib/${PROJECT_NAME}
 )

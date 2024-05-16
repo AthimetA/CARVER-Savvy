@@ -37,10 +37,7 @@ find_package(rosidl_default_generators REQUIRED)
 # find_package(nav_msgs)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/CarversavvySetNodeStaus.srv"
-  "srv/CarversavvyBeginExperiment.srv"
-  "srv/CarversavvyBeginOdomExperiment.srv"
-  "srv/CarversavvyBeginOdomEKFExperiment.srv"
+  "srv/CarversavvyBeginCalibration.srv"
   # DEPENDENCIES std_msgs
   # DEPENDENCIES nav_msgs
 )

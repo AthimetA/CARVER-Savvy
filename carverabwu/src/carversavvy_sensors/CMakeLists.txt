@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(carversavvybot_sensors)
+project(carversavvy_sensors)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -29,8 +29,6 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   # Control
   scripts/carversavvy_calibration_sensor.py
-  scripts/carversavvy_ros_bridge.py
-  scripts/testrb.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

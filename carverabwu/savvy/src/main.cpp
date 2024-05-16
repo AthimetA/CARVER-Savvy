@@ -235,12 +235,12 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 	inputcontrolR_msg.data = Sub_speedR;
 	wheelL_vel_msg.data = encoderLrad;
 	wheelR_vel_msg.data = encoderRrad;
-	IMU_msg.angular_velocity.x = IMU_data[0];
-	IMU_msg.angular_velocity.y = IMU_data[1];
-	IMU_msg.angular_velocity.z = IMU_data[2];
-	IMU_msg.linear_acceleration.x = IMU_data[3];
-	IMU_msg.linear_acceleration.y = IMU_data[4];
-	IMU_msg.linear_acceleration.z = IMU_data[5];
+	IMU_msg.angular_velocity.x = -1.0*IMU_data[0];
+	IMU_msg.angular_velocity.y = IMU_data[2];
+	IMU_msg.angular_velocity.z = IMU_data[1];
+	IMU_msg.linear_acceleration.x = -1.0* IMU_data[3];
+	IMU_msg.linear_acceleration.y = IMU_data[5];
+	IMU_msg.linear_acceleration.z = IMU_data[4];
 	IMU_msg.orientation.w = IMU_data[6];
 	IMU_msg.orientation.x = IMU_data[7];
 	IMU_msg.orientation.y = IMU_data[8];
@@ -528,17 +528,18 @@ void setup(){
 
 	// dualcore
 	pinMode(pinStatusMotor, INPUT);
-  pinMode(pinEmerSwitch, INPUT);
-  pinMode(pinBypassSwitch, INPUT);
-  pinMode(pinTriggerSwitch, INPUT);
-  pinMode(pinSelectorSwitch_1, INPUT);
-  pinMode(pinSelectorSwitch_2, INPUT);
-  pinMode(pinButtonSwitch, INPUT);
-  pinMode(pinVoltage, INPUT);
-  uROSsetup();
+  	pinMode(pinEmerSwitch, INPUT);
+  	pinMode(pinBypassSwitch, INPUT);
+  	pinMode(pinTriggerSwitch, INPUT);
+  	pinMode(pinSelectorSwitch_1, INPUT);
+  	pinMode(pinSelectorSwitch_2, INPUT);
+  	pinMode(pinButtonSwitch, INPUT);
+  	pinMode(pinVoltage, INPUT);
+  	uROSsetup();
 	controlSetup();
-	start_motor();
-  interlock();
+	// start_motor();
+	stop_motor();
+  	interlock();
 	
 }
 
