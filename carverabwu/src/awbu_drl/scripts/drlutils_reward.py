@@ -222,8 +222,8 @@ class Reward():
 
         # Scaling the reward
 
-        R_FONT_SCAN = R_FONT_SCAN * 3
+        R_FONT_SCAN = R_FONT_SCAN * 24
 
-        R_OTHER_SCAN = R_OTHER_SCAN * 1
+        R_OTHER_SCAN = R_OTHER_SCAN * 6
 
         return R_FONT_SCAN, R_OTHER_SCAN

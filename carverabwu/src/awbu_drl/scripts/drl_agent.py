@@ -367,12 +367,12 @@ class DrlAgent(Node):
                     reward_sum += reward
 
 
-                    if ENABLE_STACKING:
-                        frame_buffer = frame_buffer[self.model.state_size:] + list(next_state)      # Update big buffer with single step
-                        next_state = []                                                         # Prepare next set of frames (state)
-                        for depth in range(self.model.stack_depth):
-                            start = self.model.state_size * (self.model.frame_skip - 1) + (self.model.state_size * self.model.frame_skip * depth)
-                            next_state += frame_buffer[start : start + self.model.state_size]
+                    # if ENABLE_STACKING:
+                    #     frame_buffer = frame_buffer[self.model.state_size:] + list(next_state)      # Update big buffer with single step
+                    #     next_state = []                                                         # Prepare next set of frames (state)
+                    #     for depth in range(self.model.stack_depth):
+                    #         start = self.model.state_size * (self.model.frame_skip - 1) + (self.model.state_size * self.model.frame_skip * depth)
+                    #         next_state += frame_buffer[start : start + self.model.state_size]
 
                     # Train
                     if self.training == True:
