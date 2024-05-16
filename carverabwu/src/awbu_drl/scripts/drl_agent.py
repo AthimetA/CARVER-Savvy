@@ -507,8 +507,6 @@ class DrlAgent(Node):
                     # Update the reward sum
                     reward_sum += reward
 
-                    # Pause the simulation to training
-                    self.pause_simulation()
                     # Train
                     if self.training == True:
                         self.replay_buffer.add_sample(state, action, [reward], next_state, [self.episode_done])
@@ -523,9 +521,6 @@ class DrlAgent(Node):
                     # Update the state
                     state = copy.deepcopy(next_state)
                     step += 1
-
-                    # Unpause the simulation
-                    self.unpause_simulation()
 
                     # Check if the episode is done
                     if self.episode_done:
