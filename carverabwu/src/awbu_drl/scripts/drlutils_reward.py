@@ -164,6 +164,16 @@ class Reward():
         # [-1, 0] # Distance to the goal(Normalized by MAX_DISTANCE)
         R_DISTANCE = -1 * abs(distance_to_goal) * SCALING_FACTOR
 
+        # Reward for the angular velocity
+        # Penalty for angular velocity to prevent spinning in place and lower the angular velocity
+        # [-1, 0]
+        R_ANGULAR = -1 * np.abs(action_angular) * SCALING_FACTOR
+        
+        # Reward for the linear velocity
+        # Penalty for linear velocity to prevent high speed (Since the robot is [-1, 1] and -1 is 0 m/s)
+        # [-1, 0]
+        R_LINEAR = -1 * [action_linear + 1]/2 * SCALING_FACTOR # +1 to make it [0, 2] and divide by 2 to make it [0, 1]
+
         # Waypoint reward
         R_WAYPOINT = 0
         if not self.waypoint_reached:
@@ -171,7 +181,7 @@ class Reward():
             # If the distance to the goal is less than the waypoint distance
             if distance_to_goal < self.waypoint_list[self.waypoint_idx]:
                 self.waypoint_idx += 1 # Move to the next waypoint
-                R_WAYPOINT = 100
+                R_WAYPOINT = 25
 
             # If the last waypoint is reached
             if self.waypoint_idx == 4:
@@ -182,16 +192,16 @@ class Reward():
 
         # Reward for status
         if status == SUCCESS:
-            R_STATUS = 500
+            R_STATUS = 250
         elif status == COLLISION:
-            R_STATUS = -500
-        elif status == TIMEOUT:
             R_STATUS = -250
+        elif status == TIMEOUT:
+            R_STATUS = -125
         else:
             R_STATUS = 0
 
         # Total reward
-        reward = R_STEP + R_ANGLE + R_DISTANCE + R_STATUS + R_WAYPOINT + R_FONT_SCAN + R_OTHER_SCAN
+        reward = R_STATUS + R_STEP + R_ANGLE + R_DISTANCE + R_WAYPOINT + R_FONT_SCAN + R_OTHER_SCAN + R_ANGULAR + R_LINEAR
 
 
         return float(reward) , [R_DISTANCE, R_ANGLE, R_WAYPOINT, R_FONT_SCAN, R_OTHER_SCAN]
@@ -203,7 +213,7 @@ class Reward():
 
         DEG_PER_SCAN = 360 / NUM_SCAN_SAMPLES
 
-        font_angle_fov = 45 # degrees
+        font_angle_fov = 60 # degrees
 
         front_scan_start_index = int((180 - font_angle_fov) / DEG_PER_SCAN)
         front_scan_end_index = int((180 + font_angle_fov) / DEG_PER_SCAN)
@@ -222,8 +232,8 @@ class Reward():
 
         # Scaling the reward
 
-        R_FONT_SCAN = R_FONT_SCAN * 24
+        R_FONT_SCAN = R_FONT_SCAN * 80
 
-        R_OTHER_SCAN = R_OTHER_SCAN * 6
+        R_OTHER_SCAN = R_OTHER_SCAN * 20
 
         return R_FONT_SCAN, R_OTHER_SCAN

@@ -561,9 +561,9 @@ class DRLGazebo(Node):
         if len(request.action) == 0:
             return self.initalize_episode(response)
 
-        if ENABLE_MOTOR_NOISE:
-            request.action[LINEAR_VELOCITY_LOC] += np.clip(np.random.normal(0, 0.05), -0.1, 0.1)
-            request.action[ANGULAR_VELOCITY_LOC] += np.clip(np.random.normal(0, 0.05), -0.1, 0.1)
+        # if ENABLE_MOTOR_NOISE:
+        #     request.action[LINEAR_VELOCITY_LOC] += np.clip(np.random.normal(0, 0.05), -0.1, 0.1)
+        #     request.action[ANGULAR_VELOCITY_LOC] += np.clip(np.random.normal(0, 0.05), -0.1, 0.1)
 
         # Un-normalize actions
         if ENABLE_BACKWARD:
@@ -588,8 +588,8 @@ class DRLGazebo(Node):
         # Calculate reward
         reward_out, [R_DISTANCE, R_ANGLE, R_WAYPOINT, R_FONT_SCAN, R_OTHER_SCAN] = self.reward_manager.get_reward(
             status              = self._EP_succeed,
-            action_linear       = action_linear, # not used
-            action_angular      = action_angular, # not used
+            action_linear       = request.action[LINEAR_VELOCITY_LOC], # not used
+            action_angular      = request.action[ANGULAR_VELOCITY_LOC], # not used
             distance_to_goal    = self.robot.distance_to_goal / MAX_GOAL_DISTANCE, # Normalize the distance
             angle_to_goal       = self.robot.goal_angle / math.pi, # Normalize the angle
             omega               = action_angular, # not used
