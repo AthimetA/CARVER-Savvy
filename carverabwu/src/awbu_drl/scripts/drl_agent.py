@@ -176,7 +176,7 @@ class DrlAgent(Node):
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')
             self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
         # Start the process
-        self.timer_hz = 50.0 * self.sim_speed # Scale the simulation speed
+        self.timer_hz = 50.0
         self.timer_period = 1e9/self.timer_hz # Convert to nanoseconds
         self.episode_start_time = 0.0
         self.episode_done = False
@@ -283,16 +283,186 @@ class DrlAgent(Node):
 
         return state
     
+    # def agent_process(self):
+
+    #     process_start_time = time.perf_counter_ns()
+
+    #     process_time_sec = (time.perf_counter_ns() - process_start_time) / 1e9
+
+    #     process_time_prev = 0
+
+    #     while (True):
+            
+    #         # Get the current time
+    #         current_time = time.perf_counter_ns()
+
+    #         if (current_time - self.process_start_time) > self.timer_period:
+
+    #             # self.get_logger().info(f"Difference: {current_time - self.process_start_time}")
+    #             # self.get_logger().info(f"Agent Status: {self.agent_status}")
+
+    #             process_time_sec = (time.perf_counter_ns() - process_start_time) / 1e9
+
+    #             self.get_logger().info(f"Process time: {process_time_sec - process_time_prev:.4f}s")
+
+    #             process_time_prev = process_time_sec
+
+
+    #             if self.agent_status == "IDLE":
+    #                 # Prepare the environment
+    #                 self.pause_simulation()
+    #                 # Wait for environment to be ready
+    #                 self.wait_new_goal()
+    #                 # Start the Episode
+    #                 self.agent_status = "EPISODE STARTED"
+
+    #                 # Initialize the episode
+    #                 self.episode_done = False
+    #                 step, reward_sum, loss_critic, loss_actor = 0, 0, 0, 0
+    #                 action_past = [0.0, 0.0]
+    #                 state = self.init_episode()
+
+    #                 if ENABLE_STACKING:
+    #                     frame_buffer = [0.0] * (self.model.state_size * self.model.stack_depth * self.model.frame_skip)
+    #                     state = [0.0] * (self.model.state_size * (self.model.stack_depth - 1)) + list(state)
+    #                     next_state = [0.0] * (self.model.state_size * self.model.stack_depth)
+
+    #                 # Unpause the simulation
+    #                 self.unpause_simulation()
+
+    #                 # Start the episode timer
+    #                 self.episode_start_time = time.perf_counter()
+
+    #             elif self.agent_status == "EPISODE STARTED":
+                    
+    #                 ## Implement update of the positon and orientation of the robot
+    #                 ## CODE HERE
+
+    #                 ## END OF CODE
+
+    #                 if self.training and self.total_steps < self.observe_steps:
+    #                     action = self.model.get_action_random()
+    #                 else:
+    #                     # action = self.model.get_action_with_epsilon_greedy(
+    #                     #     state=state,
+    #                     #     is_training=self.training,
+    #                     #     step=self.total_steps,
+    #                     #     visualize=ENABLE_VISUAL,
+    #                     # )
+    #                     action = self.model.get_action(
+    #                         state=state,
+    #                         is_training=self.training,
+    #                         step=self.total_steps,
+    #                         visualize=ENABLE_VISUAL,
+    #                     )
+    #                     # if self.episode_radom_action:
+
+    #                     #     action = self.model.get_action_random()
+    #                     #     # action = [1.0,0.0]
+
+    #                     #     # if np.random.rand() < 0.5:
+    #                     #     #     action = self.model.get_action_random()
+
+    #                     #     # else:
+    #                     #     #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
+
+    #                     # else:
+    #                     #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
+
+    #                 # Set the current action 
+    #                 action_current = action
+
+    #                 # Take a step
+    #                 next_state, reward, self.episode_done, outcome, distance_traveled = self.step(action_current, action_past)
+
+    #                 # Update the past action
+    #                 action_past = copy.deepcopy(action_current)
+    #                 # Update the reward sum
+    #                 reward_sum += reward
+
+
+    #                 # if ENABLE_STACKING:
+    #                 #     frame_buffer = frame_buffer[self.model.state_size:] + list(next_state)      # Update big buffer with single step
+    #                 #     next_state = []                                                         # Prepare next set of frames (state)
+    #                 #     for depth in range(self.model.stack_depth):
+    #                 #         start = self.model.state_size * (self.model.frame_skip - 1) + (self.model.state_size * self.model.frame_skip * depth)
+    #                 #         next_state += frame_buffer[start : start + self.model.state_size]
+
+    #                 # Train
+    #                 if self.training == True:
+    #                     self.replay_buffer.add_sample(state, action, [reward], next_state, [self.episode_done])
+    #                     if self.replay_buffer.get_length() >= self.model.batch_size:
+    #                         loss_c, loss_a, = self.model._train(self.replay_buffer)
+    #                         loss_critic += loss_c
+    #                         loss_actor += loss_a
+
+    #                 if ENABLE_VISUAL:
+    #                     self.visual.update_reward(reward_sum)
+                    
+    #                 # Update the state
+    #                 state = copy.deepcopy(next_state)
+    #                 step += 1
+
+    #                 # Check if the episode is done
+    #                 if self.episode_done:
+    #                     self.agent_status = "EPISODE DONE"
+    #                     self.pause_simulation()
+
+
+    #             elif self.agent_status == "EPISODE DONE":
+    #                 self.total_steps += step
+    #                 duration = time.perf_counter() - self.episode_start_time
+    #                 # Finish the episode
+    #                 self.finish_episode(step, duration, outcome, distance_traveled, reward_sum, loss_critic, loss_actor)
+    #                 self.agent_status = "IDLE"
+
+
+    #             # Reset the process start time
+    #             self.process_start_time = time.perf_counter_ns()
+    #         else:
+    #             # Wait for the next loop
+    #             pass
+
+
+    # def agent_process(self):
+    #     tick = 0
+
+    #     process_start_time = time.perf_counter_ns()
+
+    #     process_time_prev = 0
+
+    #     while (True):
+            
+    #         # Get the current time
+    #         current_time = time.perf_counter_ns()
+
+    #         if (current_time - self.process_start_time) > self.timer_period:
+
+    #             # self.get_logger().info(f"Difference: {current_time - self.process_start_time}")
+    #             # self.get_logger().info(f"Agent Status: {self.agent_status}")  
+    #             tick += 1
+
+    #             process_time_sec = (time.perf_counter_ns() - process_start_time) / 1e9
+
+
+    #             self.get_logger().info(f"Hz {1 / (process_time_sec - process_time_prev):.2f} , Avg Hz: {tick / (time.perf_counter_ns() - process_start_time) * 1e9:.2f}")
+
+    #             process_time_prev = process_time_sec
+
+    #             # Reset the process start time
+    #             self.process_start_time = time.perf_counter_ns()
+    #         else:
+    #             # Wait for the next loop
+    #             pass
+
     def agent_process(self):
+
         while (True):
             
             # Get the current time
             current_time = time.perf_counter_ns()
 
             if (current_time - self.process_start_time) > self.timer_period:
-
-                # self.get_logger().info(f"Difference: {current_time - self.process_start_time}")
-                # self.get_logger().info(f"Agent Status: {self.agent_status}")
 
                 if self.agent_status == "IDLE":
                     # Prepare the environment
@@ -308,11 +478,6 @@ class DrlAgent(Node):
                     action_past = [0.0, 0.0]
                     state = self.init_episode()
 
-                    if ENABLE_STACKING:
-                        frame_buffer = [0.0] * (self.model.state_size * self.model.stack_depth * self.model.frame_skip)
-                        state = [0.0] * (self.model.state_size * (self.model.stack_depth - 1)) + list(state)
-                        next_state = [0.0] * (self.model.state_size * self.model.stack_depth)
-
                     # Unpause the simulation
                     self.unpause_simulation()
 
@@ -320,40 +485,16 @@ class DrlAgent(Node):
                     self.episode_start_time = time.perf_counter()
 
                 elif self.agent_status == "EPISODE STARTED":
-                    
-                    ## Implement update of the positon and orientation of the robot
-                    ## CODE HERE
-
-                    ## END OF CODE
-
+                    # Get Action
                     if self.training and self.total_steps < self.observe_steps:
                         action = self.model.get_action_random()
                     else:
-                        # action = self.model.get_action_with_epsilon_greedy(
-                        #     state=state,
-                        #     is_training=self.training,
-                        #     step=self.total_steps,
-                        #     visualize=ENABLE_VISUAL,
-                        # )
                         action = self.model.get_action(
                             state=state,
                             is_training=self.training,
                             step=self.total_steps,
                             visualize=ENABLE_VISUAL,
                         )
-                        # if self.episode_radom_action:
-
-                        #     action = self.model.get_action_random()
-                        #     # action = [1.0,0.0]
-
-                        #     # if np.random.rand() < 0.5:
-                        #     #     action = self.model.get_action_random()
-
-                        #     # else:
-                        #     #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
-
-                        # else:
-                        #     action = self.model.get_action(state, self.training, step, ENABLE_VISUAL)
 
                     # Set the current action 
                     action_current = action
@@ -366,14 +507,8 @@ class DrlAgent(Node):
                     # Update the reward sum
                     reward_sum += reward
 
-
-                    # if ENABLE_STACKING:
-                    #     frame_buffer = frame_buffer[self.model.state_size:] + list(next_state)      # Update big buffer with single step
-                    #     next_state = []                                                         # Prepare next set of frames (state)
-                    #     for depth in range(self.model.stack_depth):
-                    #         start = self.model.state_size * (self.model.frame_skip - 1) + (self.model.state_size * self.model.frame_skip * depth)
-                    #         next_state += frame_buffer[start : start + self.model.state_size]
-
+                    # Pause the simulation to training
+                    self.pause_simulation()
                     # Train
                     if self.training == True:
                         self.replay_buffer.add_sample(state, action, [reward], next_state, [self.episode_done])
@@ -389,12 +524,15 @@ class DrlAgent(Node):
                     state = copy.deepcopy(next_state)
                     step += 1
 
+                    # Unpause the simulation
+                    self.unpause_simulation()
+
                     # Check if the episode is done
                     if self.episode_done:
                         self.agent_status = "EPISODE DONE"
+                        self.pause_simulation()
 
                 elif self.agent_status == "EPISODE DONE":
-                    self.pause_simulation()
                     self.total_steps += step
                     duration = time.perf_counter() - self.episode_start_time
                     # Finish the episode
@@ -416,8 +554,8 @@ class DrlAgent(Node):
 
             # Update the episode number
             self.sm.update_episode()
-            print(f"Epi: {self.sm.episode:<5}R: {reward_sum:<8.0f}outcome: {translate_outcome(outcome):<13}", end='')
-            print(f"steps: {step:<6}steps_total: {self.total_steps:<7}time: {eps_duration:<6.2f}")
+            __text = f"Episode: {self.sm.episode:<5}Reward: {reward_sum:<8.0f}Outcome: {translate_outcome(outcome):<13}Steps: {step:<6}Total Steps: {self.total_steps:<7}Time: {eps_duration:<6.2f} HZ: {step / eps_duration:.2f}"
+            self.get_logger().info(bcolors.OKGREEN + __text + bcolors.ENDC)
 
             if (not self.training):
                 self.logger.update_test_results(step, outcome, dist_traveled, eps_duration, 0)

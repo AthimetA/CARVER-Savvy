@@ -152,7 +152,7 @@ class Reward():
     omega,  # Angular velocity
     scan_ranges,  # lidar scan
     ):
-        SCALING_FACTOR = 4.0
+        SCALING_FACTOR = 2.0
         
         # Step reward for each action
         R_STEP = - 2
@@ -172,7 +172,7 @@ class Reward():
         # Reward for the linear velocity
         # Penalty for linear velocity to prevent high speed (Since the robot is [-1, 1] and -1 is 0 m/s)
         # [-1, 0]
-        R_LINEAR = -1 * [action_linear + 1]/2 * SCALING_FACTOR # +1 to make it [0, 2] and divide by 2 to make it [0, 1]
+        R_LINEAR = -1 * (action_linear + 1)/2 * SCALING_FACTOR # +1 to make it [0, 2] and divide by 2 to make it [0, 1]
 
         # Waypoint reward
         R_WAYPOINT = 0
@@ -232,8 +232,8 @@ class Reward():
 
         # Scaling the reward
 
-        R_FONT_SCAN = R_FONT_SCAN * 80
+        R_FONT_SCAN = R_FONT_SCAN * 4
 
-        R_OTHER_SCAN = R_OTHER_SCAN * 20
+        R_OTHER_SCAN = R_OTHER_SCAN * 2
 
         return R_FONT_SCAN, R_OTHER_SCAN
