@@ -192,7 +192,7 @@ class GoalManager:
     def generate_goal_pose(self, robot_x: float, robot_y: float, radius: float)->None:
         MAX_ITERATIONS = 100
         GOAL_SEPARATION_FROM_ROBOT_DISTANCE = 3.0
-        GOAL_SEPARATION_DISTANCE = 5.0
+        GOAL_SEPARATION_DISTANCE = 2.5
         DYNAMIC_GOAL_RADIUS = float(radius) if radius > DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN else DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN
         self.prev_goal_x = self.goal_x
         self.prev_goal_y = self.goal_y
@@ -227,7 +227,11 @@ class GoalManager:
                 index = random.randint(0, len(PREDEFINED_GOAL_LOCATIONS) - 1)
                 goal_x = PREDEFINED_GOAL_LOCATIONS[index][0]
                 goal_y = PREDEFINED_GOAL_LOCATIONS[index][1]
-                break
+                
+                if math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE:
+                    break
+                else:
+                    continue
 
         if iterations >= MAX_ITERATIONS:
             goal_x = 0.0 # Default goal
