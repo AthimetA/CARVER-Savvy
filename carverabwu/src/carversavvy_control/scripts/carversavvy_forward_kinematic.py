@@ -5,9 +5,10 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Quaternion
 import numpy as np
-from sensor_msgs.msg import JointState
+from sensor_msgs.msg import JointState, Imu
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float64
+from geometry_msgs.msg import Pose
 
 NS_TO_SEC= 1000000000
 
@@ -29,12 +30,22 @@ class carversavvyFKNode(Node):
         self.create_subscription(Float64, '/wheelL_vel', self.wheelL_callback, 10)
         self.create_subscription(Float64, '/wheelR_vel', self.wheelR_callback, 10)
 
+        # IMU subscriber
+        self.imu_sub = self.create_subscription(Imu, '/IMU', self.imu_callback, 10)
+
         # Create a publisher for robot velocity commands
         self.odom_topic_name = 'carversavvy/wheel/odom'
         self.odom_pub = self.create_publisher(Odometry, self.odom_topic_name, 10) # publish to /odom topic
 
-        self.vx_cal_topic = 'vx_cal'
+        # IMU publisher
+        self.imu_pub = self.create_publisher(Imu, '/carversavvy/imu_ros', 10)
+
+        self.vx_cal_topic = 'carversavvy/vx_cal'
         self.vx_cal_pub = self.create_publisher(Float64, self.vx_cal_topic, 10) # publish to /odom topic
+
+        # Create Publisher for the robot pose
+        self.pose_topic_name = 'carversavvy/pose'
+        self.pose_pub = self.create_publisher(Pose, self.pose_topic_name, 10)
 
         # create timer_callback
         self.timer_hz = 10
@@ -53,15 +64,30 @@ class carversavvyFKNode(Node):
             except:
                 self.get_logger().error('Did not receive joint_states yet')
 
-
-        # self.forward_kinematic_cal(self.wheelL_vel, self.wheelR_vel)
-
     def wheelL_callback(self, msg:Float64):
         self.wheelL_vel = msg.data
 
     def wheelR_callback(self, msg:Float64):
         self.wheelR_vel = msg.data
 
+    def imu_callback(self, msg: Imu):
+        imu_msg = Imu()
+        imu_msg.header.stamp = self.get_clock().now().to_msg()
+        imu_msg.header.frame_id = 'imu_link'
+        # Gyroscope data in rad/s
+        imu_msg.angular_velocity.x = msg.angular_velocity.x - self.gx_offset
+        imu_msg.angular_velocity.y = msg.angular_velocity.y - self.gy_offset
+        imu_msg.angular_velocity.z = msg.angular_velocity.z - self.gz_offset
+        imu_msg.angular_velocity_covariance = self.angular_velocity_cov
+        # # Accelerometer data in m/s^2
+        imu_msg.linear_acceleration.x = msg.linear.x - self.linear_acceleration_x_offset
+        imu_msg.linear_acceleration.y = msg.linear.y - self.linear_acceleration_y_offset
+        imu_msg.linear_acceleration.z = msg.linear.z - self.linear_acceleration_z_offset
+        imu_msg.linear_acceleration_covariance = self.linear_acceleration_cov
+        # # Publish the IMU data
+        # self.get_logger().info(f'rpy: {self.rpy_cal(imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z, imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z)}')
+        self.imu_msg = imu_msg
+    
     def forward_kinematic_cal(self, wl, wr):
         now = self.get_clock().now()
         dt = now - self.time_last
@@ -92,6 +118,17 @@ class carversavvyFKNode(Node):
 
         if wz != 0:
             self.wz += dtheta
+
+        # publish the pose information
+        pose = Pose()
+        pose.position.x = self.x
+        pose.position.y = self.y
+        pose.position.z = 0.0
+        pose.orientation.x = 0.0
+        pose.orientation.y = 0.0
+        pose.orientation.z = np.sin(self.wz / 2)
+        pose.orientation.w = np.cos(self.wz / 2)
+        self.pose_pub.publish(pose)
 
         # publish the odom information
         quaternion = Quaternion()
