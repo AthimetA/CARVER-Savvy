@@ -479,7 +479,7 @@ class Clustering(Node):
                     pos = np.array([x_robot , y_robot])
                     dist = []
                     for i in range(n):
-                        dist.append(np.math.sqrt((pos[0] - points[i][0])**2 + (pos[1] - points[i][1])**2))
+                        dist.append(np.sqrt((pos[0] - points[i][0])**2 + (pos[1] - points[i][1])**2))
 
                     Dist_o = min(dist)
                     Vr = np.array([self.linear_twist.x , self.linear_twist.y])

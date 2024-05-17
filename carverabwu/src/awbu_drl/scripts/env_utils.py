@@ -228,7 +228,7 @@ class GoalManager:
                 goal_x = PREDEFINED_GOAL_LOCATIONS[index][0]
                 goal_y = PREDEFINED_GOAL_LOCATIONS[index][1]
                 
-                if math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE:
+                if math.sqrt((goal_x - self.prev_goal_x)**2 + (goal_y - self.prev_goal_y)**2) > GOAL_SEPARATION_DISTANCE or len(PREDEFINED_GOAL_LOCATIONS) == 1:
                     break
                 else:
                     continue

@@ -59,7 +59,6 @@ class ObstacleHandler(Node):
 
         self.timer = self.create_timer(self.control_loop_period, self.timer_callback)
 
-
     def timer_callback(self):
 
         if self.stage == 1:
@@ -71,8 +70,8 @@ class ObstacleHandler(Node):
         if self.obstacle_status:
             # Generate new velocity
             for obs_idx, obstacle in enumerate(self.obstacle_list):
-                self.twist_list[obs_idx].linear.x = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
-                self.twist_list[obs_idx].angular.z = np.random.uniform(-1, 1) * OBSTACLE_VELOCITY_SCALING
+                self.twist_list[obs_idx].linear.x = np.random.uniform(0, 1) * OBSTACLE_VELOCITY_SCALING
+                self.twist_list[obs_idx].angular.z = np.random.uniform(0, 1) * OBSTACLE_VELOCITY_SCALING
                 self.obstacle_control_pub_list[obs_idx].publish(self.twist_list[obs_idx])
 
     def stage_2_obstacle_control(self):
