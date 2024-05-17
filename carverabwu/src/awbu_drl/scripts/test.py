@@ -18,9 +18,25 @@ class RobotPlotter(QtWidgets.QMainWindow):
         self.obstacle_y = np.array([1, 2, 3])
 
     def initUI(self):
+        # Create a central widget and set a layout
+        self.central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.layout = QtWidgets.QVBoxLayout(self.central_widget)
+
+        # Create a QTabWidget
+        self.tabs = QtWidgets.QTabWidget()
+        self.layout.addWidget(self.tabs)
+
+        # Create the plot tab
+        self.plot_tab = QtWidgets.QWidget()
+        self.tabs.addTab(self.plot_tab, "Plot")
+
+        # Create a layout for the plot tab
+        self.plot_layout = QtWidgets.QVBoxLayout(self.plot_tab)
+
         # Create a plot window
         self.win = pg.GraphicsLayoutWidget(show=True, title="Robot and Obstacle Position")
-        self.setCentralWidget(self.win)
+        self.plot_layout.addWidget(self.win)
         
         # Create a plot item
         self.plot = self.win.addPlot(title="Robot and Obstacle X-Y Position")
@@ -35,6 +51,13 @@ class RobotPlotter(QtWidgets.QMainWindow):
         # Create a scatter plot item for the obstacles' positions
         self.obstacle_scatter = pg.ScatterPlotItem(size=10, pen=pg.mkPen(None), brush=pg.mkBrush(0, 255, 0, 120), name="Obstacles")
         self.plot.addItem(self.obstacle_scatter)
+
+        # Optionally, add more tabs with different content
+        self.additional_tab = QtWidgets.QWidget()
+        self.tabs.addTab(self.additional_tab, "Additional Tab")
+        self.additional_layout = QtWidgets.QVBoxLayout(self.additional_tab)
+        self.additional_label = QtWidgets.QLabel("This is an additional tab.")
+        self.additional_layout.addWidget(self.additional_label)
         
         # Set up a timer to update the plot periodically
         self.timer = pg.QtCore.QTimer()

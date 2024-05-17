@@ -12,76 +12,90 @@ from drlagent_off_policy_agent import OffPolicyAgent, Network, OUNoise
 LINEAR = 0
 ANGULAR = 1
 
-# Reference for network structure: https://arxiv.org/pdf/2102.10711.pdf
-# https://github.com/hanlinniu/turtlebot3_ddpg_collision_avoidance/blob/main/turtlebot_ddpg/scripts/original_ddpg/ddpg_network_turtlebot3_original_ddpg.py
-# https://github.com/djbyrne/TD3
-
+# Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
+# Paper: https://arxiv.org/abs/1802.09477
+# Original implementation: https://github.com/sfujim/TD3/blob/master/TD3.py [Stable Baselines original implementation]
 
 class Actor(Network):
-    def __init__(self, name, state_size, action_size, hidden_size):
+    def __init__(self,
+    name,           # Name of the network
+    state_size,     # Number of input neurons
+    action_size,    # Number of output neurons
+    hidden_size     # Number of neurons in hidden layers
+    ):
         super(Actor, self).__init__(name)
-        # --- define layers here ---
+        # Layer Definition
         self.fa1 = nn.Linear(state_size, hidden_size)
         self.fa2 = nn.Linear(hidden_size, hidden_size)
         self.fa3 = nn.Linear(hidden_size, action_size)
 
+        # Initialize weights
+        # Using Kaiming initialization
         self.apply(super().init_weights)
 
     def forward(self, states, visualize=False):
-        # --- define forward pass here ---
+        # Forward pass
         x1 = torch.relu(self.fa1(states))
         x2 = torch.relu(self.fa2(x1))
         action = torch.tanh(self.fa3(x2))
 
-        # -- define layers to visualize here (optional) ---
+        # If visualization is enabled, update the layers
         if visualize and self.visual:
+            # Using x1 and x2 as features for visualization
             self.visual.update_layers(states, action, [x1, x2], [self.fa1.bias, self.fa2.bias])
-        # -- define layers to visualize until here ---
+
         return action
 
 class Critic(Network):
-    def __init__(self, name, state_size, action_size, hidden_size):
+    def __init__(self,
+    name,           # Name of the network 
+    state_size,     # Number of input neurons
+    action_size,    # Number of output neurons
+    hidden_size     # Number of neurons in hidden layers
+    ):
         super(Critic, self).__init__(name)
 
-        # Q1
-        # --- define layers here ---
-        self.l1 = nn.Linear(state_size, int(hidden_size / 2))
-        self.l2 = nn.Linear(action_size, int(hidden_size / 2))
-        self.l3 = nn.Linear(hidden_size, hidden_size)
-        self.l4 = nn.Linear(hidden_size, 1)
+        # Q1 Architecture
+        self.l1 = nn.Linear(state_size + action_size, hidden_size)
+        self.l2 = nn.Linear(hidden_size, hidden_size)
+        self.l3 = nn.Linear(hidden_size, 1)
 
-        # Q2
-        # --- define layers here ---
-        self.l5 = nn.Linear(state_size, int(hidden_size / 2))
-        self.l6 = nn.Linear(action_size, int(hidden_size / 2))
-        self.l7 = nn.Linear(hidden_size, hidden_size)
-        self.l8 = nn.Linear(hidden_size, 1)
+        # Q2 Architecture
+        self.l5 = nn.Linear(state_size + action_size, hidden_size)
+        self.l6 = nn.Linear(hidden_size, hidden_size)
+        self.l7 = nn.Linear(hidden_size, 1)
 
         self.apply(super().init_weights)
 
     def forward(self, states, actions):
+        
+        # Concatenate the states and actions
+        sa = torch.cat((states, actions), dim=1)
 
-        xs = torch.relu(self.l1(states))
-        xa = torch.relu(self.l2(actions))
-        x = torch.cat((xs, xa), dim=1)
-        x = torch.relu(self.l3(x))
-        x1 = self.l4(x)
+        # Q1 forward pass
+        x1 = torch.relu(self.l1(sa))
+        x2 = torch.relu(self.l2(x1))
+        q1 = self.l3(x2)
 
-        xs = torch.relu(self.l5(states))
-        xa = torch.relu(self.l6(actions))
-        x = torch.cat((xs, xa), dim=1)
-        x = torch.relu(self.l7(x))
-        x2 = self.l8(x)
+        # Q2 forward pass
+        x5 = torch.relu(self.l5(sa))
+        x6 = torch.relu(self.l6(x5))
+        q2 = self.l7(x6)
 
-        return x1, x2
+        return q1, q2
+
 
     def Q1_forward(self, states, actions):
-        xs = torch.relu(self.l1(states))
-        xa = torch.relu(self.l2(actions))
-        x = torch.cat((xs, xa), dim=1)
-        x = torch.relu(self.l3(x))
-        x1 = self.l4(x)
-        return x1
+        
+        # Concatenate the states and actions
+        sa = torch.cat((states, actions), dim=1)
+
+        # Q1 forward pass
+        x1 = torch.relu(self.l1(sa))
+        x2 = torch.relu(self.l2(x1))
+        q1 = self.l3(x2)
+
+        return q1
 
 class TD3(OffPolicyAgent):
     def __init__(self, device, sim_speed):
@@ -97,12 +111,16 @@ class TD3(OffPolicyAgent):
 
         self.last_actor_loss = 0
 
+        # Actor and Target Actor
         self.actor = self.create_network(Actor, 'actor')
         self.actor_target = self.create_network(Actor, 'target_actor')
+        # Actor optimizer
         self.actor_optimizer = self.create_optimizer(self.actor)
 
+        # Critic and Target Critic
         self.critic = self.create_network(Critic, 'critic')
         self.critic_target = self.create_network(Critic, 'target_critic')
+        # Critic optimizer
         self.critic_optimizer = self.create_optimizer(self.critic)
 
         self.hard_update(self.actor_target, self.actor)
@@ -156,7 +174,6 @@ class TD3(OffPolicyAgent):
         # Optimize the critic
         self.critic_optimizer.zero_grad()
         loss_critic.backward()
-        # nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=2.0, norm_type=2)
         self.critic_optimizer.step()
 
         # Delayed policy updates
@@ -167,7 +184,6 @@ class TD3(OffPolicyAgent):
             # Optimize the actor
             self.actor_optimizer.zero_grad()
             loss_actor.backward()
-            # nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=2.0, norm_type=2)
             self.actor_optimizer.step()
 
             # Update the frozen target models

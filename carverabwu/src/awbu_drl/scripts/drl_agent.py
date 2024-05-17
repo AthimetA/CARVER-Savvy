@@ -39,7 +39,8 @@ import torch
 from env_utils import get_simulation_speed, read_stage, translate_outcome
 from env_utils import bcolors
 
-from drlagnet_td3 import TD3
+# from drlagnet_td3 import TD3
+from drlagnet_td3_mod import TD3
 from drlutils_graph import Graph
 from drlutils_replaybuffer import ReplayBuffer
 from drlutils_storagemanager import StorageManager
@@ -463,6 +464,10 @@ class DrlAgent(Node):
             current_time = time.perf_counter_ns()
 
             if (current_time - self.process_start_time) > self.timer_period:
+                
+                if ENABLE_VISUAL:
+                    # Process the visual events 
+                    QtWidgets.QApplication.processEvents()
 
                 if self.agent_status == "IDLE":
                     # Prepare the environment
@@ -495,6 +500,8 @@ class DrlAgent(Node):
                             step=self.total_steps,
                             visualize=ENABLE_VISUAL,
                         )
+
+                    # action = [0.25,0.0]
 
                     # Set the current action 
                     action_current = action

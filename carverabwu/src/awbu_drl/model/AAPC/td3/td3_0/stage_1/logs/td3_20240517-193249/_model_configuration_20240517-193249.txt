@@ -1,0 +1,81 @@
+device = cuda
+simulation_speed = 4
+state_size = 194
+action_size = 2
+hidden_size = 512
+input_size = 194
+batch_size = 256
+buffer_size = 51200
+discount_factor = 0.99
+learning_rate = 0.001
+tau = 0.01
+step_time = 0.01
+loss_function = <function mse_loss at 0x78cac7372ef0>
+epsilon = 1.0
+epsilon_decay = 0.995
+epsilon_minimum = 0.1
+reward_function = A
+backward_enabled = False
+stacking_enabled = False
+stack_depth = 3
+frame_skip = 4
+networks = [Actor(
+  (fa1): Linear(in_features=194, out_features=512, bias=True)
+  (fa2): Linear(in_features=512, out_features=512, bias=True)
+  (fa3): Linear(in_features=512, out_features=2, bias=True)
+), Actor(
+  (fa1): Linear(in_features=194, out_features=512, bias=True)
+  (fa2): Linear(in_features=512, out_features=512, bias=True)
+  (fa3): Linear(in_features=512, out_features=2, bias=True)
+), Critic(
+  (l1): Linear(in_features=194, out_features=256, bias=True)
+  (l2): Linear(in_features=2, out_features=256, bias=True)
+  (l3): Linear(in_features=512, out_features=512, bias=True)
+  (l4): Linear(in_features=512, out_features=1, bias=True)
+  (l5): Linear(in_features=194, out_features=256, bias=True)
+  (l6): Linear(in_features=2, out_features=256, bias=True)
+  (l7): Linear(in_features=512, out_features=512, bias=True)
+  (l8): Linear(in_features=512, out_features=1, bias=True)
+), Critic(
+  (l1): Linear(in_features=194, out_features=256, bias=True)
+  (l2): Linear(in_features=2, out_features=256, bias=True)
+  (l3): Linear(in_features=512, out_features=512, bias=True)
+  (l4): Linear(in_features=512, out_features=1, bias=True)
+  (l5): Linear(in_features=194, out_features=256, bias=True)
+  (l6): Linear(in_features=2, out_features=256, bias=True)
+  (l7): Linear(in_features=512, out_features=512, bias=True)
+  (l8): Linear(in_features=512, out_features=1, bias=True)
+)]
+iteration = 0
+noise = <drlagent_off_policy_agent.OUNoise object at 0x78cac43a1e10>
+policy_noise = 0.2
+noise_clip = 0.4
+policy_freq = 2
+last_actor_loss = 0
+actor_optimizer = AdamW (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0.01
+)
+critic_optimizer = AdamW (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0.01
+)
+

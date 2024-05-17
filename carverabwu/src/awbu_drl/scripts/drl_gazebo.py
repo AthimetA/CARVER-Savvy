@@ -290,15 +290,18 @@ class DRLGazebo(Node):
             # Get the closest obstacle
             max_cp_loc = np.argmax(msg.cp)
 
-            self.obstacle_pos_x = msg.pose_x[max_cp_loc]
-            self.obstacle_pos_y = msg.pose_y[max_cp_loc]
-
-            self.obstacle_vel_x = msg.velocity_x[max_cp_loc]
-            self.obstacle_vel_y = msg.velocity_y[max_cp_loc]
+            self.obstacle_pos_x = msg.pose_x[max_cp_loc] / LIDAR_DISTANCE_CAP
+            self.obstacle_pos_y = msg.pose_y[max_cp_loc] / LIDAR_DISTANCE_CAP
+  
+            self.obstacle_vel_x = msg.velocity_x[max_cp_loc] / MAX_OBS_SPEED_X
+            self.obstacle_vel_y = msg.velocity_y[max_cp_loc] / MAX_OBS_SPEED_Y
 
         else:
-            self.obstacle_pos_x = self.robot.x + LIDAR_DISTANCE_CAP     # meters
-            self.obstacle_pos_y = self.robot.y + LIDAR_DISTANCE_CAP     # meters
+            # self.obstacle_pos_x = self.robot.x + np.cos(self.robot.theta)
+            # self.obstacle_pos_y = self.robot.y + np.sin(self.robot.theta)
+
+            self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP
+            self.obstacle_pos_y = self.robot.y / LIDAR_DISTANCE_CAP
 
             self.obstacle_vel_x = 0.0
             self.obstacle_vel_y = 0.0
@@ -368,12 +371,12 @@ class DRLGazebo(Node):
         # Distance Obervation
         state = copy.deepcopy(self.scan_ranges)
         # Goal Related Obervation
-        dtg = self.robot.distance_to_goal / MAX_GOAL_DISTANCE
+        dtg = self.robot.distance_to_goal / LIDAR_DISTANCE_CAP
         atg = self.robot.goal_angle / math.pi
         # Robot Observation
         # X and Y components of the robot
-        x = self.robot.x / ARENA_LENGTH
-        y = self.robot.y / ARENA_WIDTH
+        x = self.robot.x / LIDAR_DISTANCE_CAP
+        y = self.robot.y / LIDAR_DISTANCE_CAP
         # Calculate the velocity components
         _vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
         # Correcting the velocity components calculation
@@ -391,10 +394,10 @@ class DRLGazebo(Node):
         # relative_robot_obstacle_linear_vel = (obstacle_linear_vel - self.robot.linear_velocity) / SPEED_LINEAR_MAX
         # relative_robot_obstacle_angular_vel = (obstacle_angular_vel - self.robot.angular_velocity) / SPEED_ANGULAR_MAX
         # Obstacle Observation
-        obstacle_x = self.obstacle_pos_x / ARENA_LENGTH
-        obstacle_y = self.obstacle_pos_y / ARENA_WIDTH
-        obstacle_vel_x = self.obstacle_vel_x / SPEED_LINEAR_MAX
-        obstacle_vel_y = self.obstacle_vel_y / SPEED_LINEAR_MAX
+        obstacle_x = self.obstacle_pos_x # Already normalized
+        obstacle_y = self.obstacle_pos_y # Already normalized
+        obstacle_vel_x = self.obstacle_vel_x # Already normalized
+        obstacle_vel_y = self.obstacle_vel_y # Already normalized
 
         # Append the state
         # Goal Related Obervation
@@ -511,7 +514,8 @@ class DRLGazebo(Node):
             self.robot.reset()
         else:
             # Reset the goal success [Position and angle not reset but the calculation is performed]
-            self.robot.reset_task_success()
+            t = self.robot.reset_task_success()
+            self.get_logger().info(bcolors.OKGREEN + t + bcolors.ENDC)
 
         # Start the robot
         self.cmd_vel_pub.publish(Twist())

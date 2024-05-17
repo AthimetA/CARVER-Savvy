@@ -282,6 +282,9 @@ class Robot:
         self.angle_to_goal = self.calculate_heading(target_x=self.goal_x, target_y=self.goal_y, x=self.x, y=self.y)
         self.goal_angle = self.calculate_angle(target_angle=self.angle_to_goal, angle=self.theta)
 
+        text = f"Goal: {self.goal_x, self.goal_y}, Distance to goal: {self.distance_to_goal}, Angle to goal: {np.degrees(self.angle_to_goal)}, Goal angle: {np.degrees(self.goal_angle)}"
+        return text
+
     def reset(self):
         # Reset the robot position
         self.x = self.initial_x

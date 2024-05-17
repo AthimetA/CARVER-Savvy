@@ -158,11 +158,11 @@ class Reward():
         R_STEP = - 2
         # Reward for the angle to the goal
         # [-1, 0] # Angle to the goal (Normalized by 1/3.14)
-        R_ANGLE = -1 * abs(angle_to_goal) * SCALING_FACTOR
+        R_ANGLE = -1 * abs(angle_to_goal) * SCALING_FACTOR * 2 
 
         # Reward for the distance to the goal
         # [-1, 0] # Distance to the goal(Normalized by MAX_DISTANCE)
-        R_DISTANCE = -1 * abs(distance_to_goal) * SCALING_FACTOR
+        R_DISTANCE = -1 * abs(distance_to_goal) * SCALING_FACTOR * 2
 
         # Reward for the angular velocity
         # Penalty for angular velocity to prevent spinning in place and lower the angular velocity
@@ -201,7 +201,7 @@ class Reward():
             R_STATUS = 0
 
         # Total reward
-        reward = R_STATUS + R_STEP + R_ANGLE + R_DISTANCE + R_WAYPOINT + R_FONT_SCAN + R_OTHER_SCAN + R_ANGULAR + R_LINEAR
+        reward = R_STATUS + R_STEP + R_ANGLE + R_DISTANCE + R_WAYPOINT + R_FONT_SCAN + R_OTHER_SCAN
 
 
         return float(reward) , [R_DISTANCE, R_ANGLE, R_WAYPOINT, R_FONT_SCAN, R_OTHER_SCAN]
