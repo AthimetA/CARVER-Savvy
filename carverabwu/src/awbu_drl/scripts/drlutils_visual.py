@@ -60,7 +60,7 @@ if ENABLE_VISUAL:
             # -------- All State plots -------- #
             self.plot_all_states_item = self.tab_state_graph_layout.addPlot(title="All States"              , row=0, col=0, colspan=2, rowspan=1)
             self.plot_all_states_item.setXRange(-1, self.state_size, padding=0)
-            self.plot_all_states_item.setYRange(-1, 1, padding=0)
+            self.plot_all_states_item.setYRange(-3.14, 3.14, padding=0)
             self.bar_graph_all_states           =   pg.BarGraphItem(x=range(self.state_size), height = np.zeros(self.state_size), width=0.8)
             self.plot_all_states_item.addItem(self.bar_graph_all_states)
 
@@ -95,19 +95,19 @@ if ENABLE_VISUAL:
             # Distance to Goal
             self.dtg_item = self.tab_state_graph_layout.addPlot(title="Distance to Goal"                    , row=0, col=2, colspan=1, rowspan=1)
             self.dtg_item.setXRange(-1, 1, padding=0)
-            self.dtg_item.setYRange(-1, 1, padding=0)
+            self.dtg_item.setYRange(-2, 2, padding=0)
             self.bar_graph_dtg                  =   pg.BarGraphItem(x=[0], height=[0], width=0.5)
             self.dtg_item.addItem(self.bar_graph_dtg)
             # Angle to Goal
             self.atg_item = self.tab_state_graph_layout.addPlot(title="Angle to Goal"                      , row=0, col=3, colspan=1, rowspan=1)
-            self.atg_item.setXRange(-1, 1, padding=0)
+            self.atg_item.setXRange(-3.14, 3.14, padding=0)
             self.atg_item.setYRange(-1, 1, padding=0)
             self.bar_graph_atg                  =   pg.BarGraphItem(x=[0], height=[0], width=0.5)
             self.bar_graph_atg.setRotation(-90)
             self.atg_item.addItem(self.bar_graph_atg)
             # Theta
             self.theta_item = self.tab_state_graph_layout.addPlot(title="Theta"                            , row=1, col=2, colspan=1, rowspan=1)
-            self.theta_item.setXRange(-1, 1, padding=0)
+            self.theta_item.setXRange(-3.14, 3.14, padding=0)
             self.theta_item.setYRange(-1, 1, padding=0)
             self.bar_graph_theta                =   pg.BarGraphItem(x=[0], height=[0], width=0.5)
             self.bar_graph_theta.setRotation(-90)
@@ -237,10 +237,10 @@ if ENABLE_VISUAL:
 
             # Update the goal position
             # Calculate the goal position based on the distance and angle to goal
-            goal_x = x + dtg * np.cos(atg * np.pi)
-            goal_y = y + dtg * np.sin(atg * np.pi)
+            goal_x = x + dtg * np.cos(atg)
+            goal_y = y + dtg * np.sin(atg)
 
-            self.scatter_goal_xy.setData(x=[goal_x , x+dtg * np.cos(atg)], y=[goal_y, y+dtg * np.sin(atg)])
+            self.scatter_goal_xy.setData(x=[goal_x], y=[goal_y])
 
             #Update the Actions
             actions = actions.detach().cpu().numpy().tolist()

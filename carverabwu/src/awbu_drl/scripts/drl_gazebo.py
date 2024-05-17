@@ -372,7 +372,7 @@ class DRLGazebo(Node):
         state = copy.deepcopy(self.scan_ranges)
         # Goal Related Obervation
         dtg = self.robot.distance_to_goal / LIDAR_DISTANCE_CAP
-        atg = self.robot.goal_angle / math.pi
+        atg = self.robot.goal_angle
         # Robot Observation
         # X and Y components of the robot
         x = self.robot.x / LIDAR_DISTANCE_CAP
@@ -383,7 +383,7 @@ class DRLGazebo(Node):
         Vx = _vel * math.cos(self.robot.theta)
         Vy = _vel * math.sin(self.robot.theta)
         # Angular Components of the robot
-        theta = self.robot.theta / math.pi
+        theta = self.robot.theta
         omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
         # # Relative Obstacle Observation
         # relative_robot_obstacle_distance = np.sqrt((self.obstacle_pos_x - self.robot.x)**2 + (self.obstacle_pos_y - self.robot.y)**2) / LIDAR_DISTANCE_CAP
