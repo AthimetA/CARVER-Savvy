@@ -100,6 +100,10 @@ elif STAGE == 2:
     PREDEFINED_GOAL_LOCATIONS = [ [7.0, 0.0]]
     OBSTACLE_NAME = ['wall_outler']
 
+elif STAGE == 4:
+
+    PREDEFINED_GOAL_LOCATIONS = [ [7.0, 0.0]]
+    OBSTACLE_NAME = ['wall_outler']
 
 else:
     PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1],\

@@ -44,7 +44,7 @@ ARENA_LENGTH                = 20   # meters
 ARENA_WIDTH                 = 20   # meters
 
 # General
-EPISODE_TIMEOUT_SECONDS     = 40    # Number of seconds after which episode timeout occurs
+EPISODE_TIMEOUT_SECONDS     = 20    # Number of seconds after which episode timeout occurs
 SPEED_LINEAR_MAX            = 2.0  # m/s
 SPEED_ANGULAR_MAX           = 2.0   # rad/s
 

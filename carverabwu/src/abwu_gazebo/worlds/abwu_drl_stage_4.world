@@ -46,34 +46,14 @@
       
       -->
       <!-- Physics x1 realtime-->
-      <!-- <max_step_size>0.001</max_step_size>
+      <max_step_size>0.001</max_step_size>
       <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>1</real_time_factor> -->
+      <real_time_factor>1</real_time_factor>
 
       <!-- Physics x2 realtime-->
       <!-- <max_step_size>0.002</max_step_size> 
       <real_time_update_rate>1000.0</real_time_update_rate>
       <real_time_factor>2</real_time_factor>  -->
-
-      <!-- Physics x3 realtime-->
-      <!-- <max_step_size>0.003</max_step_size>
-      <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>3</real_time_factor> -->
-
-      <!-- Physics x4 realtime-->
-      <max_step_size>0.004</max_step_size>
-      <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>4</real_time_factor>
-      
-      <!-- Physics x8 realtime-->
-      <!-- <max_step_size>0.008</max_step_size>
-      <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>8</real_time_factor> -->
-
-      <!-- Physics x10 realtime-->
-      <!-- <max_step_size>0.010</max_step_size>
-      <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>10</real_time_factor> -->
 
       <ode>
         <solver>
@@ -129,8 +109,91 @@
     <!-- Walls -->
 
     <include>
-      <uri>model://stage_2//wall_outler</uri>
+      <uri>model://stage_4//wall_outler</uri>
     </include>
+
+    <!-- Obstacles -->
+    <include>
+      <uri>model://cylinder_obstacle_3</uri>
+      <name>cylinder_obstacle_1</name>
+      <pose>6.0 8.0 0.5 0.0 0.0 -1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_3</uri>
+      <name>cylinder_obstacle_2</name>
+      <pose>4.0 8.0 0.5 0.0 0.0 -1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_3</uri>
+      <name>cylinder_obstacle_3</name>
+      <pose>2.0 8.0 0.5 0.0 0.0 -1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_3</uri>
+      <name>cylinder_obstacle_4</name>
+      <pose>0.0 8.0 0.5 0.0 0.0 -1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_3</uri>
+      <name>cylinder_obstacle_5</name>
+      <pose>-2.0 8.0 0.5 0.0 0.0 -1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_3</uri>
+      <name>cylinder_obstacle_6</name>
+      <pose>-4.0 8.0 0.5 0.0 0.0 -1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_3</uri>
+      <name>cylinder_obstacle_7</name>
+      <pose>-6.0 8.0 0.5 0.0 0.0 -1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_4</uri>
+      <name>cylinder_obstacle_8</name>
+      <pose>5.0 -8.0 0.5 0.0 0.0 1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_4</uri>
+      <name>cylinder_obstacle_9</name>
+      <pose>3.0 -8.0 0.5 0.0 0.0 1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_4</uri>
+      <name>cylinder_obstacle_10</name>
+      <pose>1.0 -8.0 0.5 0.0 0.0 1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_4</uri>
+      <name>cylinder_obstacle_11</name>
+      <pose>-1.0 -8.0 0.5 0.0 0.0 1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_4</uri>
+      <name>cylinder_obstacle_12</name>
+      <pose>-3.0 -8.0 0.5 0.0 0.0 1.5708</pose>
+    </include>
+
+    <include>
+      <uri>model://cylinder_obstacle_4</uri>
+      <name>cylinder_obstacle_13</name>
+      <pose>-5.0 -8.0 0.5 0.0 0.0 1.5708</pose>
+    </include>
+
+
+
+
 
   </world>
 </sdf>
