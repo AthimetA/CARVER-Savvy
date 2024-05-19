@@ -68,9 +68,11 @@ class Critic(Network):
         self.l6 = nn.Linear(hidden_size, hidden_size)
         self.l7 = nn.Linear(hidden_size, 1)
 
+        # Initialize weights
+        # Using Kaiming initialization
         self.apply(super().init_weights)
 
-    def forward(self, states, actions):
+    def forward(self, states, actions, visualize=False):
         
         # Concatenate the states and actions
         sa = torch.cat((states, actions), dim=1)
@@ -99,6 +101,25 @@ class Critic(Network):
         q1 = self.l3(x2)
 
         return q1
+    
+    def visualize_forward(self, sa):
+
+        with torch.no_grad(): # No gradient calculation
+
+            # Q1 forward pass
+            x1 = torch.relu(self.l1(sa))
+            x2 = torch.relu(self.l2(x1))
+            q1 = self.l3(x2)
+
+            # Q2 forward pass
+            x5 = torch.relu(self.l5(sa))
+            x6 = torch.relu(self.l6(x5))
+            q2 = self.l7(x6)
+
+        self.visual.tab_critic_update(q_values = [q1, q2],
+                                    hidden = [x1, x2, x5, x6],
+                                    biases = [self.l1.bias, self.l2.bias, self.l5.bias, self.l6.bias])
+
 
 class TD3(OffPolicyAgent):
     def __init__(self, device, sim_speed):
@@ -141,6 +162,8 @@ class TD3(OffPolicyAgent):
 
         if visualize:
             self.visual.tab_state_update(states = state)
+            sa = torch.cat((state, action), dim=0)
+            self.critic.visualize_forward(sa)
 
         if is_training:
             noise = torch.from_numpy(copy.deepcopy(self.noise.get_noise(step))).to(self.device)

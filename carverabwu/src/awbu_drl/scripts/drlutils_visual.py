@@ -45,9 +45,10 @@ if ENABLE_VISUAL:
             # Tab Initialization
             self.init_tab_state()
             self.init_tab_actor()
-            # self.init_tab_critic()
+            self.init_tab_critic()
             
-            self.iteration = 0
+            self.actor_iteration = 0
+            self.critic_iteration = 0
 
         def init_tab_state(self):
             # Create the state layout
@@ -183,6 +184,68 @@ if ENABLE_VISUAL:
             self.actor_bar_graph_reward          =   pg.BarGraphItem(x=[0], height=[0], width=0.5)
             self.actor_reward_item.addItem(self.actor_bar_graph_reward)
 
+        def init_tab_critic(self):
+            # Create the critic layout
+            self.tab_critic_layout = QtWidgets.QVBoxLayout(self.tab_critic)
+
+            # Create the critic graph layout
+            self.tab_critic_graph_layout = pg.GraphicsLayoutWidget()
+            self.tab_critic_layout.addWidget(self.tab_critic_graph_layout)
+
+            # -------- Critic Hidden Layers plots -------- #
+            self.critic_hidden_plot_items = []
+            self.critic_hidden_bar_graphs = []
+            self.critic_hidden_line_plots = []
+            i = 0
+            # Q1
+            for hidden_size in self.hidden_sizes:
+                plot_item = self.tab_critic_graph_layout.addPlot(title=f"Hidden layer {i}", row = i, col = 0, colspan=2)
+                plot_item.setXRange(-1, hidden_size, padding=0)
+                plot_item.setYRange(-0.2, 1.3, padding=0)
+
+                bar_graph = pg.BarGraphItem(x=range(hidden_size), height=np.zeros(hidden_size), width=0.8)
+                plot_item.addItem(bar_graph)
+
+                line_plot = plot_item.plot(x=range(hidden_size), brush='r', symbol='x', symbolPen='r')
+                line_plot.setPen(style=QtCore.Qt.NoPen)
+                line_plot.setSymbolSize(5)
+
+                self.critic_hidden_bar_graphs.append(bar_graph)
+                self.critic_hidden_plot_items.append(plot_item)
+                self.critic_hidden_line_plots.append(line_plot)
+                i += 1
+            # Q2
+            j = 0
+            for hidden_size in self.hidden_sizes:
+                plot_item = self.tab_critic_graph_layout.addPlot(title=f"Hidden layer {i}", row = j, col = 2, colspan=2)
+                plot_item.setXRange(-1, hidden_size, padding=0)
+                plot_item.setYRange(-0.2, 1.3, padding=0)
+
+                bar_graph = pg.BarGraphItem(x=range(hidden_size), height=np.zeros(hidden_size), width=0.8)
+                plot_item.addItem(bar_graph)
+
+                line_plot = plot_item.plot(x=range(hidden_size), brush='r', symbol='x', symbolPen='r')
+                line_plot.setPen(style=QtCore.Qt.NoPen)
+                line_plot.setSymbolSize(5)
+
+                self.critic_hidden_bar_graphs.append(bar_graph)
+                self.critic_hidden_plot_items.append(plot_item)
+                self.critic_hidden_line_plots.append(line_plot)
+                j += 1
+
+            # Q1 Value
+            self.critic_q1_item = self.tab_critic_graph_layout.addPlot(title="Critic Q1 Value"                , row=i, col=0, colspan=2)
+            self.critic_q1_item.setXRange(-1, 1, padding=0)
+            self.critic_q1_item.setYRange(-1000, 1000, padding=0)
+            self.bar_graph_q1_value              =   pg.BarGraphItem(x=[0], height=[0], width=0.5)
+            self.critic_q1_item.addItem(self.bar_graph_q1_value)
+            # Q2 Value
+            self.critic_q2_item = self.tab_critic_graph_layout.addPlot(title="Critic Q2 Value"                , row=i, col=2, colspan=2)
+            self.critic_q2_item.setXRange(-1, 1, padding=0)
+            self.critic_q2_item.setYRange(-1000, 1000, padding=0)
+            self.bar_graph_q2_value              =   pg.BarGraphItem(x=[0], height=[0], width=0.5)
+            self.critic_q2_item.addItem(self.bar_graph_q2_value)
+
         def prepare_data(self, tensor : torch.Tensor):
             return tensor.squeeze().detach().cpu()
         
@@ -248,10 +311,23 @@ if ENABLE_VISUAL:
             self.bar_graph_action_angular.setOpts(height=[actions[1]])
             for i in range(len(hidden)):
                 self.actor_hidden_bar_graphs[i].setOpts(height=self.prepare_data(hidden[i]))
-            pg.QtGui.QGuiApplication.processEvents()
-            if self.iteration % 100 == 0:
-                self.update_bias(biases)
-            self.iteration += 1
+            # pg.QtGui.QGuiApplication.processEvents()
+            if self.actor_iteration % 50 == 0:
+                for i in range(len(biases)):
+                    self.actor_hidden_line_plots[i].setData(y=self.prepare_data(biases[i]))
+            self.actor_iteration += 1
+
+        def tab_critic_update(self, q_values, hidden, biases):
+            # Update the Q values
+            self.bar_graph_q1_value.setOpts(height=[q_values[0].detach().cpu()])
+            self.bar_graph_q2_value.setOpts(height=[q_values[1].detach().cpu()])
+            # Update hidden layers
+            for i in range(len(hidden)):
+                self.critic_hidden_bar_graphs[i].setOpts(height=self.prepare_data(hidden[i]))
+            if self.critic_iteration % 50 == 0:
+                for i in range(len(biases)):
+                    self.critic_hidden_line_plots[i].setData(y=self.prepare_data(biases[i]))
+            self.critic_iteration += 1
 
         # def update_layers(self, states, actions, hidden, biases):
         #     # States data
@@ -319,9 +395,9 @@ if ENABLE_VISUAL:
         #         self.update_bias(biases)
         #     self.iteration += 1
 
-        def update_bias(self, biases):
-            for i in range(len(biases)):
-                self.actor_hidden_line_plots[i].setData(y=self.prepare_data(biases[i]))
+        # def update_bias(self, biases):
+        #     for i in range(len(biases)):
+        #         self.actor_hidden_line_plots[i].setData(y=self.prepare_data(biases[i]))
 
         def update_reward(self, acc_reward):
             self.actor_bar_graph_reward.setOpts(height=[acc_reward])
