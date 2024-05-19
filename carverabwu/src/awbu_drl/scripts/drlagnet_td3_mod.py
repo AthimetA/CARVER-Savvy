@@ -27,7 +27,8 @@ class Actor(Network):
         # Layer Definition
         self.fa1 = nn.Linear(state_size, hidden_size)
         self.fa2 = nn.Linear(hidden_size, hidden_size)
-        self.fa3 = nn.Linear(hidden_size, action_size)
+        self.fa3 = nn.Linear(hidden_size, hidden_size)
+        self.fa4 = nn.Linear(hidden_size, action_size)
 
         # Initialize weights
         # Using Kaiming initialization
@@ -37,15 +38,15 @@ class Actor(Network):
         # Forward pass
         x1 = torch.relu(self.fa1(states))
         x2 = torch.relu(self.fa2(x1))
-        action = torch.tanh(self.fa3(x2))
+        x3 = torch.relu(self.fa3(x2))
+        action = torch.tanh(self.fa4(x3))
 
         # If visualization is enabled, update the layers
         if visualize and self.visual:
-            # Using x1 and x2 as features for visualization
-            # self.visual.update_layers(states, action, [x1, x2], [self.fa1.bias, self.fa2.bias])
+            # Using x as feature visualization
             self.visual.tab_actor_update(actions = action,
-                                         hidden = [x1, x2],
-                                         biases = [self.fa1.bias, self.fa2.bias])
+                                         hidden = [x1, x2, x3],
+                                         biases = [self.fa1.bias, self.fa2.bias, self.fa3.bias])
 
         return action
 
@@ -59,14 +60,16 @@ class Critic(Network):
         super(Critic, self).__init__(name)
 
         # Q1 Architecture
-        self.l1 = nn.Linear(state_size + action_size, hidden_size)
-        self.l2 = nn.Linear(hidden_size, hidden_size)
-        self.l3 = nn.Linear(hidden_size, 1)
+        self.l01 = nn.Linear(state_size + action_size, hidden_size)
+        self.l02 = nn.Linear(hidden_size, hidden_size)
+        self.l03 = nn.Linear(hidden_size, hidden_size)
+        self.l04 = nn.Linear(hidden_size, 1)
 
         # Q2 Architecture
-        self.l5 = nn.Linear(state_size + action_size, hidden_size)
-        self.l6 = nn.Linear(hidden_size, hidden_size)
-        self.l7 = nn.Linear(hidden_size, 1)
+        self.l11 = nn.Linear(state_size + action_size, hidden_size)
+        self.l12 = nn.Linear(hidden_size, hidden_size)
+        self.l13 = nn.Linear(hidden_size, hidden_size)
+        self.l14 = nn.Linear(hidden_size, 1)
 
         # Initialize weights
         # Using Kaiming initialization
@@ -78,14 +81,16 @@ class Critic(Network):
         sa = torch.cat((states, actions), dim=1)
 
         # Q1 forward pass
-        x1 = torch.relu(self.l1(sa))
-        x2 = torch.relu(self.l2(x1))
-        q1 = self.l3(x2)
+        x01 = torch.relu(self.l01(sa))
+        x02 = torch.relu(self.l02(x01))
+        x03 = torch.relu(self.l03(x02))
+        q1 = self.l04(x03)
 
         # Q2 forward pass
-        x5 = torch.relu(self.l5(sa))
-        x6 = torch.relu(self.l6(x5))
-        q2 = self.l7(x6)
+        x11 = torch.relu(self.l11(sa))
+        x12 = torch.relu(self.l12(x11))
+        x13 = torch.relu(self.l13(x12))
+        q2 = self.l14(x13)
 
         return q1, q2
 
@@ -96,9 +101,10 @@ class Critic(Network):
         sa = torch.cat((states, actions), dim=1)
 
         # Q1 forward pass
-        x1 = torch.relu(self.l1(sa))
-        x2 = torch.relu(self.l2(x1))
-        q1 = self.l3(x2)
+        x01 = torch.relu(self.l01(sa))
+        x02 = torch.relu(self.l02(x01))
+        x03 = torch.relu(self.l03(x02))
+        q1 = self.l04(x03)
 
         return q1
     
@@ -107,18 +113,20 @@ class Critic(Network):
         with torch.no_grad(): # No gradient calculation
 
             # Q1 forward pass
-            x1 = torch.relu(self.l1(sa))
-            x2 = torch.relu(self.l2(x1))
-            q1 = self.l3(x2)
-
+            x01 = torch.relu(self.l01(sa))
+            x02 = torch.relu(self.l02(x01))
+            x03 = torch.relu(self.l03(x02))
+            q1 = self.l04(x03)
+            
             # Q2 forward pass
-            x5 = torch.relu(self.l5(sa))
-            x6 = torch.relu(self.l6(x5))
-            q2 = self.l7(x6)
+            x11 = torch.relu(self.l11(sa))
+            x12 = torch.relu(self.l12(x11))
+            x13 = torch.relu(self.l13(x12))
+            q2 = self.l14(x13)
 
         self.visual.tab_critic_update(q_values = [q1, q2],
-                                    hidden = [x1, x2, x5, x6],
-                                    biases = [self.l1.bias, self.l2.bias, self.l5.bias, self.l6.bias])
+                                    hidden = [x01, x02, x03, x11, x12, x13],
+                                    biases = [self.l01.bias, self.l02.bias, self.l03.bias, self.l11.bias, self.l12.bias, self.l13.bias])
 
 
 class TD3(OffPolicyAgent):

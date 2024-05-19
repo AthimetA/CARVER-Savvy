@@ -20,7 +20,7 @@ if ENABLE_VISUAL:
             self.resize(1980, 1200)
 
             self.state_size = state_size
-            self.hidden_sizes = [hidden_size, hidden_size]
+            self.hidden_sizes = [hidden_size, hidden_size, hidden_size]
 
             # Create the main layout
             self.central_widget = QtWidgets.QWidget()
