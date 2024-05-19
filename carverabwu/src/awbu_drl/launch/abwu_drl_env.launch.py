@@ -35,7 +35,8 @@ def generate_launch_description():
     
     drl_obstacle_cp = Node(
             package='awbu_drl',
-            executable='clustering.py',
+            # executable='clustering.py',
+            executable='drl_obstacle_cp.py',
             name='drl_obstacle_cp',
             parameters=[{'use_sim_time': use_sim_time}],
          )

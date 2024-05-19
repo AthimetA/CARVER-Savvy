@@ -15,7 +15,7 @@ import gymnasium as gym
 
 import stable_baselines3 as sb3
 
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist , Pose
 from nav_msgs.msg import Odometry
 
 from gazebo_msgs.srv import GetEntityState, GetModelList
@@ -97,19 +97,30 @@ class ObstacleCP(Node):
 
                     # Get the initial pose and twist of the obstacle
                     pose, twist = self.get_entity_state(obstacle)
+                    
+                    robot_pos_x = self.position.x
+                    robot_pos_y = self.position.y
+                    robot_vel_x = self.linear_twist.x
+                    robot_vel_y = self.linear_twist.y
+
+                    obs_pos_x = pose.position.x
+                    obs_pos_y = pose.position.y
+                    obs_vel_x = twist.linear.x
+                    obs_vel_y = twist.linear.y
+
                     # self.get_logger().info(f'Name: {obstacle}, Pose: {pose.position.x}, {pose.position.y}, \
                     #                        Twist: {twist.linear.x}, {twist.linear.y}, {twist.linear.z}')
                     
-                    ob_pose = np.array([pose.position.x , pose.position.y])
-                    robot_post = np.array([self.position.x , self.position.y])
+                    obs_pose = np.array([obs_pos_x , obs_pos_y])
+                    robot_post = np.array([robot_pos_x , robot_pos_y])
 
-                    dist = np.linalg.norm(robot_post - ob_pose)
+                    dist = np.linalg.norm(robot_post - obs_pose)
 
                     if dist < LIDAR_DISTANCE_CAP + 0.5:
 
                         Dist_o = dist - RADIUS
-                        Vr = np.array([self.linear_twist.x , self.linear_twist.y])
-                        Vo = np.array([twist.linear.x , twist.linear.y])
+                        Vr = np.array([robot_vel_x , robot_vel_y])
+                        Vo = np.array([obs_vel_x , obs_vel_y])
                         Vr_prime = Vr - Vo
                         t = Dist_o / np.sqrt(Vr_prime[0]**2 + Vr_prime[1]**2)
 

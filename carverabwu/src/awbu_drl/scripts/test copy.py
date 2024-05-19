@@ -56,76 +56,140 @@ if ENABLE_VISUAL:
             # Create the state graph layout
             self.tab_state_graph_layout = pg.GraphicsLayoutWidget()
             self.tab_state_layout.addWidget(self.tab_state_graph_layout)
-
+            
             # -------- All State plots -------- #
-            self.plot_all_states_item = self.tab_state_graph_layout.addPlot(title="All States"              , row=0, col=0, colspan=2, rowspan=1)
-            self.plot_all_states_item.setXRange(-1, self.state_size, padding=0)
-            self.plot_all_states_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_all_states           =   pg.BarGraphItem(x=range(self.state_size), height = np.zeros(self.state_size), width=0.8)
+            __viewBox_all_states = pg.ViewBox(enableMenu=False)
+            __viewBox_all_states.setXRange(-1, self.state_size, padding=0)
+            __viewBox_all_states.setYRange(-1, 1, padding=0)
+            __viewBox_all_states.setLimits(xMin=-1, xMax=self.state_size, yMin=-4, yMax=4)
+            self.plot_all_states_item = pg.PlotItem(title="All States", viewBox=__viewBox_all_states)
+            self.bar_graph_all_states           =   pg.BarGraphItem(x=range(self.state_size), height = np.zeros(self.state_size), width=0.5)
             self.plot_all_states_item.addItem(self.bar_graph_all_states)
+            self.tab_state_graph_layout.addItem(self.plot_all_states_item, row=0, col=0, colspan=2, rowspan=1)
 
             # -------- Details State plots -------- #
-            # XY Plane plot
-            self.xy_plane_item = self.tab_state_graph_layout.addPlot(title="XY Plane"                       , row=1, col=0, colspan=2, rowspan=2)
-            self.xy_plane_item.setXRange(-1, 1, padding=0)
-            self.xy_plane_item.setYRange(-1, 1, padding=0)
-            self.xy_plane_item.showGrid(x=True, y=True)
+            # Distance to Goal
+            __viewBox_dtg = pg.ViewBox(enableMenu=False)
+            __viewBox_dtg.setXRange(-1, 1, padding=0)
+            __viewBox_dtg.setYRange(-1, 1, padding=0)
+            __viewBox_dtg.setLimits(xMin=-1, xMax=1, yMin=-2, yMax=2)
+            self.dtg_item = pg.PlotItem(title="Distance to Goal", viewBox=__viewBox_dtg)
+            self.bar_graph_dtg                  =   pg.BarGraphItem(x=[0], height=[0], width=0.25)
+            self.dtg_item.addItem(self.bar_graph_dtg)
+            self.tab_state_graph_layout.addItem(self.dtg_item, row=1, col=0, colspan=1, rowspan=1)
+
+            # Angle to Goal
+            __viewBox_atg = pg.ViewBox(enableMenu=False)
+            __viewBox_atg.setXRange(-3.14, 3.14, padding=0)
+            __viewBox_atg.setYRange(-1, 1, padding=0)
+            __viewBox_atg.setLimits(xMin=-3.14, xMax=3.14, yMin=-1, yMax=1)
+            self.atg_item = pg.PlotItem(title="Angle to Goal", viewBox=__viewBox_atg)
+            self.bar_graph_atg                  =   pg.BarGraphItem(x=[0], height=[0], width=0.25)
+            self.bar_graph_atg.setRotation(-90)
+            self.atg_item.addItem(self.bar_graph_atg)
+            self.tab_state_graph_layout.addItem(self.atg_item, row=1, col=1, colspan=1, rowspan=1)
+    
+            # Theta
+            __viewBox_theta = pg.ViewBox(enableMenu=False)
+            __viewBox_theta.setXRange(-3.14, 3.14, padding=0)
+            __viewBox_theta.setYRange(-1, 1, padding=0)
+            __viewBox_theta.setLimits(xMin=-3.14, xMax=3.14, yMin=-1, yMax=1)
+            self.theta_item = pg.PlotItem(title="Theta", viewBox=__viewBox_theta)
+            self.bar_graph_theta                =   pg.BarGraphItem(x=[0], height=[0], width=0.25)
+            self.bar_graph_theta.setRotation(-90)
+            self.theta_item.addItem(self.bar_graph_theta)
+            self.tab_state_graph_layout.addItem(self.theta_item, row=2, col=0, colspan=1, rowspan=1)
+
+            # Angular Velocity
+            __viewBox_angular = pg.ViewBox(enableMenu=False)
+            __viewBox_angular.setXRange(-1, 1, padding=0)
+            __viewBox_angular.setYRange(-1, 1, padding=0)
+            __viewBox_angular.setLimits(xMin=-1, xMax=1, yMin=-1, yMax=1)
+            self.angular_item = pg.PlotItem(title="Angular Velocity", viewBox=__viewBox_angular)
+            self.bar_graph_angular              =   pg.BarGraphItem(x=[0], height=[0], width=0.25)
+            self.bar_graph_angular.setRotation(-90)
+            self.angular_item.addItem(self.bar_graph_angular)
+            self.tab_state_graph_layout.addItem(self.angular_item, row=2, col=1, colspan=1, rowspan=1)
+
+            # Last Action linear
+            __viewBox_last_action_linear = pg.ViewBox(enableMenu=False)
+            __viewBox_last_action_linear.setXRange(-1, 1, padding=0)
+            __viewBox_last_action_linear.setYRange(-1, 1, padding=0)
+            __viewBox_last_action_linear.setLimits(xMin=-1, xMax=1, yMin=-1, yMax=1)
+            self.last_action_linear_item = pg.PlotItem(title="Last Action Linear", viewBox=__viewBox_last_action_linear)
+            self.bar_graph_last_action_linear    =   pg.BarGraphItem(x=[0], height=[0], width=0.25)
+            self.last_action_linear_item.addItem(self.bar_graph_last_action_linear)
+            self.tab_state_graph_layout.addItem(self.last_action_linear_item, row=3, col=0, colspan=1, rowspan=1)
+
+            # Last Action angular
+            __viewBox_last_action_angular = pg.ViewBox(enableMenu=False)
+            __viewBox_last_action_angular.setXRange(-1, 1, padding=0)
+            __viewBox_last_action_angular.setYRange(-1, 1, padding=0)
+            __viewBox_last_action_angular.setLimits(xMin=-1, xMax=1, yMin=-1, yMax=1)
+            self.last_action_angular_item = pg.PlotItem(title="Last Action Angular", viewBox=__viewBox_last_action_angular)
+            self.bar_graph_last_action_angular   =   pg.BarGraphItem(x=[0], height=[0], width=0.25)
+            self.bar_graph_last_action_angular.setRotation(-90)
+            self.last_action_angular_item.addItem(self.bar_graph_last_action_angular)
+            self.tab_state_graph_layout.addItem(self.last_action_angular_item, row=3, col=1, colspan=1, rowspan=1)
+
+            # ------- XY Lidar plane plots -------- #
+            __viewBox_xy_lidar_plane = pg.ViewBox(enableMenu=False)
+            __viewBox_xy_lidar_plane.setXRange(-1.5, 1.5, padding=0)
+            __viewBox_xy_lidar_plane.setYRange(-1.5, 1.5, padding=0)
+            __viewBox_xy_lidar_plane.setLimits(xMin=-3.0, xMax=3.0, yMin=-3.0, yMax=3.0)
+            self.xy_lidar_plane_item = pg.PlotItem(title="XY Lidar Plane", viewBox=__viewBox_xy_lidar_plane)
+            self.xy_lidar_plane_item.showGrid(x=True, y=True)
+            self.tab_state_graph_layout.addItem(self.xy_lidar_plane_item, row=0, col=3, colspan=2, rowspan=2)
+            
             # Position
-            self.scatter_robot_xy               =   pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(0, 255, 0, 255))
+            self.scatter_robot_xy_lidar         =   pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(0, 255, 0, 255))
+
+            # Velocity
+            self.arrow_robot_vxy_lidar           =   pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#00FF00", 'width': 2}))
+
+            # Goal position
+            self.scatter_goal_xy_lidar          =   pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 0, 255))
+
+            # Lidar 
+            self.scatter_lidar                  =   pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(0, 0, 255, 255))
+            
+            # Add the items to the XY lidar plane
+            self.xy_lidar_plane_item.addItem(self.scatter_robot_xy_lidar)
+            self.xy_lidar_plane_item.addItem(self.arrow_robot_vxy_lidar)
+            self.xy_lidar_plane_item.addItem(self.scatter_goal_xy_lidar)
+            self.xy_lidar_plane_item.addItem(self.scatter_lidar)
+
+            # ------- XY Obstacle plane plots -------- #
+            __viewBox_xy_obstacle_plane = pg.ViewBox(enableMenu=False)
+            __viewBox_xy_obstacle_plane.setXRange(-1.5, 1.5, padding=0)
+            __viewBox_xy_obstacle_plane.setYRange(-1.5, 1.5, padding=0)
+            __viewBox_xy_obstacle_plane.setLimits(xMin=-3.0, xMax=3.0, yMin=-3.0, yMax=3.0)
+            self.xy_obstacle_plane_item = pg.PlotItem(title="XY Obstacle Plane", viewBox=__viewBox_xy_obstacle_plane)
+            self.xy_obstacle_plane_item.showGrid(x=True, y=True)
+            self.tab_state_graph_layout.addItem(self.xy_obstacle_plane_item, row=2, col=3, colspan=2, rowspan=2)
+
+            # Position
+            self.scatter_robot_xy                =   pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(0, 255, 0, 255))
             self.scatter_obstacle_xy            =   pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 0, 0, 255))
+
             # Velocity
             self.arrow_robot_vx                 =   pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#00FF00", 'width': 2}))
             self.arrow_robot_vy                 =   pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#00FF00", 'width': 2}))
             self.arrow_obstacle_vx              =   pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#FF0000", 'width': 2}))
             self.arrow_obstacle_vy              =   pg.PlotDataItem([0, 0], [0, 0], pen=pg.mkPen({'color': "#FF0000", 'width': 2}))
-        
-            self.xy_plane_item.addItem(self.scatter_robot_xy)
-            self.xy_plane_item.addItem(self.scatter_obstacle_xy)
-            self.xy_plane_item.addItem(self.arrow_robot_vx)
-            self.xy_plane_item.addItem(self.arrow_robot_vy)
-            self.xy_plane_item.addItem(self.arrow_obstacle_vx)
-            self.xy_plane_item.addItem(self.arrow_obstacle_vy)
 
-            # Distance to Goal
-            self.dtg_item = self.tab_state_graph_layout.addPlot(title="Distance to Goal"                    , row=0, col=2, colspan=1, rowspan=1)
-            self.dtg_item.setXRange(-1, 1, padding=0)
-            self.dtg_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_dtg                  =   pg.BarGraphItem(x=[1], height=[0], width=0.5)
-            self.dtg_item.addItem(self.bar_graph_dtg)
-            # Angle to Goal
-            self.atg_item = self.tab_state_graph_layout.addPlot(title="Angle to Goal"                      , row=0, col=3, colspan=1, rowspan=1)
-            self.atg_item.setXRange(-1, 1, padding=0)
-            self.atg_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_atg                  =   pg.BarGraphItem(x=[1], height=[0], width=0.5)
-            self.bar_graph_atg.setRotation(-90)
-            self.atg_item.addItem(self.bar_graph_atg)
-            # Theta
-            self.theta_item = self.tab_state_graph_layout.addPlot(title="Theta"                            , row=1, col=2, colspan=1, rowspan=1)
-            self.theta_item.setXRange(-1, 1, padding=0)
-            self.theta_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_theta                =   pg.BarGraphItem(x=[1], height=[0], width=0.5)
-            self.bar_graph_theta.setRotation(-90)
-            self.theta_item.addItem(self.bar_graph_theta)
-            # Angular Velocity
-            self.angular_item = self.tab_state_graph_layout.addPlot(title="Angular Velocity"                , row=1, col=3, colspan=1, rowspan=1)
-            self.angular_item.setXRange(-1, 1, padding=0)
-            self.angular_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_angular              =   pg.BarGraphItem(x=[1], height=[0], width=0.5)
-            self.bar_graph_angular.setRotation(-90)
-            self.angular_item.addItem(self.bar_graph_angular)
-            # Last Action linear
-            self.last_action_linear_item = self.tab_state_graph_layout.addPlot(title="Last Action Linear"    , row=2, col=2, colspan=1, rowspan=1)
-            self.last_action_linear_item.setXRange(-1, 1, padding=0)
-            self.last_action_linear_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_last_action_linear    =   pg.BarGraphItem(x=[1], height=[0], width=0.5)
-            self.last_action_linear_item.addItem(self.bar_graph_last_action_linear)
-            # Last Action angular
-            self.last_action_angular_item = self.tab_state_graph_layout.addPlot(title="Last Action Angular"  , row=2, col=3, colspan=1, rowspan=1)
-            self.last_action_angular_item.setXRange(-1, 1, padding=0)
-            self.last_action_angular_item.setYRange(-1, 1, padding=0)
-            self.bar_graph_last_action_angular   =   pg.BarGraphItem(x=[1], height=[0], width=0.5)
-            self.bar_graph_last_action_angular.setRotation(-90)
-            self.last_action_angular_item.addItem(self.bar_graph_last_action_angular)
+            # Goal position
+            self.scatter_goal_xy                =   pg.ScatterPlotItem(x=[0], y=[0], size=10, pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 0, 255))
+
+            # Add the items to the XY obstacle plane
+            self.xy_obstacle_plane_item.addItem(self.scatter_robot_xy)
+            self.xy_obstacle_plane_item.addItem(self.arrow_robot_vx)
+            self.xy_obstacle_plane_item.addItem(self.arrow_robot_vy)
+            self.xy_obstacle_plane_item.addItem(self.scatter_obstacle_xy)
+            self.xy_obstacle_plane_item.addItem(self.arrow_obstacle_vx)
+            self.xy_obstacle_plane_item.addItem(self.arrow_obstacle_vy)
+            self.xy_obstacle_plane_item.addItem(self.scatter_goal_xy)
+
         
         def init_tab_actor(self):
             # Create the actor layout
@@ -240,7 +304,17 @@ if ENABLE_VISUAL:
 
 def main(): 
     app = QtWidgets.QApplication([])
-    visualizer = DrlVisual(14, 128)
+    stae_size = 150
+    hidden_size = 100
+    visualizer = DrlVisual(stae_size, hidden_size)
+    for i in range(1000):
+        states = torch.randn(150)
+        actions = torch.randn(2)
+        hidden = [torch.randn(hidden_size), torch.randn(hidden_size)]
+        biases = [torch.randn(hidden_size), torch.randn(hidden_size)]
+        visualizer.update_layers(states, actions, hidden, biases)
+        time.sleep(0.1)
+
     app.exec_()
 
     
