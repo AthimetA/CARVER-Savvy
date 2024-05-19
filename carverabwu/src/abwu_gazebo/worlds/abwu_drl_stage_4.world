@@ -1,0 +1,136 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <world name="default">
+
+    <!-- World properties -->
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>0</shadows>
+    </scene>
+    <audio>
+      <device>default</device>
+    </audio>
+    <wind/>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+
+    <physics type="ode">
+
+      <!-- Physics Rule 
+      
+      1. max_step_size: 
+          The maximum time step size that can be taken by a variable time-step solver (such as simbody) during simulation. 
+          For physics engines with fixed-step solvers (like ODE), this is simply the time step size. 
+          The default value in Gazebo is 0.001 seconds.
+      2. real_time_update_rate: 
+          This is the frequency at which the simulation time steps are advanced. 
+          The default value in Gazebo is 1000 Hz. Multiplying with the default max_step_size of 0.001 seconds gives a real_time_factor of 1.
+          If real_time_update_rate is set to 0 the simulation will run as fast as it can. 
+          If Gazebo is not able to update at the desired rate, it will update as fast as it can, based on the computing power.
+      3. real_time_factor:
+          max_step_size x real_time_update_rate sets an upper bound of real_time_factor. 
+          If real_time_factor < 1 the simulation is slower than real time.
+          real_time_factor = 1 means the simulation runs in real-time.
+          real_time_factor = 2 means the simulation runs twice as fast as real-time.
+
+      [real_time_factor = max_step_size * real_time_update_rate]
+      
+      -->
+      <!-- Physics x1 realtime-->
+      <!-- <max_step_size>0.001</max_step_size>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>1</real_time_factor> -->
+
+      <!-- Physics x2 realtime-->
+      <!-- <max_step_size>0.002</max_step_size> 
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>2</real_time_factor>  -->
+
+      <!-- Physics x3 realtime-->
+      <!-- <max_step_size>0.003</max_step_size>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>3</real_time_factor> -->
+
+      <!-- Physics x4 realtime-->
+      <max_step_size>0.004</max_step_size>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>4</real_time_factor>
+      
+      <!-- Physics x8 realtime-->
+      <!-- <max_step_size>0.008</max_step_size>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>8</real_time_factor> -->
+
+      <!-- Physics x10 realtime-->
+      <!-- <max_step_size>0.010</max_step_size>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>10</real_time_factor> -->
+
+      <ode>
+        <solver>
+          <type>quick</type>
+          <iters>150</iters>
+          <precon_iters>0</precon_iters>
+          <sor>1.400000</sor>
+          <use_dynamic_moi_rescaling>1</use_dynamic_moi_rescaling>
+        </solver>
+        <constraints>
+          <cfm>0.00001</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>2000.000000</contact_max_correcting_vel>
+          <contact_surface_layer>0.01000</contact_surface_layer>
+        </constraints>
+      </ode>
+    </physics>
+
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros>
+        <namespace>/gazebo_drl</namespace>
+        <argument>model_states:=model_states_plug</argument>
+        <argument>link_states:=link_states_plug</argument>
+      </ros>
+      <update_rate>30.0</update_rate>
+    </plugin>
+
+    <!-- A camera -->
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>0 0 27.8175 3.14159 1.57079 3.14159</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Goal -->
+    <include>
+      <uri>model://goal_area</uri>
+      <pose>7.0 0.0 0.0 0 0 0</pose>
+    </include>
+
+    <!-- Walls -->
+
+    <include>
+      <uri>model://stage_2//wall_outler</uri>
+    </include>
+
+  </world>
+</sdf>

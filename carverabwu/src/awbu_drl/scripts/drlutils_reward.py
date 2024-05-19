@@ -152,13 +152,13 @@ class Reward():
     omega,  # Angular velocity
     scan_ranges,  # lidar scan
     ):
-        SCALING_FACTOR = 2.0
+        SCALING_FACTOR = 4.0
         
         # Step reward for each action
-        R_STEP = - 2
+        R_STEP = - 4
         # Reward for the angle to the goal
         # [-1, 0] # Angle to the goal (Normalized by 1/3.14)
-        R_ANGLE = -1 * abs(angle_to_goal) * SCALING_FACTOR * 2 
+        R_ANGLE = (-1 * abs(angle_to_goal) / np.pi) * SCALING_FACTOR * 2
 
         # Reward for the distance to the goal
         # [-1, 0] # Distance to the goal(Normalized by MAX_DISTANCE)
