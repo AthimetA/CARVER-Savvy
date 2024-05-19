@@ -22,7 +22,7 @@ import torch.nn.functional as torchf
 from reward import REWARD_FUNCTION
                                  
 from settings.constparams import ENABLE_BACKWARD, ENABLE_STACKING, ACTION_SIZE, HIDDEN_SIZE, BATCH_SIZE, BUFFER_SIZE, DISCOUNT_FACTOR, \
-                                LEARNING_RATE, TAU, STEP_TIME, EPSILON_DECAY, EPSILON_MINIMUM, STACK_DEPTH, FRAME_SKIP
+                                LEARNING_RATE, TAU, STEP_TIME, EPSILON_DECAY, EPSILON_MINIMUM, STACK_DEPTH, FRAME_SKIP, ENABLE_VISUAL
 
 from settings.constparams import NUM_SCAN_SAMPLES
 
@@ -56,6 +56,9 @@ class OffPolicyAgent(ABC):
         self.frame_skip         = FRAME_SKIP
         if ENABLE_STACKING:
             self.input_size *= self.stack_depth
+
+        if ENABLE_VISUAL:
+            self.visual = None
 
         self.networks = []
         self.iteration = 0
@@ -116,6 +119,8 @@ class OffPolicyAgent(ABC):
 
     def attach_visual(self, visual):
         self.actor.visual = visual
+        self.critic.visual = visual
+        self.visual = visual
 
 class Network(torch.nn.Module, ABC):
     def __init__(self, name, visual=None):

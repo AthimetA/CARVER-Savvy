@@ -456,7 +456,7 @@ class DRLGazebo(Node):
         # Reset the episode deadline
         self.episode_deadline = np.inf
         self._EP_done = True
-        if status == SUCCESS:
+        if status == SUCCESS and STAGE == 1:
             self._goals_reset_flag = False # Do not reset the simulation
         else:
             self._goals_reset_flag = True # Reset the simulation

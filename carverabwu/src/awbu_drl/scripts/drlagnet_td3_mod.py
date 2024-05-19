@@ -42,7 +42,10 @@ class Actor(Network):
         # If visualization is enabled, update the layers
         if visualize and self.visual:
             # Using x1 and x2 as features for visualization
-            self.visual.update_layers(states, action, [x1, x2], [self.fa1.bias, self.fa2.bias])
+            # self.visual.update_layers(states, action, [x1, x2], [self.fa1.bias, self.fa2.bias])
+            self.visual.tab_actor_update(actions = action,
+                                         hidden = [x1, x2],
+                                         biases = [self.fa1.bias, self.fa2.bias])
 
         return action
 
@@ -135,6 +138,10 @@ class TD3(OffPolicyAgent):
     def get_action(self, state, is_training, step, visualize=False):
         state = torch.from_numpy(np.asarray(state, np.float32)).to(self.device)
         action = self.actor(state, visualize)
+
+        if visualize:
+            self.visual.tab_state_update(states = state)
+
         if is_training:
             noise = torch.from_numpy(copy.deepcopy(self.noise.get_noise(step))).to(self.device)
             # print(f'Action: {action.cpu().data.numpy()}, Noise: {noise.cpu().data.numpy()}')

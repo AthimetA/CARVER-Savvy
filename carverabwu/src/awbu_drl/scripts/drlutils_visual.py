@@ -183,11 +183,10 @@ if ENABLE_VISUAL:
             self.actor_bar_graph_reward          =   pg.BarGraphItem(x=[0], height=[0], width=0.5)
             self.actor_reward_item.addItem(self.actor_bar_graph_reward)
 
-
         def prepare_data(self, tensor : torch.Tensor):
             return tensor.squeeze().detach().cpu()
-
-        def update_layers(self, states, actions, hidden, biases):
+        
+        def tab_state_update(self, states):
             # States data
             states_data = self.prepare_data(states)
 
@@ -242,6 +241,7 @@ if ENABLE_VISUAL:
 
             self.scatter_goal_xy.setData(x=[goal_x], y=[goal_y])
 
+        def tab_actor_update(self, actions, hidden, biases):
             #Update the Actions
             actions = actions.detach().cpu().numpy().tolist()
             self.bar_graph_action_linear.setOpts(height=[actions[0]])
@@ -252,6 +252,72 @@ if ENABLE_VISUAL:
             if self.iteration % 100 == 0:
                 self.update_bias(biases)
             self.iteration += 1
+
+        # def update_layers(self, states, actions, hidden, biases):
+        #     # States data
+        #     states_data = self.prepare_data(states)
+
+        #     # Update the states
+        #     self.bar_graph_all_states.setOpts(height=states_data)
+
+        #     lidar_data = states_data[0:NUM_SCAN_SAMPLES]
+        #     state_others = states_data[NUM_SCAN_SAMPLES:]
+
+        #     # Update the details states start from the end of the states_data
+        #     dtg = state_others[0]
+        #     atg = state_others[1]
+        #     self.bar_graph_dtg.setOpts(height=[dtg])
+        #     self.bar_graph_atg.setOpts(height=[atg])
+        #     x = state_others[2]
+        #     y = state_others[3]
+        #     self.bar_graph_theta.setOpts(height=[state_others[4]])
+        #     vx = state_others[5]
+        #     vy = state_others[6]
+        #     self.bar_graph_angular.setOpts(height=[state_others[7]])
+        #     obs_x = state_others[8]
+        #     obs_y = state_others[9]
+        #     obs_vx = state_others[10]
+        #     obs_vy = state_others[11]
+        #     self.bar_graph_last_action_linear.setOpts(height=[state_others[12]])
+        #     self.bar_graph_last_action_angular.setOpts(height=[state_others[13]])
+        
+        #     # Plot the XY position
+        #     self.scatter_robot_xy.setData(x=[x], y=[y])
+        #     self.scatter_obstacle_xy.setData(x=[obs_x], y=[obs_y])
+        #     # Set the arrow position
+        #     # Calculate the new arrow end position based on velocity
+        #     self.arrow_robot_vx.setData([x, x + vx], [y, y])
+        #     self.arrow_robot_vy.setData([x, x], [y, y + vy])
+        #     self.arrow_obstacle_vx.setData([obs_x, obs_x + obs_vx], [obs_y, obs_y])
+        #     self.arrow_obstacle_vy.setData([obs_x, obs_x], [obs_y, obs_y + obs_vy])
+
+        #     # Update the lidar
+        #     _lidar_angles = np.linspace(0, 2*np.pi, NUM_SCAN_SAMPLES, endpoint=False)
+        #     lidar_x = -lidar_data * np.cos(_lidar_angles)
+        #     lidar_y = -lidar_data * np.sin(_lidar_angles)
+
+        #     lidar_x += x
+        #     lidar_y += y
+
+        #     self.scatter_lidar.setData(x=lidar_x, y=lidar_y)
+
+        #     # Update the goal position
+        #     # Calculate the goal position based on the distance and angle to goal
+        #     goal_x = x + dtg * np.cos(atg)
+        #     goal_y = y + dtg * np.sin(atg)
+
+        #     self.scatter_goal_xy.setData(x=[goal_x], y=[goal_y])
+
+        #     #Update the Actions
+        #     actions = actions.detach().cpu().numpy().tolist()
+        #     self.bar_graph_action_linear.setOpts(height=[actions[0]])
+        #     self.bar_graph_action_angular.setOpts(height=[actions[1]])
+        #     for i in range(len(hidden)):
+        #         self.actor_hidden_bar_graphs[i].setOpts(height=self.prepare_data(hidden[i]))
+        #     pg.QtGui.QGuiApplication.processEvents()
+        #     if self.iteration % 100 == 0:
+        #         self.update_bias(biases)
+        #     self.iteration += 1
 
         def update_bias(self, biases):
             for i in range(len(biases)):
