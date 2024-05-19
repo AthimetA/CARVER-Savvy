@@ -112,6 +112,22 @@
       <uri>model://stage_4//wall_outler</uri>
     </include>
 
+    <include>
+      <uri>model://stage_4//wall_single_5m_1</uri>
+    </include>
+
+    <include>
+      <uri>model://stage_4//wall_single_5m_2</uri>
+    </include>
+
+    <include>
+      <uri>model://stage_4//wall_single_5m_3</uri>
+    </include>
+
+    <include>
+      <uri>model://stage_4//wall_single_5m_4</uri>
+    </include>
+
     <!-- Obstacles -->
     <include>
       <uri>model://cylinder_obstacle_3</uri>
