@@ -24,7 +24,7 @@ from reward import REWARD_FUNCTION
 from settings.constparams import ENABLE_BACKWARD, ENABLE_STACKING, ACTION_SIZE, HIDDEN_SIZE, BATCH_SIZE, BUFFER_SIZE, DISCOUNT_FACTOR, \
                                 LEARNING_RATE, TAU, STEP_TIME, EPSILON_DECAY, EPSILON_MINIMUM, STACK_DEPTH, FRAME_SKIP, ENABLE_VISUAL
 
-from settings.constparams import NUM_SCAN_SAMPLES, EPSILON_INITIAL
+from settings.constparams import NUM_SCAN_SAMPLES, EPSILON_INITIAL, LEARNING_RATE_ACTOR, LEARNING_RATE_CRITIC
 
 from drlutils_replaybuffer import ReplayBuffer
 
@@ -44,6 +44,8 @@ class OffPolicyAgent(ABC):
         self.buffer_size        = BUFFER_SIZE
         self.discount_factor    = DISCOUNT_FACTOR
         self.learning_rate      = LEARNING_RATE
+        self.learning_rate_actor= LEARNING_RATE_ACTOR
+        self.learning_rate_critic= LEARNING_RATE_CRITIC
         self.tau                = TAU
         # Other parameters
         self.step_time          = STEP_TIME

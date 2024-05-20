@@ -4,6 +4,7 @@ import copy
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
+from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 
 from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP, POLICY_UPDATE_FREQUENCY
 
@@ -17,6 +18,8 @@ ANGULAR = 1
 # Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
 # Paper: https://arxiv.org/abs/1802.09477
 # Original implementation: https://github.com/sfujim/TD3/blob/master/TD3.py [Stable Baselines original implementation]
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Actor(torch.nn.Module, ABC):
     def __init__(self,
@@ -173,16 +176,26 @@ class TD3(OffPolicyAgent):
         self.actor = self.create_network(Actor, 'actor')
         self.actor_target = self.create_network(Actor, 'target_actor')
         # Actor optimizer
-        self.actor_optimizer = self.create_optimizer(self.actor)
+        self.actor_optimizer = torch.optim.AdamW(self.actor.parameters(), self.learning_rate_actor)
+        self.actor_scheduler = ReduceLROnPlateau(self.actor_optimizer, mode='min', factor=0.25, patience=10_000)
+        self.last_actor_lr = self.learning_rate_actor
 
         # Critic and Target Critic
         self.critic = self.create_network(Critic, 'critic')
         self.critic_target = self.create_network(Critic, 'target_critic')
         # Critic optimizer
-        self.critic_optimizer = self.create_optimizer(self.critic)
+        self.critic_optimizer = torch.optim.AdamW(self.critic.parameters(), self.learning_rate_critic)
+        self.critic_scheduler = ReduceLROnPlateau(self.critic_optimizer, mode='min', factor=0.25, patience=10_000)
+        self.last_critic_lr = self.learning_rate_critic
 
         self.hard_update(self.actor_target, self.actor)
         self.hard_update(self.critic_target, self.critic)
+        
+    def print_gradients(self, named_parameters):
+        print('Gradients')
+        for name, param in named_parameters:
+            if param.grad is not None:
+                print(f"Layer: {name} | Gradient Norm: {param.grad.norm()}")
 
     def get_action_with_epsilon_greedy(self, state, is_training, step, visualize=False):
         if is_training and np.random.rand() <= self.epsilon:
@@ -211,6 +224,13 @@ class TD3(OffPolicyAgent):
         return [np.clip(np.random.uniform(-1.0, 1.0), -1.0, 1.0)] * self.action_size
 
     def train(self, state, action, reward, state_next, done):
+        print('Start training')
+
+        # self.print_gradients(self.actor.named_parameters()) 
+        # print('*' * 50)
+        # self.print_gradients(self.critic.named_parameters())
+        # print('*-' * 50)
+        # assert False
 
         with torch.no_grad():
             # Select action according to policy and add clipped noise
@@ -229,31 +249,93 @@ class TD3(OffPolicyAgent):
             # Compute the target Q value
             Q_target = reward + (1 - done) * self.discount_factor * Q_next
 
+        print('=' * 50)
         # Get current Q estimates
         Q1, Q2 = self.critic(state, action)
 
         # Compute critic loss
         loss_critic = self.loss_function(Q1, Q_target) + self.loss_function(Q2, Q_target)
+        print('Critic loss type:', type(loss_critic))
+
+        # Debug: Check if loss_critic has a valid gradient
+        if loss_critic.requires_grad:
+            print(f"Critic loss requires gradient. with loss: {loss_critic} and device: {loss_critic.device}")
+        else:
+            print("Critic loss does not require gradient.")
 
         # Optimize the critic
         self.critic_optimizer.zero_grad()
+        # Backward pass (Compute the gradients)
         loss_critic.backward()
+
         # Clip the gradients
         torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0, norm_type=2)
+
+        self.print_gradients(self.critic.named_parameters())    
+        print('*-' * 50)
+
+        # Step the optimizer (Update the weights and biases)
         self.critic_optimizer.step()
 
         # Delayed policy updates
         if self.iteration % self.policy_freq == 0:
+
+            # Forward actor
+            f_action = self.actor(state)
             
             # optimize actor
-            loss_actor = -1 * self.critic.Q1_forward(state, self.actor(state)).mean()
+            loss_actor = -self.critic.Q1_forward(state, f_action).mean()
+            print('Actor loss type:', type(loss_actor))
+
+            # random_state = torch.rand(1, self.state_size).to(DEVICE)
+
+            # action = self.actor(random_state)
+
+            # loss_actor = -self.critic.Q1_forward(random_state, action).mean()
 
             # Optimize the actor
             self.actor_optimizer.zero_grad()
+            # loss_actor.retain_grad()
             loss_actor.backward()
+
             # Clip the gradients
             torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0, norm_type=2)
+            print('-' * 50)
+            # Debug: Check if loss_actor has a valid gradient
+            if loss_actor.requires_grad:
+                print(f"Actor loss requires gradient. with loss: {loss_actor} and device: {loss_actor.device}")
+            else:
+                print("Actor loss does not require gradient.")
+
+            _p_grad_norm = []
+            for p in self.actor.parameters():
+                print(p.grad)
+                _p_grad_norm.append(p.grad.norm())
+
+
+            self.print_gradients(self.actor.named_parameters()) 
+            print('*=' * 50)
+
+            # Assert When p grad norm is all zeros
+            if all([x == 0 for x in _p_grad_norm]):
+                assert False
+            
             self.actor_optimizer.step()
+
+            # Step the scheduler
+            self.actor_scheduler.step(loss_actor)
+            self.critic_scheduler.step(loss_critic)
+
+            actor_lr = self.actor_scheduler.get_last_lr()[0]
+            critic_lr = self.critic_scheduler.get_last_lr()[0]
+
+            if actor_lr != self.last_actor_lr:
+                self.last_actor_lr = actor_lr
+                print(f'Actor learning rate updated to {actor_lr}')
+            
+            if critic_lr != self.last_critic_lr:
+                self.last_critic_lr = critic_lr
+                print(f'Critic learning rate updated to {critic_lr}')
 
             # Update the frozen target models
             self.soft_update(self.actor_target, self.actor, self.tau)

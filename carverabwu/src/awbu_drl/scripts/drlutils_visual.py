@@ -372,7 +372,7 @@ if ENABLE_VISUAL:
             for i in range(len(hidden)):
                 self.actor_hidden_bar_graphs[i].setOpts(height=self.prepare_data(hidden[i]))
             # pg.QtGui.QGuiApplication.processEvents()
-            if self.actor_iteration % 50 == 0:
+            if self.actor_iteration % 4 == 0:
                 for i in range(len(biases)):
                     self.actor_hidden_line_plots[i].setData(y=self.prepare_data(biases[i]))
             self.actor_iteration += 1
@@ -384,7 +384,7 @@ if ENABLE_VISUAL:
             # Update hidden layers
             for i in range(len(hidden)):
                 self.critic_hidden_bar_graphs[i].setOpts(height=self.prepare_data(hidden[i]))
-            if self.critic_iteration % 50 == 0:
+            if self.critic_iteration % 4 == 0:
                 for i in range(len(biases)):
                     self.critic_hidden_line_plots[i].setData(y=self.prepare_data(biases[i]))
             self.critic_iteration += 1
