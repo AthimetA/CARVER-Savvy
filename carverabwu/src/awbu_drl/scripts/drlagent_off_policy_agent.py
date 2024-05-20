@@ -24,7 +24,9 @@ from reward import REWARD_FUNCTION
 from settings.constparams import ENABLE_BACKWARD, ENABLE_STACKING, ACTION_SIZE, HIDDEN_SIZE, BATCH_SIZE, BUFFER_SIZE, DISCOUNT_FACTOR, \
                                 LEARNING_RATE, TAU, STEP_TIME, EPSILON_DECAY, EPSILON_MINIMUM, STACK_DEPTH, FRAME_SKIP, ENABLE_VISUAL
 
-from settings.constparams import NUM_SCAN_SAMPLES
+from settings.constparams import NUM_SCAN_SAMPLES, EPSILON_INITIAL
+
+from drlutils_replaybuffer import ReplayBuffer
 
 class OffPolicyAgent(ABC):
     def __init__(self, device, simulation_speed):
@@ -46,7 +48,7 @@ class OffPolicyAgent(ABC):
         # Other parameters
         self.step_time          = STEP_TIME
         self.loss_function      = torchf.mse_loss
-        self.epsilon            = 1.0
+        self.epsilon            = EPSILON_INITIAL
         self.epsilon_decay      = EPSILON_DECAY
         self.epsilon_minimum    = EPSILON_MINIMUM
         self.reward_function    = REWARD_FUNCTION
@@ -75,7 +77,7 @@ class OffPolicyAgent(ABC):
     def get_action_random():
         pass
 
-    def _train(self, replaybuffer):
+    def _train(self, replaybuffer: ReplayBuffer):
         batch = replaybuffer.sample(self.batch_size)
         sample_s, sample_a, sample_r, sample_ns, sample_d = batch
         sample_s = torch.from_numpy(sample_s).to(self.device)
@@ -87,13 +89,17 @@ class OffPolicyAgent(ABC):
         self.iteration += 1
         return result
 
-    def create_network(self, type, name):
+    def create_network(self, type: torch.nn.Module, name: str) -> torch.nn.Module:
         network = type(name, self.input_size, self.action_size, self.hidden_size).to(self.device)
         self.networks.append(network)
         return network
 
-    def create_optimizer(self, network):
-        return torch.optim.AdamW(network.parameters(), self.learning_rate)
+    def create_optimizer(self, network: torch.nn.Module):
+        optimizer = torch.optim.AdamW(network.parameters(), self.learning_rate)
+        # Cap the gradient norm to -1 and 1
+        # for param in network.parameters():
+        #     param.register_hook(lambda grad: torch.clamp(grad, -1.0, 1.0))
+        return optimizer
 
     def hard_update(self, target, source):
         for target_param, param in zip(target.parameters(), source.parameters()):
@@ -145,7 +151,7 @@ class Network(torch.nn.Module, ABC):
 
 
 class OUNoise(object):
-    def __init__(self, action_space, mu=0.0, theta=0.15, max_sigma=0.7, min_sigma=0.4, decay_period=600_000):
+    def __init__(self, action_space, mu=0.0, theta=0.15, max_sigma=0.2, min_sigma=0.1, decay_period=600_000):
         self.mu = mu
         self.theta = theta
         self.sigma = max_sigma

@@ -64,17 +64,17 @@ DYNAMIC_GOAL_SEPARATION_DISTANCE_MAX          = 10.00  # meters
 ACTION_SIZE     = 2         # Not used for DQN, see DQN_ACTION_SIZE
 HIDDEN_SIZE     = 256       # Number of neurons in hidden layers
 
-BATCH_SIZE      = 128       # Number of samples per training batch
+BATCH_SIZE      = 256       # Number of samples per training batch
 BUFFER_SIZE     = BATCH_SIZE * 1000 # Number of samples stored in replay buffer before FIFO
 DISCOUNT_FACTOR = 0.99
-LEARNING_RATE   = 0.001
-TAU             = 0.010
+LEARNING_RATE   = 1e-3
+TAU             = 0.005
 
-OBSERVE_STEPS   = BATCH_SIZE * 200 # At training start random actions are taken for N steps for better exploration
+OBSERVE_STEPS   = BATCH_SIZE * 1 # At training start random actions are taken for N steps for better exploration
 STEP_TIME       = 0.01      # Delay between steps, can be set to 0
-# EPSILON_DECAY   = 0.9995    # Epsilon decay per step
-EPSILON_DECAY   = 0.995    # Epsilon decay per step
-EPSILON_MINIMUM = 0.10
+EPSILON_INITIAL = 0.85       # Initial epsilon value for epsilon-greedy policy
+EPSILON_DECAY   = 0.9995    # Epsilon decay per step
+EPSILON_MINIMUM = 0.20
 
 # DQN parameters
 DQN_ACTION_SIZE = 5

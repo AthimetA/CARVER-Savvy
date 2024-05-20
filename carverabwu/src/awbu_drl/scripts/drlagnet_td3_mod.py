@@ -7,7 +7,9 @@ import torch.nn as nn
 
 from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP, POLICY_UPDATE_FREQUENCY
 
-from drlagent_off_policy_agent import OffPolicyAgent, Network, OUNoise
+from drlagent_off_policy_agent import OffPolicyAgent, OUNoise
+
+from abc import ABC, abstractmethod
 
 LINEAR = 0
 ANGULAR = 1
@@ -16,14 +18,19 @@ ANGULAR = 1
 # Paper: https://arxiv.org/abs/1802.09477
 # Original implementation: https://github.com/sfujim/TD3/blob/master/TD3.py [Stable Baselines original implementation]
 
-class Actor(Network):
+class Actor(torch.nn.Module, ABC):
     def __init__(self,
     name,           # Name of the network
     state_size,     # Number of input neurons
     action_size,    # Number of output neurons
-    hidden_size     # Number of neurons in hidden layers
+    hidden_size,     # Number of neurons in hidden layers
+    visual= None
     ):
-        super(Actor, self).__init__(name)
+        super(Actor, self).__init__()
+        self.name = name
+        self.visual = visual
+        self.iteration = 0
+
         # Layer Definition
         self.fa1 = nn.Linear(state_size, hidden_size)
         self.fa2 = nn.Linear(hidden_size, hidden_size)
@@ -32,7 +39,15 @@ class Actor(Network):
 
         # Initialize weights
         # Using Kaiming initialization
-        self.apply(super().init_weights)
+        self.apply(self.init_weights)
+
+    def init_weights(self, m: torch.nn.Module):
+        # Initialize the weights of the network
+        if isinstance(m, torch.nn.Linear):
+            # Kaiming He initialization
+            torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+            m.bias.data.fill_(0.0)
+
 
     def forward(self, states, visualize=False):
         # Forward pass
@@ -50,14 +65,18 @@ class Actor(Network):
 
         return action
 
-class Critic(Network):
+class Critic(torch.nn.Module, ABC):
     def __init__(self,
     name,           # Name of the network 
     state_size,     # Number of input neurons
     action_size,    # Number of output neurons
-    hidden_size     # Number of neurons in hidden layers
+    hidden_size,     # Number of neurons in hidden layers
+    visual = None
     ):
-        super(Critic, self).__init__(name)
+        super(Critic, self).__init__()
+        self.name = name
+        self.visual = visual
+        self.iteration = 0
 
         # Q1 Architecture
         self.l01 = nn.Linear(state_size + action_size, hidden_size)
@@ -73,9 +92,16 @@ class Critic(Network):
 
         # Initialize weights
         # Using Kaiming initialization
-        self.apply(super().init_weights)
+        self.apply(self.init_weights)
 
-    def forward(self, states, actions, visualize=False):
+    def init_weights(self, m: torch.nn.Module):
+        # Initialize the weights of the network
+        if isinstance(m, torch.nn.Linear):
+            # Kaiming He initialization
+            torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+            m.bias.data.fill_(0.0)
+
+    def forward(self, states, actions, visualize=False) -> torch.Tensor:
         
         # Concatenate the states and actions
         sa = torch.cat((states, actions), dim=1)
@@ -95,7 +121,7 @@ class Critic(Network):
         return q1, q2
 
 
-    def Q1_forward(self, states, actions):
+    def Q1_forward(self, states, actions) -> torch.Tensor:
         
         # Concatenate the states and actions
         sa = torch.cat((states, actions), dim=1)
@@ -134,7 +160,7 @@ class TD3(OffPolicyAgent):
         super().__init__(device, sim_speed)
 
         # DRL parameters
-        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.9, min_sigma=0.1, decay_period=700_000)
+        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.3, min_sigma=0.1, decay_period=1_000_000)
 
         # TD3 parameters
         self.policy_noise   = POLICY_NOISE
@@ -212,16 +238,21 @@ class TD3(OffPolicyAgent):
         # Optimize the critic
         self.critic_optimizer.zero_grad()
         loss_critic.backward()
+        # Clip the gradients
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0, norm_type=2)
         self.critic_optimizer.step()
 
         # Delayed policy updates
         if self.iteration % self.policy_freq == 0:
+            
             # optimize actor
             loss_actor = -1 * self.critic.Q1_forward(state, self.actor(state)).mean()
 
             # Optimize the actor
             self.actor_optimizer.zero_grad()
             loss_actor.backward()
+            # Clip the gradients
+            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0, norm_type=2)
             self.actor_optimizer.step()
 
             # Update the frozen target models

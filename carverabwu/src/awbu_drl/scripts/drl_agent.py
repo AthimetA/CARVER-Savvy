@@ -278,9 +278,9 @@ class DrlAgent(Node):
         #     self.episode_radom_action = False
         #     self.get_logger().info(bcolors.OKGREEN + "Normal action episode" + bcolors.ENDC)
 
-        # if self.model.epsilon and self.model.epsilon > self.model.epsilon_minimum:
-        #     self.model.epsilon *= self.model.epsilon_decay
-        #     self.get_logger().info(f"Epsilon: {self.model.epsilon}")
+        if self.model.epsilon and self.model.epsilon > self.model.epsilon_minimum:
+            self.model.epsilon *= self.model.epsilon_decay
+            self.get_logger().info(f"Epsilon: {self.model.epsilon}")
 
         return state
     
@@ -494,7 +494,13 @@ class DrlAgent(Node):
                     if self.training and self.total_steps < self.observe_steps:
                         action = self.model.get_action_random()
                     else:
-                        action = self.model.get_action(
+                        # action = self.model.get_action(
+                        #     state=state,
+                        #     is_training=self.training,
+                        #     step=self.total_steps,
+                        #     visualize=ENABLE_VISUAL,
+                        # )
+                        action = self.model.get_action_with_epsilon_greedy(
                             state=state,
                             is_training=self.training,
                             step=self.total_steps,

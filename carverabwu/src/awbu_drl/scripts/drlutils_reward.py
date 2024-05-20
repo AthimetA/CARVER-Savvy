@@ -152,10 +152,10 @@ class Reward():
     omega,  # Angular velocity
     scan_ranges,  # lidar scan
     ):
-        SCALING_FACTOR = 6.0
+        SCALING_FACTOR = 2.0
         
         # Step reward for each action
-        R_STEP = - 4
+        R_STEP = - 2
         # Reward for the angle to the goal
         # [-1, 0] # Angle to the goal (Normalized by 1/3.14)
         R_ANGLE = (-1 * abs(angle_to_goal) / np.pi) * SCALING_FACTOR
@@ -181,7 +181,7 @@ class Reward():
             # If the distance to the goal is less than the waypoint distance
             if distance_to_goal < self.waypoint_list[self.waypoint_idx]:
                 self.waypoint_idx += 1 # Move to the next waypoint
-                R_WAYPOINT = 25
+                R_WAYPOINT = 100
 
             # If the last waypoint is reached
             if self.waypoint_idx == 4:
@@ -196,7 +196,7 @@ class Reward():
         elif status == COLLISION:
             R_STATUS = -250
         elif status == TIMEOUT:
-            R_STATUS = -125
+            R_STATUS = -250
         else:
             R_STATUS = 0
 
@@ -232,8 +232,8 @@ class Reward():
 
         # Scaling the reward
 
-        R_FONT_SCAN = R_FONT_SCAN * 3
+        R_FONT_SCAN = R_FONT_SCAN * 1
 
-        R_OTHER_SCAN = R_OTHER_SCAN * 2
+        R_OTHER_SCAN = R_OTHER_SCAN * 0.5
 
         return R_FONT_SCAN, R_OTHER_SCAN
