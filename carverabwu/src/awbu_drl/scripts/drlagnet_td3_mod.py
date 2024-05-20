@@ -190,12 +190,6 @@ class TD3(OffPolicyAgent):
 
         self.hard_update(self.actor_target, self.actor)
         self.hard_update(self.critic_target, self.critic)
-        
-    def print_gradients(self, named_parameters):
-        print('Gradients')
-        for name, param in named_parameters:
-            if param.grad is not None:
-                print(f"Layer: {name} | Gradient Norm: {param.grad.norm()}")
 
     def get_action_with_epsilon_greedy(self, state, is_training, step, visualize=False):
         if is_training and np.random.rand() <= self.epsilon:
@@ -224,13 +218,6 @@ class TD3(OffPolicyAgent):
         return [np.clip(np.random.uniform(-1.0, 1.0), -1.0, 1.0)] * self.action_size
 
     def train(self, state, action, reward, state_next, done):
-        print('Start training')
-
-        # self.print_gradients(self.actor.named_parameters()) 
-        # print('*' * 50)
-        # self.print_gradients(self.critic.named_parameters())
-        # print('*-' * 50)
-        # assert False
 
         with torch.no_grad():
             # Select action according to policy and add clipped noise
@@ -249,19 +236,11 @@ class TD3(OffPolicyAgent):
             # Compute the target Q value
             Q_target = reward + (1 - done) * self.discount_factor * Q_next
 
-        print('=' * 50)
         # Get current Q estimates
         Q1, Q2 = self.critic(state, action)
 
         # Compute critic loss
         loss_critic = self.loss_function(Q1, Q_target) + self.loss_function(Q2, Q_target)
-        print('Critic loss type:', type(loss_critic))
-
-        # Debug: Check if loss_critic has a valid gradient
-        if loss_critic.requires_grad:
-            print(f"Critic loss requires gradient. with loss: {loss_critic} and device: {loss_critic.device}")
-        else:
-            print("Critic loss does not require gradient.")
 
         # Optimize the critic
         self.critic_optimizer.zero_grad()
@@ -271,8 +250,10 @@ class TD3(OffPolicyAgent):
         # Clip the gradients
         torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0, norm_type=2)
 
-        self.print_gradients(self.critic.named_parameters())    
-        print('*-' * 50)
+        # ---------- Check if the gradients are all zeros ---------- #
+        # Meaning that the gradients are not being computed, and the optimizer is not updating the weights
+        # Indicating that the network is not learnin, need debugging Note: This is a common issue when the learning rate is too high
+        self.grad_norm_zero_assert(self.critic)
 
         # Step the optimizer (Update the weights and biases)
         self.critic_optimizer.step()
@@ -285,40 +266,20 @@ class TD3(OffPolicyAgent):
             
             # optimize actor
             loss_actor = -self.critic.Q1_forward(state, f_action).mean()
-            print('Actor loss type:', type(loss_actor))
-
-            # random_state = torch.rand(1, self.state_size).to(DEVICE)
-
-            # action = self.actor(random_state)
-
-            # loss_actor = -self.critic.Q1_forward(random_state, action).mean()
 
             # Optimize the actor
             self.actor_optimizer.zero_grad()
-            # loss_actor.retain_grad()
+            
+            # Backward pass (Compute the gradients)
             loss_actor.backward()
 
             # Clip the gradients
             torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0, norm_type=2)
-            print('-' * 50)
-            # Debug: Check if loss_actor has a valid gradient
-            if loss_actor.requires_grad:
-                print(f"Actor loss requires gradient. with loss: {loss_actor} and device: {loss_actor.device}")
-            else:
-                print("Actor loss does not require gradient.")
 
-            _p_grad_norm = []
-            for p in self.actor.parameters():
-                print(p.grad)
-                _p_grad_norm.append(p.grad.norm())
-
-
-            self.print_gradients(self.actor.named_parameters()) 
-            print('*=' * 50)
-
-            # Assert When p grad norm is all zeros
-            if all([x == 0 for x in _p_grad_norm]):
-                assert False
+            # ---------- Check if the gradients are all zeros ---------- #
+            # Meaning that the gradients are not being computed, and the optimizer is not updating the weights
+            # Indicating that the network is not learnin, need debugging Note: This is a common issue when the learning rate is too high
+            self.grad_norm_zero_assert(self.actor)
             
             self.actor_optimizer.step()
 
@@ -345,3 +306,12 @@ class TD3(OffPolicyAgent):
             self.last_actor_loss = loss_actor.mean().detach().cpu()
         return [loss_critic.mean().detach().cpu(), self.last_actor_loss]
     
+
+    def grad_norm_zero_assert(self, m: torch.nn.Module):
+        _p_grad_norm = []
+        for p in m.parameters():
+            _p_grad_norm.append(p.grad.norm())
+
+        # Assert When p grad norm is all zeros
+        if all([x == 0 for x in _p_grad_norm]):
+            assert False

@@ -115,13 +115,13 @@ class DrlAgent(Node):
             # Delete the model
             del self.model
             self.model = self.sm.load_model()
-            self.model.policy_noise = POLICY_NOISE
-            self.model.noise_clip = POLICY_NOISE_CLIP
+            # self.model.policy_noise = POLICY_NOISE
+            # self.model.noise_clip = POLICY_NOISE_CLIP
             self.model.device = self.device
-            self.model.learning_rate = LEARNING_RATE
-            self.model.tau = TAU
-            self.model.epsilon_decay = EPSILON_DECAY
-            self.model.epsilon_minimum = EPSILON_MINIMUM
+            # self.model.learning_rate = LEARNING_RATE
+            # self.model.tau = TAU
+            # self.model.epsilon_decay = EPSILON_DECAY
+            # self.model.epsilon_minimum = EPSILON_MINIMUM
 
             self.sm.load_weights(self.model.networks)
             
