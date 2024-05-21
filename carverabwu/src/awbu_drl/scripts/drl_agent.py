@@ -94,6 +94,7 @@ class DrlAgent(Node):
         # Initialize the model
         if self.algorithm == "sac":
             self.model = SAC(self.device, self.algorithm)
+            self.observe_steps = 0 # SAC does not need observe steps
         elif self.algorithm == "td3":
             self.model = TD3(self.device, self.algorithm)
         else:
@@ -115,6 +116,13 @@ class DrlAgent(Node):
         # If the model directory does not exist, Load the session is False
         if not os.path.exists(self.sm.model_dir):
             self.load_session = False
+        else:
+            # Session directory exists 
+            if self.sm.episode == 0:
+                # New session
+                self.get_logger().info(bcolors.FAIL + "Session directory exists, but no episode found" + bcolors.ENDC)
+                self.get_logger().info(bcolors.FAIL + "Starting a new session" + bcolors.ENDC)
+                self.load_session = False
         
         # If loading a session, load the model
         if self.load_session:
