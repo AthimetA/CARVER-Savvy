@@ -166,7 +166,7 @@ class TD3(BaseAgent):
         super().__init__(device, algorithm)
 
         # DRL parameters
-        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.3, min_sigma=0.1, decay_period=1_000_000)
+        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.3, min_sigma=0.15, decay_period=1_000_000)
 
         # TD3 parameters
         self.policy_noise   = POLICY_NOISE
@@ -181,16 +181,16 @@ class TD3(BaseAgent):
         self.actor_target = self.create_network(Actor, 'target_actor')
         # Actor optimizer
         self.actor_optimizer = torch.optim.AdamW(self.actor.parameters(), self.learning_rate_actor)
-        self.actor_scheduler = ReduceLROnPlateau(self.actor_optimizer, mode='min', factor=0.5, patience=1_000_000)
-        self.last_actor_lr = self.learning_rate_actor
+        # self.actor_scheduler = ReduceLROnPlateau(self.actor_optimizer, mode='min', factor=0.5, patience=1_000_000)
+        # self.last_actor_lr = self.learning_rate_actor
 
         # Critic and Target Critic
         self.critic = self.create_network(Critic, 'critic')
         self.critic_target = self.create_network(Critic, 'target_critic')
         # Critic optimizer
         self.critic_optimizer = torch.optim.AdamW(self.critic.parameters(), self.learning_rate_critic)
-        self.critic_scheduler = ReduceLROnPlateau(self.critic_optimizer, mode='min', factor=0.5, patience=1_000_000)
-        self.last_critic_lr = self.learning_rate_critic
+        # self.critic_scheduler = ReduceLROnPlateau(self.critic_optimizer, mode='min', factor=0.5, patience=1_000_000)
+        # self.last_critic_lr = self.learning_rate_critic
 
         self.hard_update(self.actor_target, self.actor)
         self.hard_update(self.critic_target, self.critic)
