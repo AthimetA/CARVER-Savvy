@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 
 from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP, POLICY_UPDATE_FREQUENCY
 
-from drlagent_off_policy_agent import BaseAgent, OUNoise
+from drlagent_base_agent import BaseAgent, OUNoise
 
 from drlutils_visual import DrlVisual
 
@@ -63,23 +63,37 @@ class Actor(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
             m.bias.data.fill_(0.0)
     
-    def forward(self, state):
+    def forward(self, state, visualize=False):
         # Forward pass
-        x = F.relu(self.fc1(state))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
+        x1 = F.relu(self.fc1(state))
+        x2 = F.relu(self.fc2(x1))
+        x3 = F.relu(self.fc3(x2))
         # Mean of the Gaussian policy
-        mean = self.mean(x)
+        mean = self.mean(x3)
         # Clamp the standard deviation of the Gaussian policy
-        log_std = self.log_std(x) 
+        log_std = self.log_std(x3) 
         log_std = torch.clamp(log_std, min=self.log_std_min, max=self.log_std_max) 
         # Return the mean and the standard deviation of the Gaussian policy
         std = log_std.exp()
+
+        # If visualization is enabled, update the layers
+        if visualize and self.visual:
+            # Using x as feature visualization
+
+            with torch.no_grad():
+                norm = torch.distributions.Normal(mean, std)
+                x_t = norm.rsample()
+                action = torch.tanh(x_t)
+
+            self.visual.tab_actor_update(actions = action[0],
+                                         hidden = [x1, x2, x3],
+                                         biases = [self.fc1.bias, self.fc2.bias, self.fc3.bias])
+
         return mean, std
     
-    def sample(self, state):
+    def sample(self, state, visualize=False):
         # Sample an action from the Gaussian policy
-        mean, std = self.forward(state)
+        mean, std = self.forward(state, visualize)
         # Normal distribution
         normal = torch.distributions.Normal(mean, std)
         # Sample an action
@@ -110,6 +124,8 @@ class Critic(nn.Module):
         self.fc2 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, hidden_size)
         self.q = nn.Linear(hidden_size, 1)
+
+        self.apply(self.init_weights)
     
     def forward(self, state, action):
         x = torch.cat([state, action], dim=1)
@@ -118,26 +134,66 @@ class Critic(nn.Module):
         x = F.relu(self.fc3(x))
         q = self.q(x)
         return q
+    
+    def visualize_forward(self, sa):
+
+        with torch.no_grad(): # No gradient calculation
+
+            # Forward pass
+            x1 = F.relu(self.fc1(sa))
+            x2 = F.relu(self.fc2(x1))
+            x3 = F.relu(self.fc3(x2))
+            # Value of the Q-value network
+            value = self.q(x3)
+        
+        return value, x1, x2, x3, self.fc1.bias, self.fc2.bias, self.fc3.bias
+    
+    def init_weights(self, m: torch.nn.Module):
+        # Initialize the weights of the network
+        if isinstance(m, torch.nn.Linear):
+            # Kaiming He initialization
+            torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+            m.bias.data.fill_(0.0)
 
 class QValue(nn.Module):
-    def __init__(self, state_dim, hidden_dim):
+    def __init__(self, 
+    name,           # Name of the network 
+    state_size,     # Number of input neurons
+    action_size,    # Number of output neurons
+    hidden_size,    # Number of neurons in hidden layers
+    visual = None
+    ):
         super(QValue, self).__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = nn.Linear(hidden_dim, hidden_dim)
-        self.value = nn.Linear(hidden_dim, 1)
+        
+        self.name = name
+        self.visual = visual
+        self.iteration = 0
+
+        self.fc1 = nn.Linear(state_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.val = nn.Linear(hidden_size, 1)
+
+        self.apply(self.init_weights)
     
     def forward(self, state):
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
-        value = self.value(x)
+        value = self.val(x)
         return value
+    
+    def init_weights(self, m: torch.nn.Module):
+        # Initialize the weights of the network
+        if isinstance(m, torch.nn.Linear):
+            # Kaiming He initialization
+            torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+            m.bias.data.fill_(0.0)
     
 
 class SAC(BaseAgent):
-    def __init__(self, device):
-        super().__init__(device)
+    def __init__(self, device, algorithm):
+        super().__init__(device, algorithm)
         # Set aplha
         self.alpha = 0.2
 
@@ -162,13 +218,26 @@ class SAC(BaseAgent):
 
     def get_action(self, state, is_training, step, visualize=False):
         state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
-        action, _ = self.actor.sample(state)
+        action, _ = self.actor.sample(state, visualize)
 
         # If Visualize is True, update the state of the tab
         if visualize:
             self.visual.tab_state_update(states = state)
+            sa = torch.cat([state, action], dim=1)
 
-        return action.detach().cpu().numpy()[0]
+            # Q1
+            value1, x11, x21, x31, b11, b21, b31 = self.critic_1.visualize_forward(sa)
+
+            # Q2
+            value2, x12, x22, x32, b12, b22, b32 = self.critic_2.visualize_forward(sa)
+
+            # Update the tab
+            self.visual.tab_critic_update(q_values = [value1[0], value2[0]],
+                                        hidden = [x11, x21, x31, x12, x22, x32],
+                                        biases = [b11, b21, b31, b12, b22, b32])
+
+
+        return action.detach().cpu().numpy().tolist()[0]
     
     def grad_norm_zero_assert(self, m: torch.nn.Module):
         _p_grad_norm = []
@@ -196,6 +265,7 @@ class SAC(BaseAgent):
         with torch.no_grad():
             # Sample an action from the Gaussian policy
             next_action, next_log_prob = self.actor.sample(state_next)
+            next_log_prob = next_log_prob.reshape(-1, 1)
             # Compute the target Q-value
             target_value = self.q_value_target(state_next)
             q_target = reward + (1 - done) * self.discount_factor * (target_value - self.alpha * next_log_prob)
@@ -203,6 +273,7 @@ class SAC(BaseAgent):
         # Compute the Q-values
         q1 = self.critic_1(state, action)
         q2 = self.critic_2(state, action)
+
         critic_1_loss = self.loss_function(q1, q_target)
         critic_2_loss = self.loss_function(q2, q_target)
 
@@ -224,6 +295,7 @@ class SAC(BaseAgent):
 
         # Update the Q-value network
         new_action, new_log_prob = self.actor.sample(state)
+        new_log_prob = new_log_prob.reshape(-1, 1)
         q1_new = self.critic_1(state, new_action)
         q2_new = self.critic_2(state, new_action)
         q_new = torch.minimum(q1_new, q2_new)

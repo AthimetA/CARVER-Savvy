@@ -39,7 +39,8 @@ import torch
 from env_utils import get_simulation_speed, read_stage, translate_outcome
 from env_utils import bcolors
 
-from drlagnet_td3_mod import TD3
+from drlagnet_td3 import TD3
+from drlagnet_sac import SAC
 from drlutils_graph import Graph
 from drlutils_replaybuffer import ReplayBuffer
 from drlutils_storagemanager import StorageManager
@@ -89,9 +90,15 @@ class DrlAgent(Node):
         # ===================================================================== #
         #                             Model loading                             #
         # ===================================================================== #
-
+        self.algorithm = 'sac'
         # Initialize the model
-        self.model = TD3(self.device)
+        if self.algorithm == "sac":
+            self.model = SAC(self.device, self.algorithm)
+        elif self.algorithm == "td3":
+            self.model = TD3(self.device, self.algorithm)
+        else:
+            self.get_logger().error(bcolors.FAIL + "Invalid Algorithm" + bcolors.ENDC)
+            quit()
         self.get_logger().info(bcolors.OKBLUE + f"Algorithm: {self.algorithm}, Model Initialized" + bcolors.ENDC)
 
         
