@@ -134,8 +134,6 @@ class DrlAgent(Node):
             # Load the replay buffer
             if self.training:
                 self.replay_buffer.buffer = self.sm.load_replay_buffer(self.model.buffer_size)
-            # # Load the graph data
-            # self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
 
             self.get_logger().info(bcolors.OKGREEN + f"Model Loaded: {self.model.get_model_parameters()} device: {self.model.device} total steps: {self.total_steps}" + bcolors.ENDC)      
 
@@ -146,10 +144,11 @@ class DrlAgent(Node):
         self.get_logger().info(bcolors.OKBLUE + "Storage Manager Initialized" + bcolors.ENDC)
 
         # Initialize the graph
-        self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode)
+        self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode, continue_graph=True)
         # Load the graph data
         if self.load_session:
             self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
+            self.graph.draw_plots(self.sm.episode)
         self.get_logger().info(bcolors.OKBLUE + "Graph Initialized" + bcolors.ENDC)
 
         # Update graph session dir

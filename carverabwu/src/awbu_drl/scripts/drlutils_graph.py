@@ -8,10 +8,11 @@ from matplotlib.ticker import MaxNLocator
 
 matplotlib.use('TkAgg')
 class Graph():
-    def __init__(self, session_dir, first_episode = 0):
+    def __init__(self, session_dir, first_episode = 0, continue_graph = True):
         plt.show()
 
         self.first_episode = first_episode
+        self.continue_graph = continue_graph
 
         self.session_dir = session_dir
         self.legend_labels = ['Unknown', 'Success', 'Collision', 'Timeout', 'Tumble']
@@ -55,7 +56,8 @@ class Graph():
     def set_graphdata(self, graphdata, episode):
         self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor = [graphdata[i] for i in range(len(self.graphdata))]
         self.graphdata = [self.global_steps, self.data_outcome_history, self.data_rewards, self.data_loss_critic, self.data_loss_actor]
-        self.clear_graph()
+        if not self.continue_graph:
+            self.clear_graph()
         self.draw_plots(episode)
         return self.global_steps
 
@@ -69,7 +71,10 @@ class Graph():
 
     def draw_plots(self, ep):
         
-        episode = ep - self.first_episode
+        if not self.continue_graph:
+            episode = ep - self.first_episode
+        else:
+            episode = ep
 
         xaxis = np.array(range(1, episode + 1))
 
