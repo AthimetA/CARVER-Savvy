@@ -49,6 +49,8 @@ from drlutils_visual import *
 
 import torch.nn as nn
 
+LOAD_BEST_WEIGHTS_WHEN_AVAILABLE = True
+
 class DrlAgent(Node):
     def __init__(self,
     algorithm : str = "td3",
@@ -90,7 +92,7 @@ class DrlAgent(Node):
         # ===================================================================== #
         #                             Model loading                             #
         # ===================================================================== #
-        self.algorithm = 'sac'
+        # self.algorithm = 'sac'
         # Initialize the model
         if self.algorithm == "sac":
             self.model = SAC(self.device, self.algorithm)
@@ -126,10 +128,9 @@ class DrlAgent(Node):
         
         # If loading a session, load the model
         if self.load_session:
-            # Delete the model
-            del self.model
-            self.model = self.sm.load_model()
+            # Set the model device
             self.model.device = self.device
+            # Load Network weights
             self.sm.load_weights(self.model.networks)
             
             # Load the replay buffer
