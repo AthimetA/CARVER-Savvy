@@ -8,7 +8,11 @@ from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 
 from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP, POLICY_UPDATE_FREQUENCY
 
-from drlagent_off_policy_agent import OffPolicyAgent, OUNoise
+from drlagent_off_policy_agent import BaseAgent, OUNoise
+
+from drlutils_visual import DrlVisual
+
+from drlutils_replaybuffer import ReplayBuffer
 
 from abc import ABC, abstractmethod
 
@@ -26,8 +30,8 @@ class Actor(torch.nn.Module, ABC):
     name,           # Name of the network
     state_size,     # Number of input neurons
     action_size,    # Number of output neurons
-    hidden_size,     # Number of neurons in hidden layers
-    visual= None
+    hidden_size,    # Number of neurons in hidden layers
+    visual = None
     ):
         super(Actor, self).__init__()
         self.name = name
@@ -65,7 +69,6 @@ class Actor(torch.nn.Module, ABC):
             self.visual.tab_actor_update(actions = action,
                                          hidden = [x1, x2, x3],
                                          biases = [self.fa1.bias, self.fa2.bias, self.fa3.bias])
-
         return action
 
 class Critic(torch.nn.Module, ABC):
@@ -73,7 +76,7 @@ class Critic(torch.nn.Module, ABC):
     name,           # Name of the network 
     state_size,     # Number of input neurons
     action_size,    # Number of output neurons
-    hidden_size,     # Number of neurons in hidden layers
+    hidden_size,    # Number of neurons in hidden layers
     visual = None
     ):
         super(Critic, self).__init__()
@@ -158,9 +161,9 @@ class Critic(torch.nn.Module, ABC):
                                     biases = [self.l01.bias, self.l02.bias, self.l03.bias, self.l11.bias, self.l12.bias, self.l13.bias])
 
 
-class TD3(OffPolicyAgent):
-    def __init__(self, device, sim_speed):
-        super().__init__(device, sim_speed)
+class TD3(BaseAgent):
+    def __init__(self, device):
+        super().__init__(device)
 
         # DRL parameters
         self.noise = OUNoise(action_space=self.action_size, max_sigma=0.3, min_sigma=0.1, decay_period=1_000_000)
@@ -169,7 +172,8 @@ class TD3(OffPolicyAgent):
         self.policy_noise   = POLICY_NOISE
         self.noise_clip     = POLICY_NOISE_CLIP
         self.policy_freq    = POLICY_UPDATE_FREQUENCY
-
+        
+        # Loss
         self.last_actor_loss = 0
 
         # Actor and Target Actor
@@ -177,7 +181,7 @@ class TD3(OffPolicyAgent):
         self.actor_target = self.create_network(Actor, 'target_actor')
         # Actor optimizer
         self.actor_optimizer = torch.optim.AdamW(self.actor.parameters(), self.learning_rate_actor)
-        self.actor_scheduler = ReduceLROnPlateau(self.actor_optimizer, mode='min', factor=0.25, patience=10_000)
+        self.actor_scheduler = ReduceLROnPlateau(self.actor_optimizer, mode='min', factor=0.5, patience=1_000_000)
         self.last_actor_lr = self.learning_rate_actor
 
         # Critic and Target Critic
@@ -185,17 +189,11 @@ class TD3(OffPolicyAgent):
         self.critic_target = self.create_network(Critic, 'target_critic')
         # Critic optimizer
         self.critic_optimizer = torch.optim.AdamW(self.critic.parameters(), self.learning_rate_critic)
-        self.critic_scheduler = ReduceLROnPlateau(self.critic_optimizer, mode='min', factor=0.25, patience=10_000)
+        self.critic_scheduler = ReduceLROnPlateau(self.critic_optimizer, mode='min', factor=0.5, patience=1_000_000)
         self.last_critic_lr = self.learning_rate_critic
 
         self.hard_update(self.actor_target, self.actor)
         self.hard_update(self.critic_target, self.critic)
-
-    def get_action_with_epsilon_greedy(self, state, is_training, step, visualize=False):
-        if is_training and np.random.rand() <= self.epsilon:
-            return self.get_action_random()
-        else:
-            return self.get_action(state, is_training, step, visualize)
 
     def get_action(self, state, is_training, step, visualize=False):
         state = torch.from_numpy(np.asarray(state, np.float32)).to(self.device)
@@ -214,11 +212,23 @@ class TD3(OffPolicyAgent):
             # print('-' * 50)
         return action.detach().cpu().data.numpy().tolist()
 
-    def get_action_random(self):
+    def get_action_random(self, state):
         return [np.clip(np.random.uniform(-1.0, 1.0), -1.0, 1.0)] * self.action_size
 
-    def train(self, state, action, reward, state_next, done):
+    def train(self, replaybuffer: ReplayBuffer):
 
+        # Sample a batch of transitions
+        batch = replaybuffer.sample(self.batch_size)
+        state, action, reward, state_next, done = batch
+
+        # Convert the numpy arrays to torch tensors and move to the device
+        state = torch.from_numpy(state).to(self.device)
+        action = torch.from_numpy(action).to(self.device)
+        reward = torch.from_numpy(reward).to(self.device)
+        state_next = torch.from_numpy(state_next).to(self.device)
+        done = torch.from_numpy(done).to(self.device)
+
+        # Compute the target Q value
         with torch.no_grad():
             # Select action according to policy and add clipped noise
             noise = (
@@ -283,20 +293,20 @@ class TD3(OffPolicyAgent):
             
             self.actor_optimizer.step()
 
-            # Step the scheduler
-            self.actor_scheduler.step(loss_actor)
-            self.critic_scheduler.step(loss_critic)
+            # ---------- Learning rate scheduler ---------- #
+            # self.actor_scheduler.step(loss_actor)
+            # self.critic_scheduler.step(loss_critic)
 
-            actor_lr = self.actor_scheduler.get_last_lr()[0]
-            critic_lr = self.critic_scheduler.get_last_lr()[0]
+            # actor_lr = self.actor_scheduler.get_last_lr()[0]
+            # critic_lr = self.critic_scheduler.get_last_lr()[0]
 
-            if actor_lr != self.last_actor_lr:
-                self.last_actor_lr = actor_lr
-                print(f'Actor learning rate updated to {actor_lr}')
+            # if actor_lr != self.last_actor_lr:
+            #     self.last_actor_lr = actor_lr
+            #     print(f'Actor learning rate updated to {actor_lr}')
             
-            if critic_lr != self.last_critic_lr:
-                self.last_critic_lr = critic_lr
-                print(f'Critic learning rate updated to {critic_lr}')
+            # if critic_lr != self.last_critic_lr:
+            #     self.last_critic_lr = critic_lr
+            #     print(f'Critic learning rate updated to {critic_lr}')
 
             # Update the frozen target models
             self.soft_update(self.actor_target, self.actor, self.tau)
@@ -304,6 +314,10 @@ class TD3(OffPolicyAgent):
 
             # Visualize the network
             self.last_actor_loss = loss_actor.mean().detach().cpu()
+
+        # Increment the iteration
+        self.iteration += 1
+
         return [loss_critic.mean().detach().cpu(), self.last_actor_loss]
     
 

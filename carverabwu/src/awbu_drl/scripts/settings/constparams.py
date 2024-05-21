@@ -69,7 +69,7 @@ BUFFER_SIZE     = BATCH_SIZE * 1000 # Number of samples stored in replay buffer 
 DISCOUNT_FACTOR = 0.99
 LEARNING_RATE   = 1e-3
 LEARNING_RATE_ACTOR = 1e-4
-LEARNING_RATE_CRITIC = 1e-5
+LEARNING_RATE_CRITIC = 1e-4
 TAU             = 0.05
 
 OBSERVE_STEPS   = BATCH_SIZE * 10 # At training start random actions are taken for N steps for better exploration

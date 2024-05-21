@@ -3,8 +3,7 @@ import numpy as np
 
 import matplotlib
 import matplotlib.pyplot as plt
-from reward import SUCCESS
-from settings.constparams import GRAPH_DRAW_INTERVAL, GRAPH_AVERAGE_REWARD
+from settings.constparams import GRAPH_DRAW_INTERVAL, GRAPH_AVERAGE_REWARD, SUCCESS
 from matplotlib.ticker import MaxNLocator
 
 matplotlib.use('TkAgg')

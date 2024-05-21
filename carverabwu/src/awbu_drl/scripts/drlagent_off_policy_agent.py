@@ -18,21 +18,19 @@ from abc import ABC, abstractmethod
 import numpy as np
 import torch
 import torch.nn.functional as torchf
-
-from reward import REWARD_FUNCTION
                                  
-from settings.constparams import ENABLE_BACKWARD, ENABLE_STACKING, ACTION_SIZE, HIDDEN_SIZE, BATCH_SIZE, BUFFER_SIZE, DISCOUNT_FACTOR, \
-                                LEARNING_RATE, TAU, STEP_TIME, EPSILON_DECAY, EPSILON_MINIMUM, STACK_DEPTH, FRAME_SKIP, ENABLE_VISUAL
-
-from settings.constparams import NUM_SCAN_SAMPLES, EPSILON_INITIAL, LEARNING_RATE_ACTOR, LEARNING_RATE_CRITIC
+from settings.constparams import ACTION_SIZE, HIDDEN_SIZE, BATCH_SIZE, BUFFER_SIZE, DISCOUNT_FACTOR, \
+                                TAU, EPSILON_DECAY, EPSILON_MINIMUM, ENABLE_VISUAL, NUM_SCAN_SAMPLES, \
+                                EPSILON_INITIAL, LEARNING_RATE_ACTOR, LEARNING_RATE_CRITIC
 
 from drlutils_replaybuffer import ReplayBuffer
+from drlutils_visual import DrlVisual
 
-class OffPolicyAgent(ABC):
-    def __init__(self, device, simulation_speed):
-
+class BaseAgent(ABC):
+    def __init__(self, device):
+        
+        # Device
         self.device = device
-        self.simulation_speed   = simulation_speed
 
         # Network structure
         self.state_size         = NUM_SCAN_SAMPLES + 2 + 6 + 4 + 2
@@ -43,23 +41,14 @@ class OffPolicyAgent(ABC):
         self.batch_size         = BATCH_SIZE
         self.buffer_size        = BUFFER_SIZE
         self.discount_factor    = DISCOUNT_FACTOR
-        self.learning_rate      = LEARNING_RATE
         self.learning_rate_actor= LEARNING_RATE_ACTOR
         self.learning_rate_critic= LEARNING_RATE_CRITIC
         self.tau                = TAU
         # Other parameters
-        self.step_time          = STEP_TIME
         self.loss_function      = torchf.mse_loss
         self.epsilon            = EPSILON_INITIAL
         self.epsilon_decay      = EPSILON_DECAY
         self.epsilon_minimum    = EPSILON_MINIMUM
-        self.reward_function    = REWARD_FUNCTION
-        self.backward_enabled   = ENABLE_BACKWARD
-        self.stacking_enabled   = ENABLE_STACKING
-        self.stack_depth        = STACK_DEPTH
-        self.frame_skip         = FRAME_SKIP
-        if ENABLE_STACKING:
-            self.input_size *= self.stack_depth
 
         if ENABLE_VISUAL:
             self.visual = None
@@ -68,7 +57,7 @@ class OffPolicyAgent(ABC):
         self.iteration = 0
 
     @abstractmethod
-    def train():
+    def train(self, replaybuffer: ReplayBuffer):
         pass
 
     @abstractmethod
@@ -79,35 +68,16 @@ class OffPolicyAgent(ABC):
     def get_action_random():
         pass
 
-    def _train(self, replaybuffer: ReplayBuffer):
-        batch = replaybuffer.sample(self.batch_size)
-        sample_s, sample_a, sample_r, sample_ns, sample_d = batch
-        sample_s = torch.from_numpy(sample_s).to(self.device)
-        sample_a = torch.from_numpy(sample_a).to(self.device)
-        sample_r = torch.from_numpy(sample_r).to(self.device)
-        sample_ns = torch.from_numpy(sample_ns).to(self.device)
-        sample_d = torch.from_numpy(sample_d).to(self.device)
-        result = self.train(sample_s, sample_a, sample_r, sample_ns, sample_d)
-        self.iteration += 1
-        return result
-
     def create_network(self, type: torch.nn.Module, name: str) -> torch.nn.Module:
         network = type(name, self.input_size, self.action_size, self.hidden_size).to(self.device)
         self.networks.append(network)
         return network
 
-    def create_optimizer(self, network: torch.nn.Module):
-        optimizer = torch.optim.AdamW(network.parameters(), self.learning_rate)
-        # Cap the gradient norm to -1 and 1
-        # for param in network.parameters():
-        #     param.register_hook(lambda grad: torch.clamp(grad, -1.0, 1.0))
-        return optimizer
-
-    def hard_update(self, target, source):
+    def hard_update(self, target: torch.nn.Module, source: torch.nn.Module):
         for target_param, param in zip(target.parameters(), source.parameters()):
             target_param.data.copy_(param.data)
 
-    def soft_update(self, target, source, tau):
+    def soft_update(self, target: torch.nn.Module, source: torch.nn.Module, tau: float):
         for target_param, param in zip(target.parameters(), source.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
 
@@ -120,37 +90,14 @@ class OffPolicyAgent(ABC):
 
     def get_model_parameters(self):
         parameters = [self.batch_size, self.buffer_size, self.state_size, self.action_size, self.hidden_size,
-                            self.discount_factor, self.learning_rate, self.tau, self.step_time, REWARD_FUNCTION,
-                            ENABLE_BACKWARD, ENABLE_STACKING, self.stack_depth, self.frame_skip]
+                            self.discount_factor, self.learning_rate_actor, self.learning_rate_critic, self.tau,]
         parameter_string = ', '.join(map(str, parameters))
         return parameter_string
 
-    def attach_visual(self, visual):
+    def attach_visual(self, visual: DrlVisual):
         self.actor.visual = visual
         self.critic.visual = visual
         self.visual = visual
-
-class Network(torch.nn.Module, ABC):
-    def __init__(self, name, visual=None):
-        super(Network, self).__init__()
-        self.name = name
-        self.visual = visual
-        self.iteration = 0
-
-    @abstractmethod
-    def forward():
-        pass
-
-    def init_weights(n, m):
-        if isinstance(m, torch.nn.Linear):
-            # --- define weights initialization here (optional) ---
-            # torch.nn.init.xavier_uniform_(m.weight)
-            # m.bias.data.fill_(0.01)
-
-            # Kaiming He initialization
-            torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
-            m.bias.data.fill_(0.01)
-
 
 class OUNoise(object):
     def __init__(self, action_space, mu=0.0, theta=0.15, max_sigma=0.2, min_sigma=0.1, decay_period=600_000):
