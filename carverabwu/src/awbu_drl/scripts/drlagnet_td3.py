@@ -258,7 +258,7 @@ class TD3(BaseAgent):
         loss_critic.backward()
 
         # Clip the gradients
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0, norm_type=2)
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=2.0, norm_type=2)
 
         # ---------- Check if the gradients are all zeros ---------- #
         # Meaning that the gradients are not being computed, and the optimizer is not updating the weights
@@ -284,7 +284,7 @@ class TD3(BaseAgent):
             loss_actor.backward()
 
             # Clip the gradients
-            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0, norm_type=2)
+            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=2.0, norm_type=2)
 
             # ---------- Check if the gradients are all zeros ---------- #
             # Meaning that the gradients are not being computed, and the optimizer is not updating the weights

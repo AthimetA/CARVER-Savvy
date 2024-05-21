@@ -129,11 +129,11 @@
     </include>
 
     <!-- Obstacles -->
-    <include>
+    <!-- <include>
       <uri>model://cylinder_obstacle_3</uri>
       <name>cylinder_obstacle_1</name>
       <pose>6.0 8.0 0.5 0.0 0.0 -1.5708</pose>
-    </include>
+    </include> -->
 
     <include>
       <uri>model://cylinder_obstacle_3</uri>
@@ -153,11 +153,11 @@
       <pose>0.0 8.0 0.5 0.0 0.0 -1.5708</pose>
     </include>
 
-    <include>
+    <!-- <include>
       <uri>model://cylinder_obstacle_3</uri>
       <name>cylinder_obstacle_5</name>
       <pose>-2.0 8.0 0.5 0.0 0.0 -1.5708</pose>
-    </include>
+    </include> -->
 
     <include>
       <uri>model://cylinder_obstacle_3</uri>
@@ -165,11 +165,11 @@
       <pose>-4.0 8.0 0.5 0.0 0.0 -1.5708</pose>
     </include>
 
-    <include>
+    <!-- <include>
       <uri>model://cylinder_obstacle_3</uri>
       <name>cylinder_obstacle_7</name>
       <pose>-6.0 8.0 0.5 0.0 0.0 -1.5708</pose>
-    </include>
+    </include> -->
 
     <include>
       <uri>model://cylinder_obstacle_4</uri>
@@ -183,11 +183,11 @@
       <pose>3.0 -8.0 0.5 0.0 0.0 1.5708</pose>
     </include>
 
-    <include>
+    <!-- <include>
       <uri>model://cylinder_obstacle_4</uri>
       <name>cylinder_obstacle_10</name>
       <pose>1.0 -8.0 0.5 0.0 0.0 1.5708</pose>
-    </include>
+    </include> -->
 
     <include>
       <uri>model://cylinder_obstacle_4</uri>
