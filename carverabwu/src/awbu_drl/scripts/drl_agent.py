@@ -49,8 +49,6 @@ from drlutils_visual import *
 
 import torch.nn as nn
 
-LOAD_BEST_WEIGHTS_WHEN_AVAILABLE = True
-
 class DrlAgent(Node):
     def __init__(self,
     algorithm : str = "td3",
@@ -449,11 +447,17 @@ class DrlAgent(Node):
 
 def main(args=sys.argv[1:]):
     rclpy.init(args=args)
-    if len(args) == 0:
-        drl_agent = DrlAgent()
+    if len(args) == 1:
+        algorithm = args[0]
     else:
-        rclpy.shutdown()
-        quit("ERROR: wrong number of arguments!")
+        algorithm = "td3"
+    # Check if the algorithm is valid
+    if algorithm not in ["td3", "sac"]:
+        print("Invalid Algorithm Using TD3")
+        algorithm = "td3"
+    
+    drl_agent = DrlAgent(algorithm=algorithm, training=True, real_robot=False, load_session=True)
+
     rclpy.spin(drl_agent)
     drl_agent.destroy()
     rclpy.shutdown()
