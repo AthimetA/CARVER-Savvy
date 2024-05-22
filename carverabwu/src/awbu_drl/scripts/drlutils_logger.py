@@ -47,6 +47,9 @@ class Logger():
         self.best_episode_reward = 0
         self.highest_success = 0
         self.best_episode_success = 0
+        self.EGO_SCORE_LIST = []
+        self.SOCIAL_SCORE_LIST = []
+        self.AVRIVAL_LIST = []
 
         # Initialize files
         datetime = time.strftime("%Y%m%d-%H%M%S")
@@ -77,7 +80,7 @@ class Logger():
             file_comparison.write(datetime + ', ' + session + ', ' + str(episode) + ', ' + stage + ', ' + hyperparameters + '\n')
         return file_comparison
 
-    def update_comparison_file(self, episode, success_count, average_reward=0):
+    def update_comparison_file(self, episode, success_count, average_reward , avg_ego ,avg_social):
         if average_reward > self.highest_reward and episode != 1:
             self.highest_reward = average_reward
             self.best_episode_reward = episode
@@ -93,9 +96,14 @@ class Logger():
             file_comparison.writelines(lines[:-1])
             file_comparison.write(datetime + ', ' + self.session + ', ' + self.stage + ', ' + self.hyperparameters)
             if self.is_training:
-                file_comparison.write(', results, ' + str(episode) + ', ' + str(self.best_episode_success) + ': ' + str(self.highest_success) + '%, ' + str(self.best_episode_reward) + ': ' + str(self.highest_reward) + '\n')
+                file_comparison.write(', results, ' + str(episode) + ', ' 
+                                      + str(self.best_episode_success) + ': ' + str(self.highest_success) 
+                                      + '%, ' + str(self.best_episode_reward) + ': ' + str(self.highest_reward) + '\n')
             else:
-                file_comparison.write(', results, ' + str(episode) + ', ' + str(self.best_episode_success) + ', ' + str(self.highest_success) + '%\n')
+                file_comparison.write(', results, ' + str(episode) + ', ' 
+                                      + str(self.best_episode_success) + ', ' + str(self.highest_success) 
+                                      + str(avg_ego) + ', ' + str(avg_social)
+                                      + '%\n')
 
     '''
     
@@ -116,18 +124,40 @@ class Logger():
         return file_log
 
 
-    def update_test_results(self, step, outcome, distance_traveled, episode_duration, swerving_sum):
+    def update_test_results(self, step, outcome, distance_traveled, episode_duration, swerving_sum,
+                            k_time,
+                            m_time,
+                            total_time):
+        
+        
         self.test_entry += 1
         self.test_outcome[outcome] += 1
         if outcome == SUCCESS:
             self.test_distance.append(distance_traveled)
             self.test_duration.append(episode_duration)
             self.test_swerving.append(swerving_sum/step)
+
+            '''
+            Calculate EGO SCORE AND SOCIAL SCORE
+            '''
+            EGO_SCORE = (1-(k_time/total_time))
+            SOCIAL_SCORE = (1-(m_time/total_time))
+
+            self.EGO_SCORE_LIST.append(EGO_SCORE)
+            self.SOCIAL_SCORE_LIST.append(SOCIAL_SCORE)
+            print(
+                f"EGO_SCORE: {EGO_SCORE:.2%} "
+                f"SOCIAL_SCORE: {SOCIAL_SCORE:.2%}")
+            
+        self.AVRIVAL_LIST.append(total_time)
+
         success_count = self.test_outcome[SUCCESS]
 
         self.file_log.write(f"{self.test_entry}, {outcome}, {step}, {episode_duration}, {distance_traveled}, {self.test_outcome[SUCCESS]}/{self.test_outcome[COLLISION]}/{self.test_outcome[TIMEOUT]}/{self.test_outcome[TUMBLE]}\n")
         if self.test_entry > 0 and self.test_entry % 100 == 0:
-            self.update_comparison_file(self.test_entry, self.test_outcome[SUCCESS] / (self.test_entry / 100), 0)
+            AVG_EGO = sum(self.EGO_SCORE_LIST)/len(self.EGO_SCORE_LIST)
+            AVG_SOCIAL = sum(self.SOCIAL_SCORE_LIST)/len(self.SOCIAL_SCORE_LIST)
+            self.update_comparison_file(self.test_entry, self.test_outcome[SUCCESS] / (self.test_entry / 100), 0 , AVG_EGO ,AVG_SOCIAL)
             self.file_log.write(f"Successes: {self.test_outcome[SUCCESS]} ({self.test_outcome[SUCCESS]/self.test_entry:.2%}), "
             f"collision: {self.test_outcome[COLLISION]} ({self.test_outcome[COLLISION]/self.test_entry:.2%}), "
             f"timeouts: {self.test_outcome[TIMEOUT]}, ({self.test_outcome[TIMEOUT]/self.test_entry:.2%}), "
@@ -139,10 +169,15 @@ class Logger():
         if self.test_entry > 0:
             print(f"Successes: {self.test_outcome[SUCCESS]} ({self.test_outcome[SUCCESS]/self.test_entry:.2%}), "
             f"collision: {self.test_outcome[COLLISION]} ({self.test_outcome[COLLISION]/self.test_entry:.2%}), "
-            f"timeouts: {self.test_outcome[TIMEOUT]}, ({self.test_outcome[TIMEOUT]/self.test_entry:.2%}), "
-            f"tumbles: {self.test_outcome[TUMBLE]}, ({self.test_outcome[TUMBLE]/self.test_entry:.2%}), ")
+            f"timeouts: {self.test_outcome[TIMEOUT]}, ({self.test_outcome[TIMEOUT]/self.test_entry:.2%}), ")
+            # f"tumbles: {self.test_outcome[TUMBLE]}, ({self.test_outcome[TUMBLE]/self.test_entry:.2%}), ")
+
             if success_count > 0:
                 print(f"distance: {sum(self.test_distance)/success_count:.3f}, "
                       f"swerving: {sum(self.test_swerving)/success_count:.3f}, "
-                      f"duration: {sum(self.test_duration)/success_count:.3f}")
+                      f"duration: {sum(self.test_duration)/success_count:.3f}, "
+                      f"AVG EGO_SCORE: {sum(self.EGO_SCORE_LIST)/success_count:.2%} "
+                      f"AVG SOCIAL_SCORE: {sum(self.SOCIAL_SCORE_LIST)/success_count:.2%} "
+                      f"AVG ARIVAL TIME: {sum(self.AVRIVAL_LIST)/len(self.AVRIVAL_LIST):.2f} "
+                      )
 
