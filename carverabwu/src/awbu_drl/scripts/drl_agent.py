@@ -28,7 +28,7 @@ import numpy as np
 from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, TAU, LEARNING_RATE
 from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP, EPSILON_DECAY, EPSILON_MINIMUM
 
-from awbu_interfaces.srv import DrlStep, EnvReady
+from awbu_interfaces.srv import DrlStep, EnvReady , ScoreStep
 from std_srvs.srv import Empty
 
 import rclpy
@@ -42,6 +42,9 @@ from env_utils import bcolors
 from drlagnet_td3 import TD3
 from drlagnet_sac import SAC
 from drlutils_graph import Graph
+
+from drlutils_test_graph import Test_Graph
+
 from drlutils_replaybuffer import ReplayBuffer
 from drlutils_storagemanager import StorageManager
 from drlutils_logger import Logger
@@ -65,7 +68,12 @@ class DrlAgent(Node):
         '''
 
         self.algorithm = algorithm
-        self.training = int(training)
+        self.training = training
+        self.EPISODE_TEST = 1000
+
+        if self.training : self.get_logger().info(bcolors.OKGREEN + f'Start Trainning {self.algorithm}')
+        else : self.get_logger().info(bcolors.OKGREEN + f'Start Evaluate {self.algorithm} with {self.EPISODE_TEST} episode')
+        
         self.load_session = load_session
         self.real_robot = real_robot
 
@@ -143,16 +151,21 @@ class DrlAgent(Node):
 
         self.get_logger().info(bcolors.OKBLUE + "Storage Manager Initialized" + bcolors.ENDC)
 
-        # Initialize the graph
-        self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode, continue_graph=True)
-        # Load the graph data
-        if self.load_session:
-            self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
-            self.graph.draw_plots(self.sm.episode)
-        self.get_logger().info(bcolors.OKBLUE + "Graph Initialized" + bcolors.ENDC)
+        if self.training :
+            # Initialize the graph
+            self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode, continue_graph=True)
+            # Load the graph data
+            if self.load_session:
+                self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
+                self.graph.draw_plots(self.sm.episode)
+            self.get_logger().info(bcolors.OKBLUE + "Graph Initialized" + bcolors.ENDC)
 
-        # Update graph session dir
-        self.graph.session_dir = self.sm.session_dir
+            # Update graph session dir
+            self.graph.session_dir = self.sm.session_dir
+        else : 
+            self.test_graph = Test_Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode, continue_graph=True)
+
+
 
         # Initialize the logger
         self.logger = Logger(   training        = self.training,  
@@ -178,6 +191,8 @@ class DrlAgent(Node):
         # Create Clients for step action and goal position services
         self.step_comm_client = self.create_client(DrlStep, 'step_comm')
         self.env_comm_client = self.create_client(EnvReady, 'env_comm')
+        self.step_score_client = self.create_client(ScoreStep, 'score_step_comm')
+
         if not self.real_robot:
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')
             self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
@@ -187,6 +202,7 @@ class DrlAgent(Node):
         self.episode_start_time = 0.0
         self.episode_done = False
         self.agent_status = "IDLE"
+        self.local_ep = 0
 
         self.episode_radom_action = False
 
@@ -237,6 +253,25 @@ class DrlAgent(Node):
                     # res ---> Goal.Response()
                     res = future.result()
                     return res.env_status
+                else:
+                    self.get_logger().error(
+                        'Exception while calling service: {0}'.format(future.exception()))
+                    print("ERROR getting   service response!")
+
+    def get_score(self):
+        req = ScoreStep.Request()
+        # Wait for service to be available
+        while not self.step_score_client.wait_for_service():
+            self.get_logger().info('score service not available, waiting again...')
+        # Call the service
+        future = self.step_score_client.call_async(req)
+        # Wait for response
+        while rclpy.ok():
+            rclpy.spin_once(self)
+            if future.done():
+                if future.result() is not None:
+                    res = future.result()
+                    return res.k_time , res.m_time, res.total_time
                 else:
                     self.get_logger().error(
                         'Exception while calling service: {0}'.format(future.exception()))
@@ -414,8 +449,13 @@ class DrlAgent(Node):
                 pass
 
     def finish_episode(self, step, eps_duration, outcome, dist_traveled, reward_sum, loss_critic, lost_actor):
-            
-            if self.total_steps < self.observe_steps:
+            k_time , m_time, total_time= self.get_score()
+            __text = f"k_step : {k_time} , m_time : {m_time} , total_time : {total_time} "
+
+
+            self.get_logger().info(bcolors.OKBLUE + __text + bcolors.ENDC)
+
+            if self.total_steps < self.observe_steps and self.training:
                 print(f"Observe phase: {self.total_steps}/{self.observe_steps} steps")
                 return
 
@@ -424,8 +464,22 @@ class DrlAgent(Node):
             __text = f"Episode: {self.sm.episode:<5}Reward: {reward_sum:<8.0f}Outcome: {translate_outcome(outcome):<13}Steps: {step:<6}Total Steps: {self.total_steps:<7}Time: {eps_duration:<6.2f} HZ: {step / eps_duration:.2f}"
             self.get_logger().info(bcolors.OKGREEN + __text + bcolors.ENDC)
 
+
             if (not self.training):
-                self.logger.update_test_results(step, outcome, dist_traveled, eps_duration, 0)
+                self.logger.update_test_results(step, 
+                                                outcome, 
+                                                dist_traveled, 
+                                                eps_duration, 
+                                                0,
+                                                k_time,
+                                                m_time,
+                                                total_time,
+                                                )
+                self.local_ep  +=1 
+                self.test_graph.update_data(step, self.total_steps, outcome, k_time, m_time, total_time)
+                if (self.local_ep  % self.EPISODE_TEST == 0):
+                    self.test_graph.draw_plots(self.local_ep)
+
                 return
 
             # Update the graph
@@ -448,14 +502,27 @@ def main(args=sys.argv[1:]):
     rclpy.init(args=args)
     if len(args) == 1:
         algorithm = args[0]
+        process = "train"
+
+    elif len(args) == 2:
+        algorithm = args[0]
+        process = args[1]
+
     else:
         algorithm = "td3"
+        process = "train"
+
     # Check if the algorithm is valid
     if algorithm not in ["td3", "sac"]:
         print("Invalid Algorithm Using TD3")
         algorithm = "td3"
+
+    if process.lower() == "test":
+        train = False
+    else  : train = True
+
     
-    drl_agent = DrlAgent(algorithm=algorithm, training=True, real_robot=False, load_session=True)
+    drl_agent = DrlAgent(algorithm=algorithm, training=train, real_robot=False, load_session=True)
 
     rclpy.spin(drl_agent)
     drl_agent.destroy()

@@ -20,16 +20,23 @@ from nav_msgs.msg import Odometry
 
 from gazebo_msgs.srv import GetEntityState, GetModelList
 
-from settings.constparams import LIDAR_DISTANCE_CAP
+from settings.constparams import LIDAR_DISTANCE_CAP , THRESHOLD_COLLISION
 
 from env_utils import get_simulation_speed, read_stage
 
 from sensor_msgs.msg import LaserScan
 from awbu_interfaces.msg import Obstacle
+from std_srvs.srv import Empty
+from std_msgs.msg import Float64MultiArray
+
+from awbu_interfaces.srv import ScoreStep
+
+from tf_transformations import euler_from_quaternion
 
 SIM_SPD = get_simulation_speed(read_stage())
 RADIUS = 0.5
 ALPHA = 0.5
+ROBOT_WIDTH = 0.3
 
 class ObstacleCP(Node):
     def __init__(self):
@@ -41,6 +48,10 @@ class ObstacleCP(Node):
         # Gazebo model list subscriber
         self.model_list = self.get_model_list()
         self.obstacle_list =  [model for model in self.model_list if 'obstacle' in model]
+
+        self.reset_simulation_service = self.create_service(Empty, 'reset_world', self.service_callback)
+        
+        self.get_k_t_score = self.create_service(ScoreStep, 'score_step_comm', self.get_time_stepscore)
 
         self.get_logger().info(f'Obstacle List: {self.obstacle_list}')
 
@@ -67,9 +78,34 @@ class ObstacleCP(Node):
         self.scan = None
         self.position = None
 
+        self.k_time = 0.0
+        self.m_time = 0.0
+        self.time_step = 0.0
 
         time.sleep(3)
         self.control_loop()
+
+    def service_callback(self, request, response):
+        self.get_logger().info('Reseting')
+
+        self.k_time = 0.0
+        self.m_time = 0.0
+        self.time_step = 0.0
+
+        response = Empty.Response()
+
+        return response
+    
+
+    def get_time_stepscore(self, request, response):
+        self.get_logger().info('Get Score')
+
+        response.k_time = float(self.k_time)
+        response.m_time = float(self.m_time)
+        response.total_time = float(self.time_step)
+
+        return response
+    
 
 
     def control_loop(self):
@@ -92,21 +128,31 @@ class ObstacleCP(Node):
                 VELOCITY_Y = []
                 CP_LIST = []
 
+                DIST_ARRAY = []
+                Pc_ttc_ARRAY = []
                 # Get the current state of the obstacles
                 for obstacle in self.obstacle_list:
-
+                    
                     # Get the initial pose and twist of the obstacle
                     pose, twist = self.get_entity_state(obstacle)
-                    
+
+                    robot_orientation_list = [self.orientation.x , self.orientation.y 
+                                        , self.orientation.z , self.orientation.w]
+                    _ , _ , robot_yaw = euler_from_quaternion(robot_orientation_list)
+
                     robot_pos_x = self.position.x
                     robot_pos_y = self.position.y
-                    robot_vel_x = self.linear_twist.x
-                    robot_vel_y = self.linear_twist.y
+                    robot_vel_x = self.linear_twist.x * np.math.cos(robot_yaw)
+                    robot_vel_y = self.linear_twist.x * np.math.sin(robot_yaw)
+
+                    obs_orientation_list = [pose.orientation.x , pose.orientation.y
+                                        , pose.orientation.z , pose.orientation.w]
+                    _ , _ , obs_yaw = euler_from_quaternion(obs_orientation_list)
 
                     obs_pos_x = pose.position.x
                     obs_pos_y = pose.position.y
-                    obs_vel_x = twist.linear.x
-                    obs_vel_y = twist.linear.y
+                    obs_vel_x = twist.linear.x * np.math.cos(obs_yaw)
+                    obs_vel_y = twist.linear.x * np.math.sin(obs_yaw)
 
                     # self.get_logger().info(f'Name: {obstacle}, Pose: {pose.position.x}, {pose.position.y}, \
                     #                        Twist: {twist.linear.x}, {twist.linear.y}, {twist.linear.z}')
@@ -115,18 +161,26 @@ class ObstacleCP(Node):
                     robot_post = np.array([robot_pos_x , robot_pos_y])
 
                     dist = np.linalg.norm(robot_post - obs_pose)
+                    DIST_ARRAY.append(dist)
 
-                    if dist < LIDAR_DISTANCE_CAP + 0.5:
+                    if dist < LIDAR_DISTANCE_CAP - RADIUS:
 
-                        Dist_o = dist - RADIUS
+                        Dist_o = abs(dist - RADIUS - THRESHOLD_COLLISION)
                         Vr = np.array([robot_vel_x , robot_vel_y])
                         Vo = np.array([obs_vel_x , obs_vel_y])
                         Vr_prime = Vr - Vo
-                        t = Dist_o / np.sqrt(Vr_prime[0]**2 + Vr_prime[1]**2)
+                        t = Dist_o / np.linalg.norm(Vr_prime)
 
+                        # self.get_logger().info(f'np.linalg.norm(Vr_prime) {np.linalg.norm(Vr_prime)}')
+                        # self.get_logger().info(f'Dist_o {Dist_o}')
+                        # # self.get_logger().info(f'self.control_loop_period / t {self.control_loop_period / t}')
                         Pc_ttc = min([ 1, self.control_loop_period / t])
                         Imax = self.max_scan
                         Imin = self.min_scan 
+
+                        # self.get_logger().info(f'Pc_ttc {Pc_ttc}')
+
+                        Pc_ttc_ARRAY.append(Pc_ttc)
 
                         Pc_dto = (Imax - Dist_o) / (Imax - Imin)
 
@@ -142,6 +196,19 @@ class ObstacleCP(Node):
                         VELOCITY_X.append(twist.linear.x)
                         VELOCITY_Y.append(twist.linear.y)
                         CP_LIST.append(CP)
+
+                if DIST_ARRAY != [] and Pc_ttc_ARRAY != []:
+                    if min(DIST_ARRAY) - THRESHOLD_COLLISION - RADIUS < 0.787 * ROBOT_WIDTH : ## 0.5 + 0.5
+
+                        self.k_time += time_diff
+
+                    if max(Pc_ttc_ARRAY) > 0.4 :
+
+                        self.m_time += time_diff
+
+                # self.get_logger().info(f'min(DIST_ARRAY) {min(DIST_ARRAY) - 1} , Max Pc_ttc {max(Pc_ttc_ARRAY) }')
+
+                self.time_step += time_diff
 
                 self._obstacle_pubish(ID_LIST , CENTER_X , CENTER_Y , VELOCITY_X , VELOCITY_Y , CP_LIST)
 
