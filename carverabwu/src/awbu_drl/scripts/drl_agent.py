@@ -493,7 +493,7 @@ class DrlAgent(Node):
                 networks            =   self.model.networks,
                 graph_pickle_data   =   self.graph.graphdata, 
                 replay_buffer       =   self.replay_buffer.buffer)
-                self.logger.update_comparison_file(self.sm.episode, self.graph.get_success_count(), self.graph.get_reward_average())
+                self.logger.update_comparison_file(self.sm.episode, self.graph.get_success_count(), self.graph.get_reward_average(), avg_ego=0, avg_social=0)
             if (self.sm.episode % GRAPH_DRAW_INTERVAL == 0) or (self.sm.episode == 1):
                 self.graph.draw_plots(self.sm.episode)
 
