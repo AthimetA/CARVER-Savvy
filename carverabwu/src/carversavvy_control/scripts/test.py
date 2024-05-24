@@ -11,6 +11,8 @@ import numpy as np
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 import sys 
+from carversavvy_trajectory_generation import Trajectory
+from std_msgs.msg import Float64
 
 class carversavvyTestNode(Node):
     # Constructor of the class
@@ -42,9 +44,26 @@ class carversavvyTestNode(Node):
         self.imu_sub = self.create_subscription(Imu, '/carversavvy_imu', self.imu_callback, 10)
         self.imu_buffer = Imu()
 
-        # Create Ramp for Testing mode 1
-        self.start_vel = 0.0
-        self.cmd_vel.linear.x = self.start_vel
+        self.distance_pub = self.create_publisher(Float64, '/carversavvy_distance', 10)
+
+        # Init Trahectory Profile
+        if self.mode == 1:
+            self.Jmax = 0.2
+            self.Amax = 0.1
+            self.Vmax = 0.2
+            self.Dist = 1.0
+            self.trajectory = Trajectory(self.Amax, self.Jmax, self.Vmax, self.Dist)
+            self.trajectory.calculate_trajectory()
+            t = np.arange(0, self.trajectory.T[6], self.time_period)
+            self.QJ = np.zeros(t.shape)
+            self.QA = np.zeros(t.shape)
+            self.QV = np.zeros(t.shape)
+            self.QVP = np.zeros(t.shape)
+            self.QX = np.zeros(t.shape)
+            for i in range(len(t)):
+                self.QJ[i], self.QA[i], self.QV[i], self.QVP[i], self.QX[i] = self.trajectory.trajectory_evaluation(t[i])
+            self.QV = self.QV.tolist()
+            self.QX = self.QX.tolist()
 
     def wheel_vel_callback(self, msg: Twist):
         self.wheel_vel_buffer = msg
@@ -58,35 +77,28 @@ class carversavvyTestNode(Node):
         # self.get_logger().info(f'Received IMU data: {self.imu_buffer}')
 
     def cmd_timer_callback(self):
-        
         mode = self.mode
-
         if mode == 1:
-            self.timer_counter += 1
-            if self.timer_counter <= 3/self.time_period:
+            if self.timer_counter <= 2/self.time_period:
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
-
-            elif 3/self.time_period < self.timer_counter <= 8/self.time_period:
-                self.cmd_vel.linear.x += 0.2/(5/self.time_period)
-                self.cmd_vel.angular.z = 0.0
-                self.cmd_pub.publish(self.cmd_vel)
-
-            elif 8/self.time_period < self.timer_counter <= 18/self.time_period:
-                self.cmd_vel.linear.x = 0.2
-                self.cmd_vel.angular.z = 0.0
-                self.cmd_pub.publish(self.cmd_vel)
-
-            elif 18/self.time_period < self.timer_counter <= 23/self.time_period:
-                self.cmd_vel.linear.x -= 0.2/(5/self.time_period)
-                self.cmd_vel.angular.z = 0.0
-                self.cmd_pub.publish(self.cmd_vel)
-
+                dist = 0.0
+                self.distance_pub.publish(Float64(data = dist))
             else:
-                self.cmd_vel.linear.x = 0.0
-                self.cmd_vel.angular.z = 0.0
-                self.cmd_pub.publish(self.cmd_vel)
+                if self.loop_counter < len(self.QV):
+                    self.cmd_vel.linear.x = self.QV[self.loop_counter]
+                    self.cmd_vel.angular.z = 0.0
+                    self.cmd_pub.publish(self.cmd_vel)
+
+                    self.distance_pub.publish(Float64(data=self.QX[self.loop_counter]))
+                    self.loop_counter += 1
+                else:
+                    self.cmd_vel.linear.x = 0.0
+                    self.cmd_vel.angular.z = 0.0
+                    self.cmd_pub.publish(self.cmd_vel)
+                    self.distance_pub.publish(Float64(data=self.QX[self.loop_counter-1]))
+            self.timer_counter += 1
 
         elif mode == 2:
             self.timer_counter += 1
@@ -100,8 +112,11 @@ class carversavvyTestNode(Node):
                 self.cmd_pub.publish(self.cmd_vel)
 
         elif mode == 3:
-            self.timer_counter += 1
-            if self.timer_counter <= 10/self.time_period:
+            if self.timer_counter <= 2/self.time_period:
+                self.cmd_vel.linear.x = 0.0
+                self.cmd_vel.angular.z = 0.0
+                self.cmd_pub.publish(self.cmd_vel)
+            if 2/self.time_period < self.timer_counter <= 12/self.time_period:
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = -(2*np.pi/4)/10
                 self.cmd_pub.publish(self.cmd_vel)
@@ -109,7 +124,7 @@ class carversavvyTestNode(Node):
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
-
+            self.timer_counter += 1
 
         elif mode == 4:
             self.cmd_vel.linear.x = 0.0

@@ -174,6 +174,8 @@ int32_t rawencR = 0;
 
 float encoderLrad = 0;
 float encoderRrad = 0;
+float feedfowardL = 0;
+float feedfowardR = 0;
 
 float IMU_data[10];
 
@@ -229,8 +231,13 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
   if (timer != NULL) {
 	ENCR_msg.data = 0; 
 	ENCL_msg.data = 0;
-	outputcontrolL_msg.data = pidParameter1.output;
-	outputcontrolR_msg.data = pidParameter2.output;
+	// outputcontrolL_msg.data = pidParameter1.output;
+	// outputcontrolR_msg.data = pidParameter2.output;
+	outputcontrolL_msg.data = feedfowardL;
+	outputcontrolR_msg.data = feedfowardR;
+	
+	// inputcontrolL_msg.data = robotVelocityCmd.v1;
+	// inputcontrolR_msg.data = robotVelocityCmd.v2;
 	inputcontrolL_msg.data = Sub_speedL;
 	inputcontrolR_msg.data = Sub_speedR;
 	wheelL_vel_msg.data = encoderLrad;
@@ -328,7 +335,48 @@ void setReports(void) {
   }
 }
 
+//---------------------feedforward control------------------------------------
+float InverseTFofMotorL(float Velo, float PredictVelo)
+{
+	static float VeloLast = 0;
+	static float Voltage = 0;
+	static float VoltageLast = 0;
+	static float Pwm = 0;
+	// Voltage = (PredictVelo - (1.298649403776808*Velo) + (0.413830007244888*VeloLast) - (0.492093238713741*VoltageLast))/0.660367603263632;
+	Voltage = ((PredictVelo*2.8784)+2.438) - ((2.8784*Velo));
+	// Voltage = PredictVelo - ((2.4677*Velo) +  1.8768/2.0);
+	Pwm = (Voltage * 255)/24.0;
+	// VoltageLast = Voltage;
+	// VeloLast = Velo;
+	return Pwm;
+}
 
+float InverseTFofMotorR(float Velo, float PredictVelo)
+{
+	static float VeloLast = 0;
+	static float Voltage = 0;
+	static float VoltageLast = 0;
+	static float Pwm = 0;
+	// Voltage = (PredictVelo - (1.298649403776808*Velo) + (0.413830007244888*VeloLast) - (0.492093238713741*VoltageLast))/0.660367603263632;
+	Voltage = ((2.4677*PredictVelo) + 1.8768)- ((2.4677*Velo) );
+	Pwm = (Voltage * 255)/24.0;
+	// VoltageLast = Voltage;
+	// VeloLast = Velo;
+	return Pwm;
+}
+
+float InverseTFofMotorWith1kg(float Velo, float PredictVelo)
+{
+	static float VeloLast = 0;
+	static float Voltage = 0;
+	static float VoltageLast = 0;
+	static float Pwm = 0;
+	Voltage = (PredictVelo - (1.396*Velo) + (0.4602*VeloLast) - (0.2687*VoltageLast))/0.3479;
+	Pwm = (Voltage * 10000.0)/12.0;
+	VoltageLast = Voltage;
+	VeloLast = Velo;
+	return Pwm;
+}
 
 //------------------------------------control configuration------------------------------------
 
@@ -401,12 +449,12 @@ void controlSetup()
 	//move parameter to general_params.h
 	//parameter setup
   pidParameter1.Kp = 0.03;//3;  //1;   //4 
-  pidParameter1.Ki = 0.18;//0.5; //8;
+  pidParameter1.Ki = 0.18;//0.18;//0.5; //8;
   pidParameter1.Kd = 0.0;
   pidParameter1.sampleTime = intervalPID;
 
   pidParameter2.Kp = 0.03;//* 0.45;//3;  //1;   //4
-  pidParameter2.Ki = 0.18;//1.2*0.06/2.8;//0.5; //8;
+  pidParameter2.Ki = 0.16;//1.2*0.06/2.8;//0.5; //8;
   pidParameter2.Kd = 0.0;
   pidParameter2.sampleTime = intervalPID;
 
@@ -488,29 +536,48 @@ void controlLoop()
 		pidParameter2.setPoint = rad_to_enc(robotVelocityCmd.v2);
     // pidParameter1.setPoint = robotVelocityCmd.v1;
     // pidParameter2.setPoint = robotVelocityCmd.v2;
+		encoderLrad = enc_to_rad(control.getIntervalEnc(&encoder)); 
+    	encoderRrad = enc_to_rad(control.getIntervalEnc(&encoder2));
 		// setpoint
 		control.setpoint(&pidController1, &pidParameter1, &encoderL);
 		control.setpoint(&pidController2, &pidParameter2, &encoderR);
+		//feed forward control
+		feedfowardL = InverseTFofMotorL(encoderLrad, robotVelocityCmd.v1);
+		feedfowardR = InverseTFofMotorR(encoderRrad, robotVelocityCmd.v2);
+		
+		feedfowardL = feedfowardL +pidParameter1.output;
+		feedfowardR = feedfowardR +pidParameter2.output;
+		if (feedfowardL > 250)
+		{
+			feedfowardL = 250;
+		}
+		if (feedfowardR > 250)
+		{
+			feedfowardR = 250;
+		}
 		//stop
 		// Serial.print(String(pidParameter1.output));
 		// Serial.print(" ");
 		// Serial.println(String(pidParameter2.output));
-		// if (robotVelocityCmd.Vx == 0 && robotVelocityCmd.w == 0)
-		// {
-			// control.drive(&motorL, 0);
-			// control.drive(&motorR, 0);
-		// 	control.zeroOutputSum(&pidController1);
-		// 	control.zeroOutputSum(&pidController2);
-		// }
-		// else
-		// 	{           
-		// 		// drive
-		control.drive(&motorL, pidParameter1.output);
-		control.drive(&motorR, pidParameter2.output);
+		if (robotVelocityCmd.Vx == 0 && robotVelocityCmd.w == 0)
+		{
+			control.drive(&motorL, 0);
+			control.drive(&motorR, 0);
+			control.zeroOutputSum(&pidController1);
+			control.zeroOutputSum(&pidController2);
+		}
+		else
+		{           
+		// // drive
+		// control.drive(&motorL, pidParameter1.output+feedfowardL);
+			control.drive(&motorL, feedfowardL);
+			control.drive(&motorR, feedfowardR);
+		
+		// control.drive(&motorR,	pidParameter2.output+feedfowardR);
+		}
 		// control.drive(&motorL, 250);
 		// control.drive(&motorR, 250);
-    encoderLrad = enc_to_rad(control.getIntervalEnc(&encoder)); 
-    encoderRrad = enc_to_rad(control.getIntervalEnc(&encoder2));
+    
 	// encoderLrad = control.getIntervalEnc(&encoderL); 
     // encoderRrad = control.getIntervalEnc(&encoderR);
     // rawencL = control.getCountEnc(&encoderL);  
@@ -519,6 +586,8 @@ void controlLoop()
 
 	
 }
+
+
 
 //------------------------------------------------- Main -------------------------------------------------
 
@@ -537,8 +606,8 @@ void setup(){
   	pinMode(pinVoltage, INPUT);
   	uROSsetup();
 	controlSetup();
-	// start_motor();
-	stop_motor();
+	start_motor();
+	// stop_motor();
   	interlock();
 	
 }

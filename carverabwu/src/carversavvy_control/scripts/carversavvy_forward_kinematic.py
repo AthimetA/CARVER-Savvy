@@ -9,6 +9,9 @@ from sensor_msgs.msg import JointState, Imu
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float64
 from geometry_msgs.msg import Pose
+import yaml
+import os
+from ament_index_python.packages import get_package_share_directory
 
 NS_TO_SEC= 1000000000
 
@@ -33,6 +36,38 @@ class carversavvyFKNode(Node):
         # IMU subscriber
         self.imu_sub = self.create_subscription(Imu, '/IMU', self.imu_callback, 10)
 
+        # Read IMu Yaml File
+        # Get the filepath to your config file
+        imu_config_path = os.path.join(
+            get_package_share_directory("carversavvy_sensors"), 
+            'config','imu_calibration_result.yaml'
+        )                       
+        if os.path.exists(imu_config_path):
+            with open(imu_config_path, 'r') as file:
+                imu_calibration = yaml.safe_load(file)
+                # Load the calibration parameters
+                # Offset values
+                self.gx_offset = imu_calibration["imu_angular_velocity_mean"][0]
+                self.gy_offset = imu_calibration["imu_angular_velocity_mean"][1]
+                self.gz_offset = imu_calibration["imu_angular_velocity_mean"][2]
+                self.linear_acceleration_x_offset = imu_calibration["imu_linear_acceleration_mean"][0]
+                self.linear_acceleration_y_offset = imu_calibration["imu_linear_acceleration_mean"][1]
+                self.linear_acceleration_z_offset = imu_calibration["imu_linear_acceleration_mean"][2]
+                # Covariance matrices
+                self.linear_acceleration_cov = np.array(imu_calibration["imu_linear_acceleration_cov"]).reshape(9)
+                self.angular_velocity_cov = np.array(imu_calibration["imu_angular_velocity_cov"]).reshape(9)
+                self.get_logger().info('Carversavvy initialized with IMU calibration data.')
+        else:
+            self.get_logger().info('Carversavvy initialized without IMU calibration data.')
+            self.gx_offset = 0.0
+            self.gy_offset = 0.0
+            self.gz_offset = 0.0
+            self.linear_acceleration_x_offset = 0.0
+            self.linear_acceleration_y_offset = 0.0
+            self.linear_acceleration_z_offset = 0.0
+            self.linear_acceleration_cov = np.zeros(9)
+            self.angular_velocity_cov = np.zeros(9)
+
         # Create a publisher for robot velocity commands
         self.odom_topic_name = 'carversavvy/wheel/odom'
         self.odom_pub = self.create_publisher(Odometry, self.odom_topic_name, 10) # publish to /odom topic
@@ -46,6 +81,8 @@ class carversavvyFKNode(Node):
         # Create Publisher for the robot pose
         self.pose_topic_name = 'carversavvy/pose'
         self.pose_pub = self.create_publisher(Pose, self.pose_topic_name, 10)
+
+        self.distance_pub = self.create_publisher(Float64, '/carversavvy_distance', 10)
 
         # create timer_callback
         self.timer_hz = 10
@@ -80,13 +117,14 @@ class carversavvyFKNode(Node):
         imu_msg.angular_velocity.z = msg.angular_velocity.z - self.gz_offset
         imu_msg.angular_velocity_covariance = self.angular_velocity_cov
         # # Accelerometer data in m/s^2
-        imu_msg.linear_acceleration.x = msg.linear.x - self.linear_acceleration_x_offset
-        imu_msg.linear_acceleration.y = msg.linear.y - self.linear_acceleration_y_offset
-        imu_msg.linear_acceleration.z = msg.linear.z - self.linear_acceleration_z_offset
+        imu_msg.linear_acceleration.x = msg.linear_acceleration.x - self.linear_acceleration_x_offset
+        imu_msg.linear_acceleration.y = msg.linear_acceleration.y - self.linear_acceleration_y_offset
+        imu_msg.linear_acceleration.z = msg.linear_acceleration.z - self.linear_acceleration_z_offset
         imu_msg.linear_acceleration_covariance = self.linear_acceleration_cov
-        # # Publish the IMU data
-        # self.get_logger().info(f'rpy: {self.rpy_cal(imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z, imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z)}')
+        
+        # Publish the IMU data
         self.imu_msg = imu_msg
+        self.imu_pub.publish(imu_msg)
     
     def forward_kinematic_cal(self, wl, wr):
         now = self.get_clock().now()
@@ -123,7 +161,7 @@ class carversavvyFKNode(Node):
         pose = Pose()
         pose.position.x = self.x
         pose.position.y = self.y
-        pose.position.z = 0.0
+        pose.position.z = np.sqrt(self.x**2 + self.y**2)
         pose.orientation.x = 0.0
         pose.orientation.y = 0.0
         pose.orientation.z = np.sin(self.wz / 2)

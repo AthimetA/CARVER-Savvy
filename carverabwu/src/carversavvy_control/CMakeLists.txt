@@ -29,6 +29,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/test.py
   scripts/carversavvy_forward_kinematic.py
+  scripts/carversavvy_trajectory_generation.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
