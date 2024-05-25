@@ -69,7 +69,7 @@ class DrlAgent(Node):
 
         self.algorithm = algorithm
         self.training = training
-        self.EPISODE_TEST = 1000
+        self.EPISODE_TEST = 3
 
         if self.training : self.get_logger().info(bcolors.OKGREEN + f'Start Trainning {self.algorithm}')
         else : self.get_logger().info(bcolors.OKGREEN + f'Start Evaluate {self.algorithm} with {self.EPISODE_TEST} episode')
@@ -164,8 +164,6 @@ class DrlAgent(Node):
             self.graph.session_dir = self.sm.session_dir
         else : 
             self.test_graph = Test_Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode, continue_graph=True)
-
-
 
         # Initialize the logger
         self.logger = Logger(   training        = self.training,  
@@ -478,24 +476,29 @@ class DrlAgent(Node):
                 self.local_ep  +=1 
                 self.test_graph.update_data(step, self.total_steps, outcome, k_time, m_time, total_time)
                 if (self.local_ep  % self.EPISODE_TEST == 0):
-                    self.test_graph.draw_plots(self.local_ep)
+                    self.test_graph.draw_plots(self.local_ep, save=True)
+                    self.get_logger().info(bcolors.OKGREEN + f"Test Graph Drawn at Episode: {self.local_ep}" + bcolors.ENDC)
+                    # Terminate the process
+                    quit()
+                elif (self.local_ep % GRAPH_DRAW_INTERVAL == 0) or (self.local_ep == 1):
+                    self.test_graph.draw_plots(self.local_ep, save=False)
 
-                return
+            else: # Training
+                
+                # Update the graph
+                self.graph.update_data(step, self.total_steps, outcome, reward_sum, loss_critic, lost_actor)
+                # Update the logger file
+                self.logger.file_log.write(f"{self.sm.episode}, {reward_sum}, {outcome}, {eps_duration}, {step}, {self.total_steps}, \
+                                                {self.replay_buffer.get_length()}, {loss_critic / step}, {lost_actor / step}\n")
 
-            # Update the graph
-            self.graph.update_data(step, self.total_steps, outcome, reward_sum, loss_critic, lost_actor)
-            # Update the logger file
-            self.logger.file_log.write(f"{self.sm.episode}, {reward_sum}, {outcome}, {eps_duration}, {step}, {self.total_steps}, \
-                                            {self.replay_buffer.get_length()}, {loss_critic / step}, {lost_actor / step}\n")
-
-            if (self.sm.episode % MODEL_STORE_INTERVAL == 0):
-                self.sm.save_session(
-                networks            =   self.model.networks,
-                graph_pickle_data   =   self.graph.graphdata, 
-                replay_buffer       =   self.replay_buffer.buffer)
-                self.logger.update_comparison_file(self.sm.episode, self.graph.get_success_count(), self.graph.get_reward_average(), avg_ego=0, avg_social=0)
-            if (self.sm.episode % GRAPH_DRAW_INTERVAL == 0) or (self.sm.episode == 1):
-                self.graph.draw_plots(self.sm.episode)
+                if (self.sm.episode % MODEL_STORE_INTERVAL == 0):
+                    self.sm.save_session(
+                    networks            =   self.model.networks,
+                    graph_pickle_data   =   self.graph.graphdata, 
+                    replay_buffer       =   self.replay_buffer.buffer)
+                    self.logger.update_comparison_file(self.sm.episode, self.graph.get_success_count(), self.graph.get_reward_average(), avg_ego=0, avg_social=0)
+                if (self.sm.episode % GRAPH_DRAW_INTERVAL == 0) or (self.sm.episode == 1):
+                    self.graph.draw_plots(self.sm.episode)
 
 
 def main(args=sys.argv[1:]):

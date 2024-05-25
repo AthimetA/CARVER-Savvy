@@ -76,7 +76,7 @@ class Test_Graph():
         self.graphdata = [self.global_steps, self.data_outcome_history,
                           self.EGO_SCORE_LIST, self.SOCIAL_SCORE_LIST, self.ARIVAL_TIME]
 
-    def draw_plots(self, ep):
+    def draw_plots(self, ep, save=False):
         if not self.continue_graph:
             episode = ep - self.first_episode
         else:
@@ -102,6 +102,11 @@ class Test_Graph():
             if not self.legend_set:
                 self.ax[0][0].legend()
                 self.legend_set = True
+
+        # Plot SUCCESS % history
+        if len(self.outcome_list) > 0:
+            success_rate = np.sum(np.array(self.outcome_list) == SUCCESS) / len(self.outcome_list) * 100
+            self.ax[0][0].text(0.0, 1.0, f'SUCCESS RATE: {success_rate:.2f}%', transform=self.ax[0][0].transAxes, fontsize=9, verticalalignment='top', bbox=dict(facecolor='white', alpha=1))
 
         S_axis = np.array(range(1, len(self.EGO_SCORE_LIST) + 1))
         # Plot EGO SCORE
@@ -136,7 +141,9 @@ class Test_Graph():
 
         plt.draw()
         plt.pause(0.2)
-        plt.savefig(os.path.join(self.session_dir, "_figure_test.png"))
+
+        if save:
+            plt.savefig(os.path.join(self.session_dir, "_figure_test.png"))
 
 # Ensure the instance is created and the methods are called appropriately
 # Example usage:
