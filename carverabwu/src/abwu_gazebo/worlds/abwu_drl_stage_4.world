@@ -177,11 +177,11 @@
       <pose>5.0 -8.0 0.5 0.0 0.0 1.5708</pose>
     </include>
 
-    <!-- <include>
+    <include>
       <uri>model://cylinder_obstacle_4</uri>
       <name>cylinder_obstacle_9</name>
       <pose>3.0 -8.0 0.5 0.0 0.0 1.5708</pose>
-    </include> -->
+    </include>
 
     <!-- <include>
       <uri>model://cylinder_obstacle_4</uri>

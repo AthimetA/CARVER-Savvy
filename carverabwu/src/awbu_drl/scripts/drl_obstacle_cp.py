@@ -142,8 +142,8 @@ class ObstacleCP(Node):
 
                     robot_pos_x = self.position.x
                     robot_pos_y = self.position.y
-                    robot_vel_x = self.linear_twist.x * np.math.cos(robot_yaw)
-                    robot_vel_y = self.linear_twist.x * np.math.sin(robot_yaw)
+                    robot_vel_x = self.linear_twist.x * np.cos(robot_yaw)
+                    robot_vel_y = self.linear_twist.x * np.sin(robot_yaw)
 
                     obs_orientation_list = [pose.orientation.x , pose.orientation.y
                                         , pose.orientation.z , pose.orientation.w]
@@ -151,8 +151,8 @@ class ObstacleCP(Node):
 
                     obs_pos_x = pose.position.x
                     obs_pos_y = pose.position.y
-                    obs_vel_x = twist.linear.x * np.math.cos(obs_yaw)
-                    obs_vel_y = twist.linear.x * np.math.sin(obs_yaw)
+                    obs_vel_x = twist.linear.x * np.cos(obs_yaw)
+                    obs_vel_y = twist.linear.x * np.sin(obs_yaw)
 
                     # self.get_logger().info(f'Name: {obstacle}, Pose: {pose.position.x}, {pose.position.y}, \
                     #                        Twist: {twist.linear.x}, {twist.linear.y}, {twist.linear.z}')
