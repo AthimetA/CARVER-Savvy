@@ -5,3 +5,7 @@ twist_mux:
         topic   : /carversavvy_cmd_vel
         timeout : 0.5
         priority: 15
+      keyboard:        
+        topic   : /cmd_vel        
+        timeout : 0.5        
+        priority: 15

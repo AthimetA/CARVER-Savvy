@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="zhbbot">
+
+    <xacro:include filename="zhbbot_core_perfect.urdf.xacro" />
+    <xacro:zhbbot_core/>
+
+    <xacro:include filename="zhbbot_ros2control.xacro" />
+    <xacro:zhbbot_control/>
+
+    <xacro:include filename="zhbbot_lidar.xacro" />
+    <!-- <xacro:include filename="zhbbot_depth_camera.xacro" /> -->
+
+</robot>

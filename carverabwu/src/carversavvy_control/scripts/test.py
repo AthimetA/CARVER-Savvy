@@ -25,7 +25,7 @@ class carversavvyTestNode(Node):
         #     self.mode = 3
         # else:
         #     self.mode = int(sys.argv[1])
-        self.mode = 1
+        self.mode = 4
 
         # Create a publisher to publish the velocity commands
         self.cmd_pub = self.create_publisher(Twist, '/carversavvy_cmd_vel', 10)

@@ -1,0 +1,343 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+
+    <xacro:macro name="zhbbot_core" params="">
+
+        <xacro:include filename="zhbbot_common.xacro" />
+        <xacro:zhbbot_common/>
+
+        <!-- BASE LINK -->
+
+        <link name="base_link">
+            <visual>
+                <geometry>
+                    <box size="0.01 0.01 0.01"/>
+                </geometry>
+                <material name="Cyan">
+                    <color rgba="0 1.0 1.0 1.0"/>
+                </material>
+            </visual>
+        </link>
+
+        <!-- BASE_FOOTPRINT LINK -->
+
+        <!-- For Differantial Drive Controller -->
+        <joint name="base_footprint_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="base_footprint"/>
+            <origin xyz="0 0 -0.05" rpy="0 0 0"/>
+        </joint>
+
+        <link name="base_footprint">
+        </link>
+
+        <!-- CHASSIS Information -->
+       
+        <joint name="chassis_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="chassis"/>
+            <origin xyz="0 0 0"/>
+        </joint>
+        
+        <link name="chassis">
+            <visual>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/URDF_SAVVY.STL"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/URDF_SAVVY.STL"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin
+                    xyz="0.01046951 0.00650223 0.19582248"
+                    rpy="0 0 0" />
+                <mass
+                    value="38.3" />
+                <inertia
+                    ixx="0.86919058"
+                    ixy="0.03016623"
+                    ixz="-0.00361722"
+                    iyy="1.19587445"
+                    iyz="0.01825918"
+                    izz="1.36842641" />
+            </inertial>
+        </link>
+        
+        <!-- LEFT WHEEL -->
+
+        <joint name="left_wheel_joint" type="continuous">
+            <parent link="base_link"/>
+            <child link="left_wheel"/>
+            <origin xyz="0 0.105525 0" rpy="-${pi/2} 0 0" />
+            <axis xyz="0 0 1"/>
+        </joint>
+        
+        <link name="left_wheel">
+            <visual>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Drivewheel.STL"/>
+                </geometry>
+                <material name="blue"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Drivewheel.STL"/>
+                </geometry>
+            </collision>
+            <!-- <collision>
+                <geometry>
+                    <sphere radius="${wheel_radius}"/>
+                </geometry>
+            </collision> -->
+            <inertial>
+                <origin
+                    xyz="0 -2.666E-5 0.03"
+                    rpy="0 0 0" />
+                <mass
+                    value="0.45133" />
+                <inertia
+                    ixx="0.00042932"
+                    ixy="0.0"
+                    ixz="0.0"
+                    iyy="0.00042945"
+                    iyz="0.0"
+                    izz="0.00058797" />
+            </inertial>
+        </link>
+
+        <gazebo reference="left_wheel">
+            <material>Gazebo/Black</material>
+        </gazebo>
+
+        <!-- RIGHT WHEEL -->
+
+        <joint name="right_wheel_joint" type="continuous">
+            <parent link="base_link"/>
+            <child link="right_wheel"/>
+            <origin xyz="0 -0.105525 0" rpy="${pi/2} 0 0" />
+            <axis xyz="0 0 -1"/>
+        </joint>
+
+        <link name="right_wheel">
+            <visual>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Drivewheel.STL"/>
+                </geometry>
+                <material name="blue"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Drivewheel.STL"/>
+                </geometry>
+            </collision>
+            <!-- <collision>
+                <geometry>
+                    <sphere radius="${wheel_radius}"/>
+                </geometry>
+            </collision> -->
+            <inertial>
+                <origin
+                    xyz="0 -2.666E-5 0.03"
+                    rpy="0 0 0" />
+                <mass
+                    value="0.45133" />
+                <inertia
+                    ixx="0.00042932"
+                    ixy="0.0"
+                    ixz="0.0"
+                    iyy="0.00042945"
+                    iyz="0.0"
+                    izz="0.00058797" />
+            </inertial>
+        </link>
+
+        <gazebo reference="right_wheel">
+            <material>Gazebo/Black</material>
+        </gazebo>
+
+        <!-- CASTER WHEEL FONT RIGHT -->
+
+        <joint name="caster_wheel_f_r_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="caster_wheel_f_r"/>
+            <origin xyz="0.20490726 -0.135475 0.0824" rpy="0 0 0"/>
+        </joint>
+
+        <link name="caster_wheel_f_r">
+            <visual>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Castor_100.STL"/>
+                </geometry>
+                <material name="white"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Castor_100.STL"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin
+                    xyz="-0.03218009 0 -0.07621536"
+                    rpy="0 0 0" />
+                <mass
+                    value="0.32379" />
+                <inertia
+                    ixx="0.00032464"
+                    ixy="0.0"
+                    ixz="6.086E-5"
+                    iyy="0.00047939"
+                    iyz="0.0"
+                    izz="0.00026272" />
+            </inertial>
+        </link>
+
+        <gazebo reference="caster_wheel_f_r">
+            <material>Gazebo/Blue</material>
+            <mu1 value="0.001"/>
+            <mu2 value="0.001"/>
+        </gazebo>
+
+        <!-- CASTER WHEEL FONT LEFT -->
+        <joint name="caster_wheel_f_l_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="caster_wheel_f_l"/>
+            <origin xyz="0.20490726 0.135475 0.0824" rpy="0 0 0"/>
+        </joint>
+
+        <link name="caster_wheel_f_l">
+            <visual>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Castor_100.STL"/>
+                </geometry>
+                <material name="white"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Castor_100.STL"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin
+                    xyz="-0.03218009 0 -0.07621536"
+                    rpy="0 0 0" />
+                <mass
+                    value="0.32379" />
+                <inertia
+                    ixx="0.00032464"
+                    ixy="0.0"
+                    ixz="6.086E-5"
+                    iyy="0.00047939"
+                    iyz="0.0"
+                    izz="0.00026272" />
+            </inertial>
+        </link>
+        
+        <gazebo reference="caster_wheel_f_l">
+            <material>Gazebo/Blue</material>
+            <mu1 value="0.001"/>
+            <mu2 value="0.001"/>
+        </gazebo>
+
+        <!-- CASTER WHEEL BACK RIGHT -->
+        <joint name="caster_wheel_r_r_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="caster_wheel_r_r"/>
+            <origin xyz="-0.14804637 -0.135525 0.0824" rpy="0 0 0"/>
+        </joint>
+
+        <link name="caster_wheel_r_r">
+            <visual>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Castor_100.STL"/>
+                </geometry>
+                <material name="white"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Castor_100.STL"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin
+                    xyz="-0.03218009 0 -0.07621536"
+                    rpy="0 0 0" />
+                <mass
+                    value="0.32379" />
+                <inertia
+                    ixx="0.00032464"
+                    ixy="0.0"
+                    ixz="6.086E-5"
+                    iyy="0.00047939"
+                    iyz="0.0"
+                    izz="0.00026272" />
+            </inertial>
+        </link>
+
+        <gazebo reference="caster_wheel_r_r">
+            <material>Gazebo/Blue</material>
+            <mu1 value="0.001"/>
+            <mu2 value="0.001"/>
+        </gazebo>
+
+        <!-- CASTER WHEEL BACK LEFT -->
+        <joint name="caster_wheel_r_l_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="caster_wheel_r_l"/>
+            <origin xyz="-0.14804637 0.135475 0.0824" rpy="0 0 0"/>
+        </joint>
+
+        <link name="caster_wheel_r_l">
+            <visual>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Castor_100.STL"/>
+                </geometry>
+                <material name="white"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="file://$(find zhbbot_description)/meshes/Castor_100.STL"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin
+                    xyz="-0.03218009 0 -0.07621536"
+                    rpy="0 0 0" />
+                <mass
+                    value="0.32379" />
+                <inertia
+                    ixx="0.00032464"
+                    ixy="0.0"
+                    ixz="6.086E-5"
+                    iyy="0.00047939"
+                    iyz="0.0"
+                    izz="0.00026272" />
+            </inertial>
+        </link>
+
+        <gazebo reference="caster_wheel_r_l">
+            <material>Gazebo/Blue</material>
+            <mu1 value="0.001"/>
+            <mu2 value="0.001"/>
+        </gazebo>
+
+    </xacro:macro>
+
+</robot>

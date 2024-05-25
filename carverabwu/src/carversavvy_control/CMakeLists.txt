@@ -39,6 +39,7 @@ install(DIRECTORY
   # add directories here
   config
   launch
+  maps
   scripts
   rviz2
   experimentresult

@@ -43,20 +43,20 @@ def generate_launch_description():
         output='screen',
     )
 
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-        output="screen",
-        parameters=[{'use_sim_time': True}]
-    )
+    # joint_state_broadcaster_spawner = Node(
+    #     package="controller_manager",
+    #     executable="spawner",
+    #     arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+    #     output="screen",
+    #     parameters=[{'use_sim_time': True}]
+    # )
 
     # Velo Drive Controller
-    velo_drive_controllers = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["velocity_cont", "-c", "/controller_manager"],
-    )
+    # velo_drive_controllers = Node(
+    #     package="controller_manager",
+    #     executable="spawner",
+    #     arguments=["velocity_cont", "-c", "/controller_manager"],
+    # )
 
     '''
     
