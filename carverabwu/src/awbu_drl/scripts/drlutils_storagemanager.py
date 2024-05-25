@@ -110,18 +110,19 @@ class StorageManager:
         if os.path.exists(path):
             os.remove(path)
 
-    def update_episode(self):
+    def update_episode(self, save = False):
         self.episode += 1
-        
-        if self.episode % MODEL_STORE_INTERVAL == 0:
-            # Update the episode number in the metadata
-            for item in self.metadata['info']:
-                if item['stage'] == self.stage:
-                    item['episode'] = self.episode
-                    break
 
-            with open(self.metadata_path, 'w') as f:
-                json.dump(self.metadata, f)
+        if save:
+            if self.episode % MODEL_STORE_INTERVAL == 0:
+                # Update the episode number in the metadata
+                for item in self.metadata['info']:
+                    if item['stage'] == self.stage:
+                        item['episode'] = self.episode
+                        break
+
+                with open(self.metadata_path, 'w') as f:
+                    json.dump(self.metadata, f)
 
     def new_session(self):
 

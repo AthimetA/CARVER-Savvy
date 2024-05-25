@@ -458,12 +458,26 @@ class DrlAgent(Node):
                 return
 
             # Update the episode number
-            self.sm.update_episode()
-            __text = f"Episode: {self.sm.episode:<5}Reward: {reward_sum:<8.0f}Outcome: {translate_outcome(outcome):<13}Steps: {step:<6}Total Steps: {self.total_steps:<7}Time: {eps_duration:<6.2f} HZ: {step / eps_duration:.2f}"
-            self.get_logger().info(bcolors.OKGREEN + __text + bcolors.ENDC)
+            if self.training: # Training
+                self.sm.update_episode(save = True)
 
+                # Update the graph
+                self.graph.update_data(step, self.total_steps, outcome, reward_sum, loss_critic, lost_actor)
+                # Update the logger file
+                self.logger.file_log.write(f"{self.sm.episode}, {reward_sum}, {outcome}, {eps_duration}, {step}, {self.total_steps}, \
+                                                {self.replay_buffer.get_length()}, {loss_critic / step}, {lost_actor / step}\n")
 
-            if (not self.training):
+                if (self.sm.episode % MODEL_STORE_INTERVAL == 0):
+                    self.sm.save_session(
+                    networks            =   self.model.networks,
+                    graph_pickle_data   =   self.graph.graphdata, 
+                    replay_buffer       =   self.replay_buffer.buffer)
+                    self.logger.update_comparison_file(self.sm.episode, self.graph.get_success_count(), self.graph.get_reward_average(), avg_ego=0, avg_social=0)
+                if (self.sm.episode % GRAPH_DRAW_INTERVAL == 0) or (self.sm.episode == 1):
+                    self.graph.draw_plots(self.sm.episode)
+                    
+            else: # Testing
+                self.sm.update_episode(save = False)
                 self.logger.update_test_results(step, 
                                                 outcome, 
                                                 dist_traveled, 
@@ -482,23 +496,10 @@ class DrlAgent(Node):
                     quit()
                 elif (self.local_ep % GRAPH_DRAW_INTERVAL == 0) or (self.local_ep == 1):
                     self.test_graph.draw_plots(self.local_ep, save=False)
-
-            else: # Training
-                
-                # Update the graph
-                self.graph.update_data(step, self.total_steps, outcome, reward_sum, loss_critic, lost_actor)
-                # Update the logger file
-                self.logger.file_log.write(f"{self.sm.episode}, {reward_sum}, {outcome}, {eps_duration}, {step}, {self.total_steps}, \
-                                                {self.replay_buffer.get_length()}, {loss_critic / step}, {lost_actor / step}\n")
-
-                if (self.sm.episode % MODEL_STORE_INTERVAL == 0):
-                    self.sm.save_session(
-                    networks            =   self.model.networks,
-                    graph_pickle_data   =   self.graph.graphdata, 
-                    replay_buffer       =   self.replay_buffer.buffer)
-                    self.logger.update_comparison_file(self.sm.episode, self.graph.get_success_count(), self.graph.get_reward_average(), avg_ego=0, avg_social=0)
-                if (self.sm.episode % GRAPH_DRAW_INTERVAL == 0) or (self.sm.episode == 1):
-                    self.graph.draw_plots(self.sm.episode)
+            
+            # Display the episode information
+            __text = f"Episode: {self.sm.episode:<5}Reward: {reward_sum:<8.0f}Outcome: {translate_outcome(outcome):<13}Steps: {step:<6}Total Steps: {self.total_steps:<7}Time: {eps_duration:<6.2f} HZ: {step / eps_duration:.2f}"
+            self.get_logger().info(bcolors.OKGREEN + __text + bcolors.ENDC)
 
 
 def main(args=sys.argv[1:]):
