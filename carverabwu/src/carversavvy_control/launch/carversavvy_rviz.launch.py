@@ -109,7 +109,7 @@ def generate_launch_description():
         executable='twist_mux',
         name='twist_mux',
         parameters=[twist_mux_config],
-        remappings=[('/cmd_vel_out','/cmd_vel')],
+        remappings=[('/cmd_vel_out','/carversavvy_cmd_vel')],
         )
 
 

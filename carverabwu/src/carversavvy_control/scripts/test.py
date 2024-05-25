@@ -28,7 +28,7 @@ class carversavvyTestNode(Node):
         self.mode = 4
 
         # Create a publisher to publish the velocity commands
-        self.cmd_pub = self.create_publisher(Twist, '/carversavvy_cmd_vel', 10)
+        self.cmd_pub = self.create_publisher(Twist, '/carversavvy_vel_ref', 10)
         self.hz = 10
         self.time_period = 1/self.hz
         self.cmd_timer = self.create_timer(self.time_period, self.cmd_timer_callback)
