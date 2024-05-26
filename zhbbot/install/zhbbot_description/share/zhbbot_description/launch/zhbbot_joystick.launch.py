@@ -1,1 +1,1 @@
-/home/athimet/CARVER-Savvy-main/zhbbot/src/zhbbot_description/launch/zhbbot_joystick.launch.py
+/home/athimet/CARVER-Savvy/zhbbot/src/zhbbot_description/launch/zhbbot_joystick.launch.py

@@ -1,1 +1,1 @@
-/home/athimet/CARVER-Savvy-main/zhbbot/src/zhbbot_control/launch/zhbbot_rviz_nav2.launch.py
+/home/athimet/CARVER-Savvy/zhbbot/src/zhbbot_control/launch/zhbbot_rviz_nav2.launch.py

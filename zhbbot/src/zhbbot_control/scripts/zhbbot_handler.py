@@ -41,7 +41,7 @@ NUM_SCAN_SAMPLES = 180
 LIDAR_DISTANCE_CAP = 12.0
 
 GRAPH_DRAW_INTERVAL = 5
-EPISODE_TEST = 100
+EPISODE_TEST = 1000
 
 TOPIC_CLOCK = '/clock'
 from rosgraph_msgs.msg import Clock
@@ -204,9 +204,7 @@ class ZhbbotHandler(Node):
             # Check for obstacles
             if self.scan_ranges[i] < self.obstacle_distance_nearest:
                 self.obstacle_distance_nearest = self.scan_ranges[i]
-            
-        self.get_logger().info(f'Nearest obstacle distance: {self.obstacle_distance_nearest:.2f}')
-
+        
 
     def clock_callback(self, msg: Clock):
         # Get current time
