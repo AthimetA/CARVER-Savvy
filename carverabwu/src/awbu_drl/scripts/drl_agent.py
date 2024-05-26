@@ -69,7 +69,7 @@ class DrlAgent(Node):
 
         self.algorithm = algorithm
         self.training = training
-        self.EPISODE_TEST = 3
+        self.EPISODE_TEST = 1000
 
         if self.training : self.get_logger().info(bcolors.OKGREEN + f'Start Trainning {self.algorithm}')
         else : self.get_logger().info(bcolors.OKGREEN + f'Start Evaluate {self.algorithm} with {self.EPISODE_TEST} episode')
@@ -475,7 +475,7 @@ class DrlAgent(Node):
                     self.logger.update_comparison_file(self.sm.episode, self.graph.get_success_count(), self.graph.get_reward_average(), avg_ego=0, avg_social=0)
                 if (self.sm.episode % GRAPH_DRAW_INTERVAL == 0) or (self.sm.episode == 1):
                     self.graph.draw_plots(self.sm.episode)
-                    
+
             else: # Testing
                 self.sm.update_episode(save = False)
                 self.logger.update_test_results(step, 
