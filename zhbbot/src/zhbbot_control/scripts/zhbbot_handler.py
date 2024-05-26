@@ -13,7 +13,7 @@ import numpy as np
 import sys
 
 from zhbbot_interfaces.srv import ZhbbotSendPath , ZhbbotUserSetgoal, ZhbbotSetNodeStaus
-from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart
+from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart ,ScoreStep
 
 from std_srvs.srv import Empty
 from sensor_msgs.msg import LaserScan
@@ -24,6 +24,12 @@ from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, Hi
 
 import time
 
+from drlutils_test_graph import Test_Graph
+import os
+
+from std_msgs.msg import Float32MultiArray
+
+
 UNKNOWN = 0
 SUCCESS = 1
 COLLISION = 2
@@ -33,6 +39,9 @@ TUMBLE = 4
 TOPIC_SCAN = '/scan'
 NUM_SCAN_SAMPLES = 180
 LIDAR_DISTANCE_CAP = 12.0
+
+GRAPH_DRAW_INTERVAL = 5
+EPISODE_TEST = 100
 
 TOPIC_CLOCK = '/clock'
 from rosgraph_msgs.msg import Clock
@@ -61,7 +70,7 @@ class ZhbbotHandler(Node):
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST
         )
-
+        # self.step_score_client = self.create_client(ScoreStep, '/nav2/score')
         self.scan_sub = self.create_subscription(LaserScan, TOPIC_SCAN, self.scan_callback, qos_profile=qos_profile_sensor_data)
         self.scan_ranges = np.zeros(NUM_SCAN_SAMPLES)
         self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
@@ -169,9 +178,21 @@ class ZhbbotHandler(Node):
     
         
         self.timeloop_timer = self.create_timer(0.1, self.timeloop_callback)
+        # self.timelooper_get_score_timer = self.create_timer(0.1, self.timeloop_score_callback)
         self.loop_status = "SLEEP" # SLEEP, INIT, PROCESS, DONE
         self.loop_send_cmd = True
         self._EP_status = UNKNOWN
+
+        self.local_ep = 0
+        _path = '~'
+        self.session_dir = os.path.join(_path, "nav2")
+        if not os.path.exists(self.session_dir):
+            os.makedirs(self.session_dir)
+        self.test_graph = Test_Graph(session_dir=self.session_dir, first_episode=self.local_ep , continue_graph=True)
+
+        self.sub_score = self.create_subscription(Float32MultiArray,'/score',self.score_callback,10)
+        self.time_data = None
+        self._get = True
 
     def scan_callback(self, msg: LaserScan):
         if len(msg.ranges) != NUM_SCAN_SAMPLES:
@@ -200,6 +221,9 @@ class ZhbbotHandler(Node):
         # Reset variables
         self.reset_deadline = False
 
+    def score_callback(self , msg):
+        self.time_data = list(msg.data)
+
     def timeloop_callback(self):
 
         if self.loop_status == "INIT":
@@ -221,12 +245,15 @@ class ZhbbotHandler(Node):
             self.loop_status = "INIT"
 
     def episode_check(self):
+        
         THREHSOLD_GOAL = 1.2
         THRESHOLD_COLLISION = 0.6 # meters
+
         # Success
         if self._get_distance(self.robot_x, self.robot_y, self.goal_x, self.goal_y) < THREHSOLD_GOAL:
             self.get_logger().info(bcolors.OKGREEN + "Episode done, Agent reached the goal!" + bcolors.ENDC)
             self._EP_status = SUCCESS
+            
         # Timeout
         elif self.time_sec >= self.episode_deadline:
             self.get_logger().info(bcolors.WARNING + "Episode done, Agent reached the timeout!" + bcolors.ENDC)
@@ -243,6 +270,27 @@ class ZhbbotHandler(Node):
 
             # Reset the loop status
             self.loop_status = "DONE"
+
+        if self._EP_status == SUCCESS or self._EP_status == TIMEOUT or self._EP_status == COLLISION:
+            if self._get == True : 
+                k_time , m_time, total_time= self.time_data
+                total_time -= 3
+                __text = f"k_step : {k_time} , m_time : {m_time} , total_time : {total_time} "
+                self.get_logger().info(bcolors.OKBLUE + __text + bcolors.ENDC)
+
+                self.local_ep  +=1 
+                self.test_graph.update_data(0, self.local_ep, self._EP_status, k_time, m_time, total_time)
+
+
+                if (self.local_ep  % EPISODE_TEST == 0):
+                    self.test_graph.draw_plots(self.local_ep, save=True)
+                    self.get_logger().info(bcolors.OKGREEN + f"Test Graph Drawn at Episode: {self.local_ep}" + bcolors.ENDC)
+                    # Terminate the process
+                    quit()
+                elif (self.local_ep % GRAPH_DRAW_INTERVAL == 0) or (self.local_ep == 1):
+                    self.test_graph.draw_plots(self.local_ep, save=False)
+                self._get = False
+
 
     def start_protocall(self):
 
@@ -267,6 +315,8 @@ class ZhbbotHandler(Node):
 
 
     def reset_protocall(self):
+
+        self._get = True
         # Reset the simulation
         self.reset_simulation()
 
@@ -291,6 +341,7 @@ class ZhbbotHandler(Node):
         self.send_node_status(self.selected_local_planner, "DISABLED")
 
         time.sleep(3)
+
     
     def obstacle_start(self):
         req = ObstacleStart.Request()

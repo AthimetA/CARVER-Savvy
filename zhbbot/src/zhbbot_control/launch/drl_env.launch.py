@@ -48,11 +48,20 @@ def generate_launch_description():
         name='drl_obstacle_control',
     )
 
+    drl_obstacle_cp = Node(
+        package='zhbbot_control',
+        executable='drl_obstacle_cp.py',
+        name='drl_obstacle_cp',
+    )
+
+
+
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
         zhbbot_local_planer,
         zhbbot_handler,
         drl_obstacle_control,
+        drl_obstacle_cp
 
     ])
