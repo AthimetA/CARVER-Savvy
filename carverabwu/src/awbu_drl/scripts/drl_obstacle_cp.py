@@ -33,6 +33,8 @@ from awbu_interfaces.srv import ScoreStep
 
 from tf_transformations import euler_from_quaternion
 
+from visualization_msgs.msg import Marker, MarkerArray
+
 SIM_SPD = get_simulation_speed(read_stage())
 RADIUS = 0.5
 ALPHA = 0.5
@@ -66,6 +68,7 @@ class ObstacleCP(Node):
         '/scan',
         self.scan_callback,
         10)
+        self._visual_publisher= self.create_publisher(MarkerArray, 'Obstacle_ob', 10)
 
         self.CP_publisher = self.create_publisher(Obstacle, '/abwubot/obstacleCP', 10)
         self.odom_topic_name = '/abwubot/odom'
@@ -127,8 +130,10 @@ class ObstacleCP(Node):
                 VELOCITY_X = []
                 VELOCITY_Y = []
                 CP_LIST = []
-
                 DIST_ARRAY = []
+
+                obstacle_inrange = []
+                
                 Pc_ttc_ARRAY = []
                 # Get the current state of the obstacles
                 for obstacle in self.obstacle_list:
@@ -197,6 +202,8 @@ class ObstacleCP(Node):
                         VELOCITY_Y.append(twist.linear.y)
                         CP_LIST.append(CP)
 
+                        obstacle_inrange.append([CP,obs_pose])
+
                 if DIST_ARRAY != [] and Pc_ttc_ARRAY != []:
                     if min(DIST_ARRAY) - THRESHOLD_COLLISION - RADIUS < 0.787 * ROBOT_WIDTH : ## 0.5 + 0.5
 
@@ -211,6 +218,69 @@ class ObstacleCP(Node):
                 self.time_step += time_diff
 
                 self._obstacle_pubish(ID_LIST , CENTER_X , CENTER_Y , VELOCITY_X , VELOCITY_Y , CP_LIST)
+                self.visualize_grouped_points(obstacle_inrange)
+
+    def visualize_grouped_points(self, ob): ### point_clusters  -> self.Current_group
+        a = 0
+        marker_array = MarkerArray()
+        for obstacle in ob: 
+            CP = obstacle[0]
+            obs_pose = obstacle[1]
+            
+            marker = Marker()
+
+            marker.header.frame_id = "base_link"
+            marker.type = Marker.CYLINDER
+            marker.action = Marker.ADD
+            
+            marker.scale.x = 0.2  # Cylinder diameter
+            marker.scale.y = 0.2  # Cylinder diameter
+            marker.scale.z = 0.03  # Cylinder height
+
+            marker.color.a = 1.0 
+            marker.color.r = 0.0 
+            marker.color.g = 1.0 
+            marker.color.b = 0.0  
+
+            marker.pose.position.x = obs_pose[0] # Position (vary for each marker)
+            marker.pose.position.y = obs_pose[1] # Position (vary for each marker)
+            marker.pose.position.z = 0.0  # Position
+            marker.pose.orientation.w = 1.0  # No rotation
+            marker.id = a
+            a += 1
+
+            marker_array.markers.append(marker)
+
+
+            marker = Marker()
+            marker.header.frame_id = "base_link"
+            marker.header.stamp = self.get_clock().now().to_msg()
+            marker.ns = "text_marker"
+            marker.type = Marker.TEXT_VIEW_FACING
+            marker.action = Marker.ADD
+
+            marker.pose.position.x = obs_pose[0] + 0.5
+            marker.pose.position.y = obs_pose[1] 
+            marker.pose.position.z = 0.2
+
+            marker.pose.orientation.x = 0.0
+            marker.pose.orientation.y = 0.0
+            marker.pose.orientation.z = 0.0
+            marker.pose.orientation.w = 1.0
+
+            marker.scale.z = 0.4  # Height of the text in meters
+            marker.color.a = 1.0  # Alpha (0.0 is fully transparent, 1.0 is fully opaque)
+            marker.color.r = 1.0  # Red
+            marker.color.g = 1.0  # Green
+            marker.color.b = 1.0  # Blue
+
+            marker.text = "CP: {:.3f}".format(CP)
+            marker.id = a
+            a += 1
+            marker_array.markers.append(marker)
+
+
+        self._visual_publisher.publish(marker_array)
 
                 
     def _obstacle_pubish(self,_id,center_x,center_y,velocity_x,velocity_y,CP):
