@@ -422,9 +422,6 @@ class Clustering(Node):
                                 self.ID +=1
 
 
-
-
-
                 ### Update Wall 
                 for ID in self.Current_group :
                     if self.Current_group[ID].type == "WALL" : 
