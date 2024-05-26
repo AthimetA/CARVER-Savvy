@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+#
 # Copyright 2019 ROBOTIS CO., LTD.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,30 +16,41 @@
 #
 # Authors: Ryan Shim, Gilbert, Tomas
 
-# Modified by: Athimet Aiewcharoen, FIBO, KMUTT
-# Date: 2024-04-24
+# original implementation from: 
+# https://github.com/tomasvr/turtlebot3_drlnav
+# https://github.com/ailabspace/drl-based-mapless-crowd-navigation-with-perceived-risk
+# 
 
-import os
-import random
+# Modified by:  Athimet Aiewcharoen     , FIBO, KMUTT
+#               Tanut   Bumrungvongsiri , FIBO, KMUTT
+# Date : 2024-05-26
+
 import math
 import copy
 import numpy as np
-import time
+import rclpy
+from rclpy.qos import QoSProfile
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
 
-from gazebo_msgs.srv import DeleteEntity, SpawnEntity
+from gazebo_msgs.srv import DeleteEntity
 from gazebo_msgs.srv import SetEntityState
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Pose
 
-import rclpy
-from rclpy.qos import QoSProfile
-from rclpy.node import Node
+from geometry_msgs.msg import Pose, Twist
+from rosgraph_msgs.msg import Clock
+from nav_msgs.msg import Odometry
+from sensor_msgs.msg import LaserScan
+from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart
+from awbu_interfaces.msg import Obstacle
 
-import xml.etree.ElementTree as ET
-from settings.constparams import ENABLE_TRUE_RANDOM_GOALS, ARENA_LENGTH, ARENA_WIDTH
+from drlutils_reward import Reward
+from env_utils import GoalManager, Robot, bcolors, read_stage
 
 # GENERAL SETTINGS
-from settings.constparams import ENABLE_BACKWARD, ENABLE_DYNAMIC_GOALS 
+from settings.constparams import ENABLE_BACKWARD, ENABLE_DYNAMIC_GOALS, ENABLE_TRUE_RANDOM_GOALS
+
 # ENVIRONMENT SETTINGS 
 # Sensor
 from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_CLOCK, TOPIC_OBSTACLES_ODOM,\
@@ -60,26 +71,10 @@ from settings.constparams import UNKNOWN, SUCCESS, COLLISION, TIMEOUT, TUMBLE
 # Robot specific settings
 from settings.constparams import NUM_SCAN_SAMPLES
 
-from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
-
-from geometry_msgs.msg import Pose, Twist
-from rosgraph_msgs.msg import Clock
-from nav_msgs.msg import Odometry
-from sensor_msgs.msg import LaserScan
-from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart
-from awbu_interfaces.msg import Obstacle
-
-from drlutils_reward import Reward
-
-from env_utils import GoalManager, Robot, bcolors
-
 MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
-REST_SIMULATION_PAUSE = 0.01  # seconds
 
 MAX_OBS_SPEED_X = (ARENA_LENGTH / EPISODE_TIMEOUT_SECONDS)
 MAX_OBS_SPEED_Y = (ARENA_WIDTH / EPISODE_TIMEOUT_SECONDS)
-
-from env_utils import read_stage
 
 STAGE = read_stage()
 if STAGE == 1:
@@ -322,52 +317,6 @@ class DRLGazebo(Node):
         response.env_status = self.goal_ready
         return response
     
-    # def get_state(self,
-    #     action_linear_previous: float,
-    #     action_angular_previous: float
-    # ):
-    #     # state = copy.deepcopy(self.scan_ranges)                                                     # range: [ 0, 1]
-    #     # state.append(float(np.clip((self.robot.distance_to_goal / MAX_GOAL_DISTANCE), 0, 1)))       # range: [ 0, 1]
-    #     # state.append(float(self.robot.goal_angle) / math.pi)                                        # range: [-1, 1]
-    #     # state.append(float(action_linear_previous))                                                 # range: [-1, 1]
-    #     # state.append(float(action_angular_previous))                                                # range: [-1, 1]
-    #     self.local_step += 1
-    #     return state
-
-    # def get_state(self, action_linear_previous: float, action_angular_previous: float):
-    #     # Distance Obervation
-    #     state = copy.deepcopy(self.scan_ranges)
-    #     # Goal Related Obervation
-    #     dtg = self.robot.distance_to_goal / MAX_GOAL_DISTANCE
-    #     atg = self.robot.goal_angle / math.pi
-    #     # Robot Observation
-    #     x = self.robot.x / ARENA_LENGTH
-    #     y = self.robot.y / ARENA_WIDTH
-    #     theta = self.robot.theta / math.pi
-    #     vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
-    #     omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
-    #     # Obstacle Observation
-    #     obstacle_x = self.obstacle_pos_x / ARENA_LENGTH
-    #     obstacle_y = self.obstacle_pos_y / ARENA_WIDTH
-    #     obstacle_vel_x = self.obstacle_vel_x / SPEED_LINEAR_MAX
-    #     obstacle_vel_y = self.obstacle_vel_y / SPEED_LINEAR_MAX
-    #     # Append the state
-    #     state.append(float(dtg))
-    #     state.append(float(atg))
-    #     state.append(float(x))
-    #     state.append(float(y))
-    #     state.append(float(theta))
-    #     state.append(float(vel))
-    #     state.append(float(omega))
-    #     state.append(float(obstacle_x))
-    #     state.append(float(obstacle_y))
-    #     state.append(float(obstacle_vel_x))
-    #     state.append(float(obstacle_vel_y))
-    #     # self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
-    #     # self.get_logger().info(f'State: {state}')
-    #     self.local_step += 1
-    #     return state
-    
     def get_state(self, action_linear_previous: float, action_angular_previous: float):
         # Distance Obervation
         state = copy.deepcopy(self.scan_ranges)
@@ -386,14 +335,6 @@ class DRLGazebo(Node):
         # Angular Components of the robot
         theta = self.robot.theta
         omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
-        # # Relative Obstacle Observation
-        # relative_robot_obstacle_distance = np.sqrt((self.obstacle_pos_x - self.robot.x)**2 + (self.obstacle_pos_y - self.robot.y)**2) / LIDAR_DISTANCE_CAP
-        # relative_robot_obstacle_angle = math.atan2(self.obstacle_pos_y - self.robot.y, self.obstacle_pos_x - self.robot.x) / math.pi
-        # # Relative Linear and Angular velocity
-        # obstacle_linear_vel = np.sqrt(self.obstacle_vel_x**2 + self.obstacle_vel_y**2)
-        # obstacle_angular_vel = math.atan2(self.obstacle_vel_y, self.obstacle_vel_x)
-        # relative_robot_obstacle_linear_vel = (obstacle_linear_vel - self.robot.linear_velocity) / SPEED_LINEAR_MAX
-        # relative_robot_obstacle_angular_vel = (obstacle_angular_vel - self.robot.angular_velocity) / SPEED_ANGULAR_MAX
         # Obstacle Observation
         obstacle_x = self.obstacle_pos_x # Already normalized
         obstacle_y = self.obstacle_pos_y # Already normalized
@@ -412,10 +353,6 @@ class DRLGazebo(Node):
         state.append(float(Vy))
         state.append(float(omega))
         # Obstacle observation
-        # state.append(float(relative_robot_obstacle_distance))
-        # state.append(float(relative_robot_obstacle_angle))
-        # state.append(float(relative_robot_obstacle_linear_vel))
-        # state.append(float(relative_robot_obstacle_angular_vel))
         state.append(float(obstacle_x))
         state.append(float(obstacle_y))
         state.append(float(obstacle_vel_x))
@@ -534,7 +471,6 @@ class DRLGazebo(Node):
         response.distance_traveled = 0.0
         
         self.get_logger().info(f"=====================================")
-        # self.get_logger().info(bcolors.OKBLUE + f"New episode started, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}" + bcolors.ENDC)
         self.get_logger().info(bcolors.OKBLUE + f"Goal location: ({self.goal_x:.2f}, {self.goal_y:.2f}) DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°" + bcolors.ENDC)
 
         self.reward_manager.reward_initalize(self.robot.distance_to_goal / MAX_GOAL_DISTANCE, self.robot.goal_angle / math.pi)

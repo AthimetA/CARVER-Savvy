@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 #
+# Copyright 2019 ROBOTIS CO., LTD.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,7 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Authors: Tomas
+# Authors: Ryan Shim, Gilbert, Tomas
+
+# original implementation from: 
+# https://github.com/tomasvr/turtlebot3_drlnav
+# https://github.com/ailabspace/drl-based-mapless-crowd-navigation-with-perceived-risk
+# 
+
+# Modified by:  Athimet Aiewcharoen     , FIBO, KMUTT
+#               Tanut   Bumrungvongsiri , FIBO, KMUTT
+# Date : 2024-05-26
 
 from abc import ABC, abstractmethod
 import numpy as np

@@ -1,3 +1,34 @@
+#!/usr/bin/env python3
+#
+# Copyright 2019 ROBOTIS CO., LTD.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Authors: Ryan Shim, Gilbert, Tomas
+
+# original implementation from: 
+# https://github.com/tomasvr/turtlebot3_drlnav
+# https://github.com/ailabspace/drl-based-mapless-crowd-navigation-with-perceived-risk
+# 
+
+# Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
+# Paper: https://arxiv.org/abs/1802.09477
+# Original implementation: https://github.com/sfujim/TD3/blob/master/TD3.py [Stable Baselines original implementation]
+
+# Modified by:  Athimet Aiewcharoen     , FIBO, KMUTT
+#               Tanut   Bumrungvongsiri , FIBO, KMUTT
+# Date : 2024-05-26
+
 import numpy as np
 import copy
 
@@ -18,10 +49,6 @@ from abc import ABC, abstractmethod
 
 LINEAR = 0
 ANGULAR = 1
-
-# Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
-# Paper: https://arxiv.org/abs/1802.09477
-# Original implementation: https://github.com/sfujim/TD3/blob/master/TD3.py [Stable Baselines original implementation]
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

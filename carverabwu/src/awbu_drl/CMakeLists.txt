@@ -32,7 +32,7 @@ install(PROGRAMS
   scripts/drl_agent.py
   scripts/drl_obstacle_control.py
   scripts/drl_obstacle_cp.py
-  scripts/clustering.py
+  scripts/drl_obstacle_cp_real.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

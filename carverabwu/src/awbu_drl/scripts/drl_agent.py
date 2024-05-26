@@ -16,25 +16,25 @@
 #
 # Authors: Ryan Shim, Gilbert, Tomas
 
-# Modified by: Athimet Aiewcharoen, FIBO, KMUTT
-# Date: 2024-04-24
+# original implementation from: 
+# https://github.com/tomasvr/turtlebot3_drlnav
+# https://github.com/ailabspace/drl-based-mapless-crowd-navigation-with-perceived-risk
+# 
+
+# Modified by:  Athimet Aiewcharoen     , FIBO, KMUTT
+#               Tanut   Bumrungvongsiri , FIBO, KMUTT
+# Date : 2024-05-26
 
 import copy
 import os
 import sys
 import time
-import numpy as np
-
-from settings.constparams import ENABLE_VISUAL, ENABLE_STACKING, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL, TAU, LEARNING_RATE
-from settings.constparams import POLICY_NOISE, POLICY_NOISE_CLIP, EPSILON_DECAY, EPSILON_MINIMUM
+import rclpy
+from rclpy.node import Node
+import torch
 
 from awbu_interfaces.srv import DrlStep, EnvReady , ScoreStep
 from std_srvs.srv import Empty
-
-import rclpy
-from rclpy.node import Node
-
-import torch
 
 from env_utils import get_simulation_speed, read_stage, translate_outcome
 from env_utils import bcolors
@@ -42,15 +42,14 @@ from env_utils import bcolors
 from drlagnet_td3 import TD3
 from drlagnet_sac import SAC
 from drlutils_graph import Graph
-
 from drlutils_test_graph import Test_Graph
-
 from drlutils_replaybuffer import ReplayBuffer
 from drlutils_storagemanager import StorageManager
 from drlutils_logger import Logger
 from drlutils_visual import *
 
-import torch.nn as nn
+from settings.constparams import ENABLE_VISUAL, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL
+
 
 class DrlAgent(Node):
     def __init__(self,

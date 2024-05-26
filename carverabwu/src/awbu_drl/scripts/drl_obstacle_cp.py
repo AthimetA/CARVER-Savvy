@@ -1,40 +1,49 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+#
+# Copyright 2019 ROBOTIS CO., LTD.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Authors: Ryan Shim, Gilbert, Tomas
+
+# original implementation from: 
+# https://github.com/tomasvr/turtlebot3_drlnav
+# https://github.com/ailabspace/drl-based-mapless-crowd-navigation-with-perceived-risk
+# 
+
+# Modified by:  Athimet Aiewcharoen     , FIBO, KMUTT
+#               Tanut   Bumrungvongsiri , FIBO, KMUTT
+# Date : 2024-05-26
 
 import numpy as np
 import time
 import rclpy
-import copy
 from rclpy.node import Node
 import utils 
+from tf_transformations import euler_from_quaternion
 
-# Test import DL libraries
-import torch as th
-import torch.nn as nn
-import torch.nn.functional as F
-
-import gymnasium as gym
-
-import stable_baselines3 as sb3
-
-from geometry_msgs.msg import Twist , Pose
+from std_srvs.srv import Empty
+from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
-
 from gazebo_msgs.srv import GetEntityState, GetModelList
+from visualization_msgs.msg import Marker, MarkerArray
 
-from settings.constparams import LIDAR_DISTANCE_CAP , THRESHOLD_COLLISION
+from awbu_interfaces.msg import Obstacle
+from awbu_interfaces.srv import ScoreStep
 
 from env_utils import get_simulation_speed, read_stage
 
-from sensor_msgs.msg import LaserScan
-from awbu_interfaces.msg import Obstacle
-from std_srvs.srv import Empty
-from std_msgs.msg import Float64MultiArray
-
-from awbu_interfaces.srv import ScoreStep
-
-from tf_transformations import euler_from_quaternion
-
-from visualization_msgs.msg import Marker, MarkerArray
+from settings.constparams import LIDAR_DISTANCE_CAP , THRESHOLD_COLLISION
 
 SIM_SPD = get_simulation_speed(read_stage())
 RADIUS = 0.5
