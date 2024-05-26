@@ -5,6 +5,7 @@ import time
 import rclpy
 import copy
 from rclpy.node import Node
+import utils 
 
 # Test import DL libraries
 import torch as th
@@ -71,6 +72,7 @@ class ObstacleCP(Node):
         self._visual_publisher= self.create_publisher(MarkerArray, 'Obstacle_ob', 10)
 
         self.CP_publisher = self.create_publisher(Obstacle, '/abwubot/obstacleCP', 10)
+        
         self.odom_topic_name = '/abwubot/odom'
         self.sub_odom = self.create_subscription(
             Odometry,
@@ -94,6 +96,8 @@ class ObstacleCP(Node):
         self.k_time = 0.0
         self.m_time = 0.0
         self.time_step = 0.0
+        
+        self.clear_visual()
 
         response = Empty.Response()
 
@@ -220,13 +224,36 @@ class ObstacleCP(Node):
                 self._obstacle_pubish(ID_LIST , CENTER_X , CENTER_Y , VELOCITY_X , VELOCITY_Y , CP_LIST)
                 self.visualize_grouped_points(obstacle_inrange)
 
+    def clear_visual(self):
+
+        marker = Marker()
+        marker.header.frame_id = 'base_link'  # or the appropriate frame id for your use case
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = ''
+        marker.id = 0
+        marker.type = Marker.CUBE  # The type can be any valid marker type
+        marker.action = Marker.DELETEALL
+        marker_array = MarkerArray()
+        marker_array.markers.append(marker)
+        self._visual_publisher.publish(marker_array)
+
+
     def visualize_grouped_points(self, ob): ### point_clusters  -> self.Current_group
         a = 0
+        robot_pos_x = self.position.x
+        robot_pos_y = self.position.y
+        robot_orientation_list = [self.orientation.x , self.orientation.y 
+                    , self.orientation.z , self.orientation.w]
+        _ , _ , robot_yaw = euler_from_quaternion(robot_orientation_list)
+
+        robot_pose = robot_pos_x , robot_pos_y , robot_yaw
+
+        
         marker_array = MarkerArray()
         for obstacle in ob: 
             CP = obstacle[0]
             obs_pose = obstacle[1]
-            
+            local_xy = utils.transform_global_to_local(robot_pose,obs_pose)
             marker = Marker()
 
             marker.header.frame_id = "base_link"
@@ -242,8 +269,8 @@ class ObstacleCP(Node):
             marker.color.g = 1.0 
             marker.color.b = 0.0  
 
-            marker.pose.position.x = obs_pose[0] # Position (vary for each marker)
-            marker.pose.position.y = obs_pose[1] # Position (vary for each marker)
+            marker.pose.position.x = local_xy[0] # Position (vary for each marker)
+            marker.pose.position.y = local_xy[1] # Position (vary for each marker)
             marker.pose.position.z = 0.0  # Position
             marker.pose.orientation.w = 1.0  # No rotation
             marker.id = a
@@ -259,8 +286,8 @@ class ObstacleCP(Node):
             marker.type = Marker.TEXT_VIEW_FACING
             marker.action = Marker.ADD
 
-            marker.pose.position.x = obs_pose[0] + 0.5
-            marker.pose.position.y = obs_pose[1] 
+            marker.pose.position.x = local_xy[0] + 0.5
+            marker.pose.position.y = local_xy[1] 
             marker.pose.position.z = 0.2
 
             marker.pose.orientation.x = 0.0
