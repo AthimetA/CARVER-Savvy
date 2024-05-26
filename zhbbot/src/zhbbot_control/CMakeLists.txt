@@ -36,6 +36,7 @@ install(PROGRAMS
   scripts/zhbbot_local_planer_vff_avoidance.py
   scripts/zhbbot_local_planer_dwa.py
   scripts/drl_obstacle_control.py
+  scripts/drl_obstacle_cp.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
