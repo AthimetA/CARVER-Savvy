@@ -10,7 +10,7 @@ import numpy as np
 
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Float32
 
 from carversavvy_interfaces.srv import CarversavvyBeginCalibration
 
@@ -44,15 +44,19 @@ class carversavvyCalibrationSensor(Node):
         
         
         # IMU subscriber
-        self.sensor_subscriber = self.create_subscription(Imu, self.imu_topic, self.imu_callback, 10)
+        self.imu_ax_sub = self.create_subscription(Float32, '/IMU_ax', self.imu_ax_callback, 10)
+        self.imu_vz_sub = self.create_subscription(Float32, '/IMU_vz', self.imu_vz_callback, 10)
+        self.imu_ax_buffer = 0.0
+        self.imu_vz_buffer = 0.0
+
         self.imu_linear_acceleration_list = np.array([])
         self.imu_angular_velocity_list = np.array([])
         self.imu_n = 0
         self.imu_calibration = False
 
         # Wheel velocity subscriber
-        self.create_subscription(Float64, '/wheelL_vel', self.wheelL_callback, 10)
-        self.create_subscription(Float64, '/wheelR_vel', self.wheelR_callback, 10)
+        self.create_subscription(Float32, '/wheelL_vel', self.wheelL_callback, 10)
+        self.create_subscription(Float32, '/wheelR_vel', self.wheelR_callback, 10)
         self.left_wheel_velocity = 0.0
         self.right_wheel_velocity = 0.0
         self.left_wheel_velocity_list = np.array([])
@@ -64,12 +68,16 @@ class carversavvyCalibrationSensor(Node):
         self.srv = self.create_service(CarversavvyBeginCalibration, self.node_calibration_srv_name , self.begin_calibration_callback)
 
         self.get_logger().info('carversavvyCalibrationSensor node has been started')
-        srv_text ='ros2 service call /carversavvy_begin_calibration carversavvy_interfaces/srv/carversavvyBeginCalibration "{imu_calibration: false, wheel_calibration: false}"'
+        srv_text ='ros2 service call /carversavvy_begin_calibration carversavvy_interfaces/srv/CarversavvyBeginCalibration "{imu_calibration: false, wheel_calibration: false}"'
         self.get_logger().info(f'Waiting for service call: '+srv_text)
         
-    def imu_callback(self,msg: Imu):
-        angular_velocity = np.array([msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z])
-        linear_acceleration = np.array([msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z])
+    def imu_vz_callback(self,msg: Float32):
+        self.imu_vz_buffer = msg.data
+
+    def imu_ax_callback(self,msg: Float32):
+        self.imu_ax_buffer = msg.data
+        angular_velocity = np.array([0.0, 0.0, self.imu_vz_buffer])
+        linear_acceleration = np.array([self.imu_ax_buffer, 0.0, 0.0])
 
         if self.imu_calibration == True and self.imu_n < self.max_n:
             self.imu_angular_velocity_list = np.append(self.imu_angular_velocity_list, angular_velocity)
@@ -97,10 +105,10 @@ class carversavvyCalibrationSensor(Node):
         else:
             pass
         
-    def wheelL_callback(self, msg: Float64):
+    def wheelL_callback(self, msg: Float32):
         self.left_wheel_velocity = msg.data
     
-    def wheelR_callback(self, msg: Float64):
+    def wheelR_callback(self, msg: Float32):
         self.right_wheel_velocity = msg.data
 
         left_wheel_velocity = self.left_wheel_velocity

@@ -29,6 +29,7 @@ sh2_SensorValue_t sensorValue;
 
 // ROS2 message types
 #include <std_msgs/msg/float64.h>
+#include <std_msgs/msg/float32.h>
 #include <std_msgs/msg/int16.h>
 #include <geometry_msgs/msg/twist.h>
 #include <sensor_msgs/msg/imu.h>
@@ -85,7 +86,7 @@ int pinEncB2 = 17;
 float V_Batt_Full = 26.52; // Not change
 float V_Read_Max = 2.457;  // Not change
 float Gain_ana = 1.099; // 1.099
-float sampling_time = 100; //hz
+float sampling_time = 25; //hz
 
 // PID parameters
 uint16_t Offset_Read_Analog = 0; // ถ้า V ไม่ตรงปรับ offset ตรงนี้ แปรผันตรง
@@ -118,15 +119,24 @@ std_msgs__msg__Int16 ENCR_msg;
 
 //wheelL vel
 rcl_publisher_t wheelL_vel_publisher;
-std_msgs__msg__Float64 wheelL_vel_msg;
+std_msgs__msg__Float32 wheelL_vel_msg;
 
 //wheelR vel
 rcl_publisher_t wheelR_vel_publisher;
-std_msgs__msg__Float64 wheelR_vel_msg;
+std_msgs__msg__Float32 wheelR_vel_msg;
 
 //imu
 rcl_publisher_t IMU_publisher;
 sensor_msgs__msg__Imu IMU_msg;
+//imu_data
+rcl_publisher_t IMU_yaw_publisher;
+std_msgs__msg__Float32 IMU_yaw_msg;
+
+rcl_publisher_t IMU_vz_publisher;
+std_msgs__msg__Float32 IMU_vz_msg;
+
+rcl_publisher_t IMU_ax_publisher;
+std_msgs__msg__Float32 IMU_ax_msg;
 
 //input controlL
 rcl_publisher_t inputL_publisher;
@@ -198,8 +208,7 @@ PID pidController1(&pidParameter1.encInput, &pidParameter1.output, &pidParameter
 PID pidController2(&pidParameter2.encInput, &pidParameter2.output, &pidParameter2.setPoint,
                    0, 0, 0, DIRECT);
 
-int intervalPID = 10;
-int intervalpubsub = 10;
+
 double preIntervelMillis = 0;
 double prePubMillis = 0;
 double preDetectError = 0;
@@ -229,38 +238,42 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
   RCLC_UNUSED(last_call_time);
   if (timer != NULL) {
-	ENCR_msg.data = 0; 
-	ENCL_msg.data = 0;
+	// ENCR_msg.data = counttimer; 
+	// ENCL_msg.data = counttimer;
 	// outputcontrolL_msg.data = pidParameter1.output;
 	// outputcontrolR_msg.data = pidParameter2.output;
-	outputcontrolL_msg.data = feedfowardL;
-	outputcontrolR_msg.data = feedfowardR;
+	// outputcontrolL_msg.data = feedfowardL;
+	// outputcontrolR_msg.data = feedfowardR;
 	
 	// inputcontrolL_msg.data = robotVelocityCmd.v1;
 	// inputcontrolR_msg.data = robotVelocityCmd.v2;
-	inputcontrolL_msg.data = Sub_speedL;
-	inputcontrolR_msg.data = Sub_speedR;
+	// inputcontrolL_msg.data = Sub_speedL;
+	// inputcontrolR_msg.data = Sub_speedR;
 	wheelL_vel_msg.data = encoderLrad;
 	wheelR_vel_msg.data = encoderRrad;
-	IMU_msg.angular_velocity.x = -1.0*IMU_data[0];
-	IMU_msg.angular_velocity.y = IMU_data[2];
-	IMU_msg.angular_velocity.z = IMU_data[1];
-	IMU_msg.linear_acceleration.x = -1.0* IMU_data[3];
-	IMU_msg.linear_acceleration.y = IMU_data[5];
-	IMU_msg.linear_acceleration.z = IMU_data[4];
-	IMU_msg.orientation.w = IMU_data[6];
-	IMU_msg.orientation.x = IMU_data[7];
-	IMU_msg.orientation.y = IMU_data[8];
-	IMU_msg.orientation.z = IMU_data[9];
-	RCSOFTCHECK(rcl_publish(&ENCL_publisher, &ENCL_msg, NULL));
-	RCSOFTCHECK(rcl_publish(&ENCR_publisher, &ENCR_msg, NULL));
+	// IMU_msg.angular_velocity.x = -1.0*IMU_data[0];
+	// IMU_msg.angular_velocity.y = IMU_data[2];
+	IMU_vz_msg.data = IMU_data[1];
+	IMU_ax_msg.data = -1.0* IMU_data[3];
+	// IMU_msg.linear_acceleration.y = IMU_data[5];
+	// IMU_msg.linear_acceleration.z = IMU_data[4];
+	// IMU_msg.orientation.w = IMU_data[6];
+	// IMU_msg.orientation.x = IMU_data[7];
+	// IMU_msg.orientation.y = IMU_data[8];
+	IMU_yaw_msg.data = IMU_data[8];
+	// RCSOFTCHECK(rcl_publish(&ENCL_publisher, &ENCL_msg, NULL));
+	// RCSOFTCHECK(rcl_publish(&ENCR_publisher, &ENCR_msg, NULL));
 	RCSOFTCHECK(rcl_publish(&wheelL_vel_publisher, &wheelL_vel_msg, NULL));
 	RCSOFTCHECK(rcl_publish(&wheelR_vel_publisher, &wheelR_vel_msg, NULL));
-	RCSOFTCHECK(rcl_publish(&IMU_publisher, &IMU_msg, NULL));
-	RCSOFTCHECK(rcl_publish(&outputL_publisher, &outputcontrolL_msg, NULL));
-	RCSOFTCHECK(rcl_publish(&outputR_publisher, &outputcontrolR_msg, NULL));
-	RCSOFTCHECK(rcl_publish(&inputL_publisher, &inputcontrolL_msg, NULL));
-	RCSOFTCHECK(rcl_publish(&inputR_publisher, &inputcontrolR_msg, NULL));
+	// RCSOFTCHECK(rcl_publish(&IMU_publisher, &IMU_msg, NULL));
+	RCSOFTCHECK(rcl_publish(&IMU_yaw_publisher, &IMU_yaw_msg, NULL));
+	RCSOFTCHECK(rcl_publish(&IMU_vz_publisher, &IMU_vz_msg, NULL));
+	RCSOFTCHECK(rcl_publish(&IMU_ax_publisher, &IMU_ax_msg, NULL));
+	// RCSOFTCHECK(rcl_publish(&IMU_publisher, &IMU_msg, NULL));
+	// RCSOFTCHECK(rcl_publish(&outputL_publisher, &outputcontrolL_msg, NULL));
+	// RCSOFTCHECK(rcl_publish(&outputR_publisher, &outputcontrolR_msg, NULL));
+	// RCSOFTCHECK(rcl_publish(&inputL_publisher, &inputcontrolL_msg, NULL));
+	// RCSOFTCHECK(rcl_publish(&inputR_publisher, &inputcontrolR_msg, NULL));
 	// counttimer++;
   }
 }
@@ -278,22 +291,25 @@ void uROSsetup()
 	  // sync time
   	// rmw_uros_sync_session(1000);
 	//create publisher
-	RCCHECK(rclc_publisher_init_default(&ENCL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "rawENCL"));
-	RCCHECK(rclc_publisher_init_default(&ENCR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "rawENCR"));
-	RCCHECK(rclc_publisher_init_default(&wheelL_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64), "wheelL_vel"));
-	RCCHECK(rclc_publisher_init_default(&wheelR_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64), "wheelR_vel"));
-	RCCHECK(rclc_publisher_init_default(&outputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputL"));
-	RCCHECK(rclc_publisher_init_default(&outputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputR"));
-	RCCHECK(rclc_publisher_init_default(&inputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64), "inputL"));
-	RCCHECK(rclc_publisher_init_default(&inputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64), "inputR"));
-  RCCHECK(rclc_publisher_init_default(&IMU_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "IMU"));
+	// RCCHECK(rclc_publisher_init_default(&ENCL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "rawENCL"));
+	// RCCHECK(rclc_publisher_init_default(&ENCR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "rawENCR"));
+	RCCHECK(rclc_publisher_init_default(&wheelL_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "wheelL_vel"));
+	RCCHECK(rclc_publisher_init_default(&wheelR_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "wheelR_vel"));
+	// RCCHECK(rclc_publisher_init_default(&outputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputL"));
+	// RCCHECK(rclc_publisher_init_default(&outputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputR"));
+	// RCCHECK(rclc_publisher_init_default(&inputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64), "inputL"));
+	// RCCHECK(rclc_publisher_init_default(&inputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64), "inputR"));
+	RCCHECK(rclc_publisher_init_default(&IMU_yaw_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_yaw"));
+	RCCHECK(rclc_publisher_init_default(&IMU_vz_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_vz"));
+	RCCHECK(rclc_publisher_init_default(&IMU_ax_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_ax"));
+//   RCCHECK(rclc_publisher_init_default(&IMU_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "IMU"));
 	//create subscriber
 	RCCHECK(rclc_subscription_init_default(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "carversavvy_cmd_vel"));
 	//create timer
-	const unsigned int timer_timeout = 10;
+	const unsigned int timer_timeout = 40; //25 HZ
 	RCCHECK(rclc_timer_init_default(&timer, &support, RCL_MS_TO_NS(timer_timeout), timer_callback));
 	//create executor
-	RCCHECK(rclc_executor_init(&executor_pub, &support.context, 10, &allocator));
+	RCCHECK(rclc_executor_init(&executor_pub, &support.context, 6, &allocator));
 	RCCHECK(rclc_executor_add_timer(&executor_pub, &timer));
 	// RCCHECK(rclc_executor_init(&executor_sub, &support.context, 1, &allocator));
 	RCCHECK(rclc_executor_add_subscription(&executor_pub, &subscriber, &Speed_msg, &subscription_callback, ON_NEW_DATA));
@@ -412,7 +428,7 @@ return (w * res_encoder * qei ) / (2 * M_PI);
 
 float enc_to_rad(float enc)
 {
-  return ( (enc * intervalPID) / ( res_encoder * qei ) ) * 2 * M_PI;
+  return ( (enc * sampling_time) / ( res_encoder * qei ) ) * 2 * M_PI;
   // return ( enc / ( res_encoder * qei ) ) * 2 * pi;
 }
 //move function calculate.h
@@ -451,12 +467,12 @@ void controlSetup()
   pidParameter1.Kp = 0.03;//3;  //1;   //4 
   pidParameter1.Ki = 0.18;//0.18;//0.5; //8;
   pidParameter1.Kd = 0.0;
-  pidParameter1.sampleTime = intervalPID;
+  pidParameter1.sampleTime = sampling_time;
 
   pidParameter2.Kp = 0.03;//* 0.45;//3;  //1;   //4
   pidParameter2.Ki = 0.16;//1.2*0.06/2.8;//0.5; //8;
   pidParameter2.Kd = 0.0;
-  pidParameter2.sampleTime = intervalPID;
+  pidParameter2.sampleTime = sampling_time;
 
   motorR.pwmChannel = 1;
   motorR.pwmPin = 25;
@@ -491,6 +507,7 @@ void controlLoop()
 		preIntervelMillis = millis();
 		// Serial.println("This Task run on Core: " + String(xPortGetCoreID()));
 		// get IMU data
+
 		if (bno08x.wasReset()) {
     		// Serial.print("sensor was reset ");
     		// setReports();

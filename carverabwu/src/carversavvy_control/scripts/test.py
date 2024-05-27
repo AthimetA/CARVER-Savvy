@@ -25,11 +25,11 @@ class carversavvyTestNode(Node):
         #     self.mode = 3
         # else:
         #     self.mode = int(sys.argv[1])
-        self.mode = 4
+        self.mode = 1
 
         # Create a publisher to publish the velocity commands
         self.cmd_pub = self.create_publisher(Twist, '/carversavvy_vel_ref', 10)
-        self.hz = 10
+        self.hz = 30
         self.time_period = 1/self.hz
         self.cmd_timer = self.create_timer(self.time_period, self.cmd_timer_callback)
         self.cmd_vel = Twist()
@@ -98,6 +98,9 @@ class carversavvyTestNode(Node):
                     self.cmd_vel.angular.z = 0.0
                     self.cmd_pub.publish(self.cmd_vel)
                     self.distance_pub.publish(Float64(data=self.QX[self.loop_counter-1]))
+                    # self.mode = 3
+                    # self.timer_counter = 0
+                    # self.loop_counter = 0
             self.timer_counter += 1
 
         elif mode == 2:
@@ -118,7 +121,7 @@ class carversavvyTestNode(Node):
                 self.cmd_pub.publish(self.cmd_vel)
             if 2/self.time_period < self.timer_counter <= 12/self.time_period:
                 self.cmd_vel.linear.x = 0.0
-                self.cmd_vel.angular.z = -(2*np.pi/4)/10
+                self.cmd_vel.angular.z = -(2*np.pi)/10
                 self.cmd_pub.publish(self.cmd_vel)
             else:
                 self.cmd_vel.linear.x = 0.0

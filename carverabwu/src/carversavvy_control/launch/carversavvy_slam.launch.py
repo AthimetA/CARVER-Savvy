@@ -43,6 +43,24 @@ def generate_launch_description():
         output='screen',
     )
 
+    package_name = 'zhbbot_description'
+
+    joy_params = os.path.join(get_package_share_directory(package_name),'config','carversavvy_joystick.yaml')
+
+    joy_node = Node(
+            package='joy',
+            executable='joy_node',
+            parameters=[joy_params, {'use_sim_time': False}],
+         )
+
+    teleop_node = Node(
+            package='teleop_twist_joy',
+            executable='teleop_node',
+            name='teleop_node',
+            parameters=[joy_params, {'use_sim_time': False}],
+            remappings=[('/cmd_vel','/cmd_vel_joy')]
+         )
+
     '''
     
     CONTROLLER
@@ -122,14 +140,14 @@ def generate_launch_description():
     default_params_file = os.path.join(get_package_share_directory("carversavvy_control"),
                                        'config', 'mapper_params_online_async.yaml')
 
-    start_async_slam_toolbox_node = Node(
+    start_sync_slam_toolbox_node = Node(
         parameters=[
           default_params_file,
           {'use_sim_time': False}
         ],
         package='slam_toolbox',
-        executable='async_slam_toolbox_node',
-        name='slam_toolbox',
+        executable='sync_slam_toolbox_node',
+        name='sync_slam_toolbox_node',
         output='screen')
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
@@ -151,10 +169,13 @@ def generate_launch_description():
 
         rplidar_node,
 
-        start_async_slam_toolbox_node,
+        start_sync_slam_toolbox_node,
 
         # Rviz Node
         rviz_node,
+
+        joy_node,
+        teleop_node,
 
         # Twist Mux
         twist_mux_node
