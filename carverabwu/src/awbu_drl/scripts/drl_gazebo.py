@@ -225,6 +225,7 @@ class DRLGazebo(Node):
         self.gazebo_unpause.call_async(Empty.Request())
 
     def reset_obstacle_cp(self):
+        self.get_logger().info('Resetting obstacle CP...')
         while not self.obstacle_cp_reset_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         self.obstacle_cp_reset_client.call_async(Empty.Request())
@@ -262,12 +263,16 @@ class DRLGazebo(Node):
 
     def scan_callback(self, msg: LaserScan):
         if len(msg.ranges) != NUM_SCAN_SAMPLES:
-            print(f"more or less scans than expected! check model.sdf, got: {len(msg.ranges)}, expected: {NUM_SCAN_SAMPLES}")
+            # Downsample the scan data
+            scan_step = len(msg.ranges) // NUM_SCAN_SAMPLES
+            scandata = msg.ranges[::scan_step]
+        else:
+            scandata = msg.ranges
         # normalize laser values
         self.obstacle_distance_nearest = 1
         for i in range(NUM_SCAN_SAMPLES):
                 # Normalize the scan values
-                self.scan_ranges[i] = np.clip(float(msg.ranges[i]) / LIDAR_DISTANCE_CAP, 0, 1)
+                self.scan_ranges[i] = np.clip(float(scandata[i]) / LIDAR_DISTANCE_CAP, 0, 1)
                 # Check for obstacles
                 if self.scan_ranges[i] < self.obstacle_distance_nearest:
                     self.obstacle_distance_nearest = self.scan_ranges[i]

@@ -5,8 +5,6 @@ import math
 import numpy as np
 import copy
 
-
-
 def transform_local_to_global(robot_pose,local_point):
         """
         Transform coordinates from the local frame of a mobile robot to the global frame.
@@ -184,12 +182,12 @@ def association(previous_group,group):
 
         euclidean = np.zeros((len(previous_mean),len(group)))
         
-
         for i in range(len(previous_mean)):
             for j in range(len(group)):
                 euclidean[i, j] = np.linalg.norm(np.array(previous_mean[i]) - np.array(current_mean[j]))
 
-                
+        # print(f'Euclidean Distance Matrix : \n{euclidean}')   
+        
         hungarian = Hungarian(euclidean)
         hungarian.calculate()
         t = hungarian.get_results()
@@ -225,7 +223,7 @@ def calculate_distance(point, m, c):
     x, y = point
     return abs(y - (m * x + c)) / np.sqrt(1 + m**2)
 
-def is_oblique_line(points, distance_threshold = 0.01 , percentage_threshold = 0.7 ):
+def is_oblique_line(points, distance_threshold = 0.01 , percentage_threshold = 0.85):
     # Fit a line to the points
     ###### 
 
@@ -309,16 +307,16 @@ def classify_object(points):
     x = sum([i[0] for i in points])/len(points)
     y = sum([i[1] for i in points])/len(points)
 
-    #     print(points)
+    #  Line
     if is_oblique_line(points):
         return ["WALL", (x,y) , None]
 
-    # else :
-    try : 
+
+    # Circle
+    try :   
         (h,k) , r = Reconstruct_Circle(points) 
         return ["Obstacle", (h,k) , r]
     except : 
-
         return ["WALL", (x,y) , None]
     
 

@@ -48,6 +48,6 @@ def generate_launch_description():
 
         drl_obstacle,
 
-        # drl_obstacle_cp,
+        drl_obstacle_cp,
 
     ])
