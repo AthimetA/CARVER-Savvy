@@ -35,8 +35,8 @@ def generate_launch_description():
     
     drl_obstacle_cp = Node(
             package='awbu_drl',
-            # executable='drl_obstacle_cp_real.py',
-            executable='drl_obstacle_cp.py',
+            executable='drl_obstacle_cp_real.py',
+            # executable='drl_obstacle_cp.py',
             name='drl_obstacle_cp',
             parameters=[{'use_sim_time': use_sim_time}],
          )
@@ -48,6 +48,6 @@ def generate_launch_description():
 
         drl_obstacle,
 
-        drl_obstacle_cp,
+        # drl_obstacle_cp,
 
     ])

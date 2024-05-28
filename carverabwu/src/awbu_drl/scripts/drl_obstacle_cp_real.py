@@ -42,8 +42,12 @@ import copy
 import numpy as np
 
 from awbu_interfaces.msg import Obstacle
+from awbu_interfaces.srv import ScoreStep
 
 from env_utils import get_simulation_speed, read_stage
+
+from settings.constparams import THRESHOLD_COLLISION
+ROBOT_WIDTH = 0.3
 
 sim_speed = get_simulation_speed(read_stage())
 
@@ -142,6 +146,11 @@ class Clustering(Node):
 
         self.reset_simulation_service = self.create_service(Empty, 'reset_world', self.service_callback)
 
+        self.get_k_t_score = self.create_service(ScoreStep, 'score_step_comm', self.get_time_stepscore)
+        self.k_time = 0.0
+        self.m_time = 0.0
+        self.time_step = 0.0
+
         # Create a timer with a period of 1 second (1000 milliseconds)
         ### 30 Hz
         self.timer = self.create_timer(TIME_STEP,  self.timer_callback)
@@ -151,6 +160,15 @@ class Clustering(Node):
         self.position = None
 
         self.past_time = 0.0
+
+    def get_time_stepscore(self, request, response):
+        self.get_logger().info('Get Score')
+
+        response.k_time = float(self.k_time)
+        response.m_time = float(self.m_time)
+        response.total_time = float(self.time_step)
+
+        return response
 
         
 
@@ -186,16 +204,33 @@ class Clustering(Node):
         self.previous_object = 0
         self.color_track = {}
 
+        self.k_time = 0.0
+        self.m_time = 0.0
+        self.time_step = 0.0
+
+        self.clear_visual()
+
         response = Empty.Response()
 
         return response
+    
+    def clear_visual(self):
+
+        marker = Marker()
+        marker.header.frame_id = 'base_link'  # or the appropriate frame id for your use case
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.ns = ''
+        marker.id = 0
+        marker.type = Marker.CUBE  # The type can be any valid marker type
+        marker.action = Marker.DELETEALL
+        marker_array = MarkerArray()
+        marker_array.markers.append(marker)
+        self.publisher2_.publish(marker_array)
     
     def scan_callback(self ,msg):
         self.scan = msg
         self.max_scan = msg.range_max
         self.min_scan = msg.range_min
-
-        
 
     def timer_callback(self):
         if self.scan == None or self.time_sec == None or self.position == None: return 
@@ -472,6 +507,8 @@ class Clustering(Node):
         VELOCITY_X = []
         VELOCITY_Y = []
         CP_LIST = []
+        DIST_ARRAY = []
+        Pc_ttc_ARRAY = []
 
         if self._Start == False and self.Previous_group != {}:
             print(self.Current_group)
@@ -492,7 +529,7 @@ class Clustering(Node):
                     print('velo :' , self.Current_group[ID].velocity)
                     print("Predicted KF :" , self.Current_group[ID].Predicted_KF)
 
-                    #### Calculate CP \
+                    #### Calculate CP 
                     n = len(self.Current_group[ID].position)
                     points = self.Current_group[ID].position
                     
@@ -502,12 +539,20 @@ class Clustering(Node):
                         dist.append(np.sqrt((pos[0] - points[i][0])**2 + (pos[1] - points[i][1])**2))
 
                     Dist_o = min(dist)
+
+                    DIST_ARRAY.append(Dist_o)
+
+                    # Calculate Pc_ttc
                     Vr = np.array([self.linear_twist.x , self.linear_twist.y])
                     Vo = np.array(self.Current_group[ID].velocity)
                     Vr_prime = Vr - Vo
                     t = Dist_o / np.sqrt(Vr_prime[0]**2 + Vr_prime[1]**2)
 
                     Pc_ttc = min([ 1, dt / t])
+
+                    Pc_ttc_ARRAY.append(Pc_ttc)
+
+                    # Calculate Pc_dto
                     Imax = self.max_scan
                     Imin = self.min_scan 
 
@@ -531,6 +576,18 @@ class Clustering(Node):
                             VELOCITY_Y.append(self.Current_group[ID].velocity[1])
                             CP_LIST.append(CP)
 
+            if DIST_ARRAY != [] and Pc_ttc_ARRAY != []:
+                if min(DIST_ARRAY) - THRESHOLD_COLLISION - _RADIUS < 0.787 * ROBOT_WIDTH : ## 0.5 + 0.5
+
+                    self.k_time += 1
+
+                if max(Pc_ttc_ARRAY) > 0.4 :
+
+                    self.m_time += 1
+    
+
+        # Update time step
+        self.time_step += 1        
 
         self._obstacle_pubish(ID_LIST , CENTER_X , CENTER_Y , VELOCITY_X , VELOCITY_Y , CP_LIST)
 

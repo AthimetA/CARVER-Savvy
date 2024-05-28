@@ -152,7 +152,7 @@ class DrlAgent(Node):
 
         if self.training :
             # Initialize the graph
-            self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode, continue_graph=True)
+            self.graph = Graph(session_dir=self.sm.session_dir, first_episode=self.sm.episode, continue_graph=False)
             # Load the graph data
             if self.load_session:
                 self.total_steps = self.graph.set_graphdata(self.sm.load_graphdata(), self.sm.episode)
@@ -497,7 +497,7 @@ class DrlAgent(Node):
                     self.test_graph.draw_plots(self.local_ep, save=False)
             
             # Display the episode information
-            __text = f"Episode: {self.sm.episode:<5}Reward: {reward_sum:<8.0f}Outcome: {translate_outcome(outcome):<13}Steps: {step:<6}Total Steps: {self.total_steps:<7}Time: {eps_duration:<6.2f} HZ: {step / eps_duration:.2f}"
+            __text = f"Episode: {self.sm.episode:<5} Reward: {reward_sum:<8.0f}Outcome: {translate_outcome(outcome):<13}Steps: {step:<6}Total Steps: {self.total_steps:<7}Time: {eps_duration:<6.2f} HZ: {step / eps_duration:.2f}"
             self.get_logger().info(bcolors.OKGREEN + __text + bcolors.ENDC)
 
 
