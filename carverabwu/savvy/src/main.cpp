@@ -92,8 +92,8 @@ float sampling_time = 25; //hz
 uint16_t Offset_Read_Analog = 0; // ถ้า V ไม่ตรงปรับ offset ตรงนี้ แปรผันตรง
 // float r_wheel = 0.125;
 float d = 0.6;
-float res_encoder = 2048;
-float qei = 2;
+float res_encoder = 2048.0;
+float qei = 2.0;
 float gear = 300;
 float pi = 3.14159265359;
 String motor_status = "on";
@@ -140,11 +140,11 @@ std_msgs__msg__Float32 IMU_ax_msg;
 
 //input controlL
 rcl_publisher_t inputL_publisher;
-std_msgs__msg__Float64 inputcontrolL_msg;
+std_msgs__msg__Float32 inputcontrolL_msg;
 
 //input controlR
 rcl_publisher_t inputR_publisher;
-std_msgs__msg__Float64 inputcontrolR_msg;
+std_msgs__msg__Float32 inputcontrolR_msg;
 
 rcl_publisher_t outputL_publisher;
 std_msgs__msg__Int16 outputcontrolL_msg;
@@ -247,8 +247,8 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 	
 	// inputcontrolL_msg.data = robotVelocityCmd.v1;
 	// inputcontrolR_msg.data = robotVelocityCmd.v2;
-	// inputcontrolL_msg.data = Sub_speedL;
-	// inputcontrolR_msg.data = Sub_speedR;
+	inputcontrolL_msg.data = Sub_speedL;
+	inputcontrolR_msg.data = Sub_speedR;
 	wheelL_vel_msg.data = encoderLrad;
 	wheelR_vel_msg.data = encoderRrad;
 	// IMU_msg.angular_velocity.x = -1.0*IMU_data[0];
@@ -272,8 +272,8 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 	// RCSOFTCHECK(rcl_publish(&IMU_publisher, &IMU_msg, NULL));
 	// RCSOFTCHECK(rcl_publish(&outputL_publisher, &outputcontrolL_msg, NULL));
 	// RCSOFTCHECK(rcl_publish(&outputR_publisher, &outputcontrolR_msg, NULL));
-	// RCSOFTCHECK(rcl_publish(&inputL_publisher, &inputcontrolL_msg, NULL));
-	// RCSOFTCHECK(rcl_publish(&inputR_publisher, &inputcontrolR_msg, NULL));
+	RCSOFTCHECK(rcl_publish(&inputL_publisher, &inputcontrolL_msg, NULL));
+	RCSOFTCHECK(rcl_publish(&inputR_publisher, &inputcontrolR_msg, NULL));
 	// counttimer++;
   }
 }
@@ -297,16 +297,16 @@ void uROSsetup()
 	RCCHECK(rclc_publisher_init_default(&wheelR_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "wheelR_vel"));
 	// RCCHECK(rclc_publisher_init_default(&outputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputL"));
 	// RCCHECK(rclc_publisher_init_default(&outputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputR"));
-	// RCCHECK(rclc_publisher_init_default(&inputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64), "inputL"));
-	// RCCHECK(rclc_publisher_init_default(&inputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float64), "inputR"));
-	RCCHECK(rclc_publisher_init_default(&IMU_yaw_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_yaw"));
-	RCCHECK(rclc_publisher_init_default(&IMU_vz_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_vz"));
-	RCCHECK(rclc_publisher_init_default(&IMU_ax_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_ax"));
+	RCCHECK(rclc_publisher_init_default(&inputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputL"));
+	RCCHECK(rclc_publisher_init_default(&inputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputR"));
+	// RCCHECK(rclc_publisher_init_default(&IMU_yaw_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_yaw"));
+	// RCCHECK(rclc_publisher_init_default(&IMU_vz_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_vz"));
+	// RCCHECK(rclc_publisher_init_default(&IMU_ax_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_ax"));
 //   RCCHECK(rclc_publisher_init_default(&IMU_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "IMU"));
 	//create subscriber
 	RCCHECK(rclc_subscription_init_default(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "carversavvy_cmd_vel"));
 	//create timer
-	const unsigned int timer_timeout = 40; //25 HZ
+	const unsigned int timer_timeout = 1000/sampling_time; //25 HZ
 	RCCHECK(rclc_timer_init_default(&timer, &support, RCL_MS_TO_NS(timer_timeout), timer_callback));
 	//create executor
 	RCCHECK(rclc_executor_init(&executor_pub, &support.context, 6, &allocator));
@@ -354,12 +354,19 @@ void setReports(void) {
 //---------------------feedforward control------------------------------------
 float InverseTFofMotorL(float Velo, float PredictVelo)
 {
-	static float VeloLast = 0;
-	static float Voltage = 0;
-	static float VoltageLast = 0;
+	static float VeloLast = 0.0;
+	static float Voltage = 0.0;
+	static float VoltageLast = 0.0;
 	static float Pwm = 0;
 	// Voltage = (PredictVelo - (1.298649403776808*Velo) + (0.413830007244888*VeloLast) - (0.492093238713741*VoltageLast))/0.660367603263632;
-	Voltage = ((PredictVelo*2.8784)+2.438) - ((2.8784*Velo));
+	if (PredictVelo > 0) 
+	{
+		Voltage = ((PredictVelo*2.6699 +3.3474)) - ((2.6699 *Velo));
+	}
+	else
+	{
+		Voltage = ((2.093*PredictVelo -2.9458) )- ((2.093*Velo) );
+	}
 	// Voltage = PredictVelo - ((2.4677*Velo) +  1.8768/2.0);
 	Pwm = (Voltage * 255)/24.0;
 	// VoltageLast = Voltage;
@@ -369,30 +376,25 @@ float InverseTFofMotorL(float Velo, float PredictVelo)
 
 float InverseTFofMotorR(float Velo, float PredictVelo)
 {
-	static float VeloLast = 0;
-	static float Voltage = 0;
-	static float VoltageLast = 0;
+	static float VeloLast = 0.0;
+	static float Voltage = 0.0;
+	static float VoltageLast = 0.0;
 	static float Pwm = 0;
 	// Voltage = (PredictVelo - (1.298649403776808*Velo) + (0.413830007244888*VeloLast) - (0.492093238713741*VoltageLast))/0.660367603263632;
-	Voltage = ((2.4677*PredictVelo) + 1.8768)- ((2.4677*Velo) );
+	if (PredictVelo > 0)
+	{
+		Voltage = ((PredictVelo*2.2501 +2.7908)) - ((2.2501 *Velo));
+	}
+	else
+	{
+		Voltage = ((2.1973*PredictVelo -2.9272) )- ((2.1973*Velo) );
+	}
 	Pwm = (Voltage * 255)/24.0;
 	// VoltageLast = Voltage;
 	// VeloLast = Velo;
 	return Pwm;
 }
 
-float InverseTFofMotorWith1kg(float Velo, float PredictVelo)
-{
-	static float VeloLast = 0;
-	static float Voltage = 0;
-	static float VoltageLast = 0;
-	static float Pwm = 0;
-	Voltage = (PredictVelo - (1.396*Velo) + (0.4602*VeloLast) - (0.2687*VoltageLast))/0.3479;
-	Pwm = (Voltage * 10000.0)/12.0;
-	VoltageLast = Voltage;
-	VeloLast = Velo;
-	return Pwm;
-}
 
 //------------------------------------control configuration------------------------------------
 
@@ -428,7 +430,7 @@ return (w * res_encoder * qei ) / (2 * M_PI);
 
 float enc_to_rad(float enc)
 {
-  return ( (enc * sampling_time) / ( res_encoder * qei ) ) * 2 * M_PI;
+  return ( (enc * sampling_time) / ( res_encoder * qei ) ) * 2.0 * M_PI;
   // return ( enc / ( res_encoder * qei ) ) * 2 * pi;
 }
 //move function calculate.h
@@ -464,15 +466,15 @@ void controlSetup()
 	//IMU setup--------------------------------------------------------------------------------------------------------------------	
 	//move parameter to general_params.h
 	//parameter setup
-  pidParameter1.Kp = 0.03;//3;  //1;   //4 
-  pidParameter1.Ki = 0.18;//0.18;//0.5; //8;
-  pidParameter1.Kd = 0.0;
-  pidParameter1.sampleTime = sampling_time;
+  pidParameter1.Kp = 0.035;//3;  //1;   //4 
+  pidParameter1.Ki = 0.001;//0.18;//0.5; //8;
+  pidParameter1.Kd = 0.1;
+  pidParameter1.sampleTime = 1000/sampling_time;
 
-  pidParameter2.Kp = 0.03;//* 0.45;//3;  //1;   //4
-  pidParameter2.Ki = 0.16;//1.2*0.06/2.8;//0.5; //8;
-  pidParameter2.Kd = 0.0;
-  pidParameter2.sampleTime = sampling_time;
+  pidParameter2.Kp = 0.034;//* 0.45;//3;  //1;   //4 0.03
+  pidParameter2.Ki = 0.001;//1.2*0.06/2.8;//0.5; //8;0.18
+  pidParameter2.Kd = 0.1;
+  pidParameter2.sampleTime = 1000/sampling_time;
 
   motorR.pwmChannel = 1;
   motorR.pwmPin = 25;
@@ -564,6 +566,8 @@ void controlLoop()
 		
 		feedfowardL = feedfowardL +pidParameter1.output;
 		feedfowardR = feedfowardR +pidParameter2.output;
+		// feedfowardL = pidParameter1.output;
+		// feedfowardR = pidParameter2.output;
 		if (feedfowardL > 250)
 		{
 			feedfowardL = 250;
@@ -572,10 +576,6 @@ void controlLoop()
 		{
 			feedfowardR = 250;
 		}
-		//stop
-		// Serial.print(String(pidParameter1.output));
-		// Serial.print(" ");
-		// Serial.println(String(pidParameter2.output));
 		if (robotVelocityCmd.Vx == 0 && robotVelocityCmd.w == 0)
 		{
 			control.drive(&motorL, 0);
@@ -586,15 +586,12 @@ void controlLoop()
 		else
 		{           
 		// // drive
-		// control.drive(&motorL, pidParameter1.output+feedfowardL);
 			control.drive(&motorL, feedfowardL);
 			control.drive(&motorR, feedfowardR);
-		
-		// control.drive(&motorR,	pidParameter2.output+feedfowardR);
 		}
-		// control.drive(&motorL, 250);
-		// control.drive(&motorR, 250);
-    
+		// control.drive(&motorL, -250);
+		// control.drive(&motorR, -250);
+
 	// encoderLrad = control.getIntervalEnc(&encoderL); 
     // encoderRrad = control.getIntervalEnc(&encoderR);
     // rawencL = control.getCountEnc(&encoderL);  
