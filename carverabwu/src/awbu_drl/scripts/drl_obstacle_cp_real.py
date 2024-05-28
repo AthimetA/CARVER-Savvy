@@ -201,9 +201,7 @@ class ObstacleCPHandler(Node):
         self._OBSTACLE.cp = CP
 
         self.CP_publisher.publish(self._OBSTACLE)
-
-
-
+        
     def clock_callback(self, msg: Clock):
         # Get current time
         seconds= msg.clock.sec 
@@ -227,6 +225,8 @@ class ObstacleCPHandler(Node):
 
         self.clear_visual()
 
+        self.past_time = self.time_sec
+
         response = Empty.Response()
 
         return response
@@ -243,6 +243,7 @@ class ObstacleCPHandler(Node):
         marker_array = MarkerArray()
         marker_array.markers.append(marker)
         self._visual_publisher_cp.publish(marker_array)
+        self._visual_publisher_raw.publish(marker_array)
     
     def scan_callback(self ,msg: LaserScan):
         self.scan = msg
