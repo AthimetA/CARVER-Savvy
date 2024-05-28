@@ -46,12 +46,12 @@ from awbu_interfaces.srv import ScoreStep
 
 from env_utils import get_simulation_speed, read_stage
 
-from settings.constparams import THRESHOLD_COLLISION
+from settings.constparams import THRESHOLD_COLLISION, TOPIC_ODOM, TOPIC_SCAN, TOPIC_CLOCK
 ROBOT_WIDTH = 0.3
 
 sim_speed = get_simulation_speed(read_stage())
 
-TIME_STEP  = 1/(50 * sim_speed)
+TIME_STEP  = 1/(30)
 ALPHA = 0.5 # for CP
 MIN_DISTANCE = 0.05 # for tracking Missing object using KALMAN
 _RADIUS = 1 # object should have low radius
@@ -77,7 +77,7 @@ class Object:
                      [0, 1, 0 ,0]]
                      ).reshape(2, 4)
         self.Q = np.array([[0.01, 0.00, 0.00, 0.00], 
-                      [0.00, 0.01, 0.00, 0.00], 
+                      [0.00, 0.01, 0.00, 0.00],
                       [0.00, 0.00, 0.01, 0.00],
                       [0.00, 0.00, 0.00, 0.01]
                       ])
@@ -94,42 +94,65 @@ class Object:
     def predict_kf(self):
         return np.dot(self.H,  self.kf.predict())[0]
 
-
-
-class Clustering(Node):
+class ObstacleCPHandler(Node):
 
     def __init__(self):
-        super().__init__('Clustering')  
-        print("ON GOING")
-        ### 30 Hz
-                
-        self.odom_topic_name = '/abwubot/odom'
-        self.sub_odom = self.create_subscription(
-            Odometry,
-            self.odom_topic_name,
-            self.get_odometry,
-            10)
+        super().__init__('ObstacleCPHandler')  
 
-        self.subscription = self.create_subscription(
-            LaserScan,
-            '/scan',
-            self.scan_callback,
-            10)
-        
-        
-        self.publisher_ = self.create_publisher(MarkerArray, 'Obstacle', 10)
-        self.publisher2_= self.create_publisher(MarkerArray, 'Obstacle_ob', 10)
-
-        self.CP_publisher = self.create_publisher(Obstacle, '/abwubot/obstacleCP', 10)
-
+        # QoS profile
         qos_clock = QoSProfile(
             depth=1,
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST
         )
+        qos_default = QoSProfile(
+            depth=10,
+        )
 
-        self.clock_sub  = self.create_subscription(Clock, '/clock', self.clock_callback, qos_profile=qos_clock)
+        # Subscribers
+        self.sub_odom = self.create_subscription(
+            Odometry,
+            TOPIC_ODOM,
+            self.get_odometry,
+            qos_default)
 
+        self.sub_scan = self.create_subscription(
+            LaserScan,
+            TOPIC_SCAN,
+            self.scan_callback,
+            qos_default)
+        self.sub_clock  = self.create_subscription(
+            Clock, 
+            TOPIC_CLOCK,
+            self.clock_callback, 
+            qos_profile=qos_clock)
+        
+        # Publishers
+        self._visual_publisher_raw = self.create_publisher(
+            MarkerArray,
+            'ObstacleVis_raw', 
+            qos_default)
+        self._visual_publisher_cp = self.create_publisher(
+            MarkerArray, 
+            'ObstacleVis_cp', 
+            qos_default)
+        self.CP_publisher = self.create_publisher(
+            Obstacle, 
+            '/abwubot/obstacleCP', 
+            qos_default)
+        
+        # Service server
+        self.reset_simulation_service = self.create_service(
+            Empty, 
+            'reset_obstacle_cp', 
+            self.cp_reset_srv_callback)
+
+        self.get_k_t_score = self.create_service(
+            ScoreStep, 
+            'score_step_comm', 
+            self.get_time_stepscore_srv_callback)
+        
+        # Initialize variables
         self.ID = 0
         self.Current_group = {}
         self.Previous_group = {}
@@ -137,22 +160,20 @@ class Clustering(Node):
         self.current_object = 0
         self.previous_object = 0
 
-        ########
+        # Parameters
         self._dth = 0.001
         self._max_cluster_size = 360
         self._euclidean_distance = 0.25
 
+        # Color track
         self.color_track = {}
 
-        self.reset_simulation_service = self.create_service(Empty, 'reset_world', self.service_callback)
-
-        self.get_k_t_score = self.create_service(ScoreStep, 'score_step_comm', self.get_time_stepscore)
+        # Score parameters
         self.k_time = 0.0
         self.m_time = 0.0
         self.time_step = 0.0
 
         # Create a timer with a period of 1 second (1000 milliseconds)
-        ### 30 Hz
         self.timer = self.create_timer(TIME_STEP,  self.timer_callback)
 
         self.scan = None
@@ -161,16 +182,12 @@ class Clustering(Node):
 
         self.past_time = 0.0
 
-    def get_time_stepscore(self, request, response):
+    def get_time_stepscore_srv_callback(self, request: ScoreStep.Request, response: ScoreStep.Response):
         self.get_logger().info('Get Score')
-
         response.k_time = float(self.k_time)
         response.m_time = float(self.m_time)
         response.total_time = float(self.time_step)
-
         return response
-
-        
 
     def _obstacle_pubish(self,_id,center_x,center_y,velocity_x,velocity_y,CP):
 
@@ -194,7 +211,7 @@ class Clustering(Node):
         self.time_sec = seconds + nanoseconds / 1e9
         # print("TIME" , self.time_sec)
 
-    def service_callback(self, request, response):
+    def cp_reset_srv_callback(self, request, response):
         self.get_logger().info('Reseting')
         self.ID = 0
         self.Current_group = {}
@@ -225,9 +242,9 @@ class Clustering(Node):
         marker.action = Marker.DELETEALL
         marker_array = MarkerArray()
         marker_array.markers.append(marker)
-        self.publisher2_.publish(marker_array)
+        self._visual_publisher_cp.publish(marker_array)
     
-    def scan_callback(self ,msg):
+    def scan_callback(self ,msg: LaserScan):
         self.scan = msg
         self.max_scan = msg.range_max
         self.min_scan = msg.range_min
@@ -692,7 +709,7 @@ class Clustering(Node):
 
             marker_array.markers.append(gpoints)
         
-        self.publisher_.publish(marker_array)
+        self._visual_publisher_raw.publish(marker_array)
 
         a = 0
         marker_array2 = MarkerArray()
@@ -761,7 +778,7 @@ class Clustering(Node):
 
 
 
-        self.publisher2_.publish(marker_array2)
+        self._visual_publisher_cp.publish(marker_array2)
 
 
 
@@ -769,7 +786,7 @@ class Clustering(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    node = Clustering()
+    node = ObstacleCPHandler()
 
     rclpy.spin(node)
 

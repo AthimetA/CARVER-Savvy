@@ -175,6 +175,7 @@ class DRLGazebo(Node):
         # Initialise services clients
         self.delete_entity_client       = self.create_client(DeleteEntity, '/delete_entity')
         self.reset_simulation_client    = self.create_client(Empty, '/reset_world')
+        self.obstacle_cp_reset_client   = self.create_client(Empty, '/reset_obstacle_cp')
         self.gazebo_pause               = self.create_client(Empty, '/pause_physics')
         self.gazebo_unpause             = self.create_client(Empty, '/unpause_physics')
         self.set_entity_state_client    = self.create_client(SetEntityState, '/gazebo_drl/set_entity_state')
@@ -222,6 +223,11 @@ class DRLGazebo(Node):
         while not self.gazebo_unpause.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('unpause gazebo service not available, waiting again...')
         self.gazebo_unpause.call_async(Empty.Request())
+
+    def reset_obstacle_cp(self):
+        while not self.obstacle_cp_reset_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.obstacle_cp_reset_client.call_async(Empty.Request())
 
     def set_entity_state(self, goal_x: float, goal_y: float):
         request = SetEntityState.Request()
@@ -434,6 +440,9 @@ class DRLGazebo(Node):
         if self._goals_reset_flag:
             # Reset the goals
             self.reset_simulation()
+
+        # Reset the obstacles
+        self.reset_obstacle_cp()
 
         # Generate a new goal
         self.goal_x, self.goal_y = self.goal_manager.generate_goal_pose(self.robot.x, self.robot.y, self._dynamic_goals_radius)
