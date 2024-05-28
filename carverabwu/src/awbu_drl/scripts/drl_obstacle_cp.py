@@ -61,7 +61,7 @@ class ObstacleCP(Node):
         self.model_list = self.get_model_list()
         self.obstacle_list =  [model for model in self.model_list if 'obstacle' in model]
 
-        self.reset_simulation_service = self.create_service(Empty, 'reset_world', self.service_callback)
+        self.reset_simulation_service = self.create_service(Empty, 'reset_obstacle_cp', self.service_callback)
         
         self.get_k_t_score = self.create_service(ScoreStep, 'score_step_comm', self.get_time_stepscore)
 
