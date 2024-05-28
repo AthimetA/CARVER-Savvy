@@ -37,14 +37,6 @@ def generate_launch_description():
                     {'use_sim_time': False}]
     )
 
-    # Joint State Publisher Node
-    joint_state_publisher_node = Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-        name='joint_state_publisher',
-        output='screen',
-    )
-
     '''
     
     CONTROLLER
@@ -125,14 +117,14 @@ def generate_launch_description():
     slam_map_path = os.path.join(
         get_package_share_directory(package_name),
         'maps',
-        'office.yaml')
+        'FIBOFL5.yaml')
     
     slam_map_file = LaunchConfiguration('map', default=slam_map_path)
 
     # ***** NAVIGATION ***** #
     # Navigation parameters
     nav2_param_path = os.path.join(
-        get_package_share_directory(package_name),
+        get_package_share_directory('carversavvy_control'),
         'config',
         'navigation_param.yaml')
     
@@ -143,51 +135,61 @@ def generate_launch_description():
         get_package_share_directory('nav2_bringup'),
         'launch')
     
-    # SLAM Toolbox and Navigation
-    DeclareLaunchArgument(
-        'map',
-        default_value=slam_map_file,
-        description='Full path to map file to load'),
 
-    DeclareLaunchArgument(
-        'params',
-        default_value=nav2_param_file,
-        description='Full path to param file to load'),
-
-    nav2 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [nav2_launch_file_path, '/bringup_launch.py']),
-        launch_arguments={
-            'map': slam_map_file,
-            'use_sim_time': False,
-            'params_file': nav2_param_file}.items(),
-    )
+    # ***Rviz*** #
+    rviz_config_file = os.path.join(
+        get_package_share_directory(package_name),
+        'rviz2',
+        'carversavvy_slam.rviz')
+    
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        # arguments=['-d', rviz_config_file]
+        )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
         
+        # Robot State Publisher
+        # node_robot_state_publisher,
 
-        # Robot State Publisher Node
-        node_robot_state_publisher,
-        
-        # Joint State Publisher Node
-        joint_state_publisher_node,
-        # joint_state_broadcaster_spawner,
+        # Forward Kinematics Node
+        # carversavvy_forward_kinematic,
 
-        # velo_drive_controllers,
+        # EKF Node
+        # ekf_filter_node_odom,
 
-        carversavvy_forward_kinematic,
-
-        ekf_filter_node_odom,
-
+        # RPLidar Node
         rplidar_node,
 
-        nav2,
+        # Twist Mux Node
+        twist_mux_node,
 
         # Rviz Node
+
         rviz_node,
 
-        # Twist Mux
-        twist_mux_node
+        # SLAM Toolbox and Navigation
+        DeclareLaunchArgument(
+            'map',
+            default_value=slam_map_file,
+            description='Full path to map file to load'),
+
+        DeclareLaunchArgument(
+            'params',
+            default_value=nav2_param_file,
+            description='Full path to param file to load'),
+
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                [nav2_launch_file_path, '/bringup_launch.py']),
+            launch_arguments={
+                'map': slam_map_file,
+                'use_sim_time': 'false',
+                'params_file': nav2_param_file}.items(),
+        )
 
     ])

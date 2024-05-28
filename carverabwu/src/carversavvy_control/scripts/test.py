@@ -25,7 +25,7 @@ class carversavvyTestNode(Node):
         #     self.mode = 3
         # else:
         #     self.mode = int(sys.argv[1])
-        self.mode = 1
+        self.mode = 2
 
         # Create a publisher to publish the velocity commands
         self.cmd_pub = self.create_publisher(Twist, '/carversavvy_vel_ref', 10)
@@ -79,6 +79,7 @@ class carversavvyTestNode(Node):
     def cmd_timer_callback(self):
         mode = self.mode
         if mode == 1:
+            self.timer_counter += 1
             if self.timer_counter <= 2/self.time_period:
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = 0.0
@@ -93,19 +94,26 @@ class carversavvyTestNode(Node):
 
                     self.distance_pub.publish(Float64(data=self.QX[self.loop_counter]))
                     self.loop_counter += 1
+
                 else:
                     self.cmd_vel.linear.x = 0.0
                     self.cmd_vel.angular.z = 0.0
                     self.cmd_pub.publish(self.cmd_vel)
                     self.distance_pub.publish(Float64(data=self.QX[self.loop_counter-1]))
-                    # self.mode = 3
-                    # self.timer_counter = 0
-                    # self.loop_counter = 0
-            self.timer_counter += 1
+
+                    self.mode = 3
+                    self.timer_counter = 0
+                    self.loop_counter = 0
+                    
+            
 
         elif mode == 2:
             self.timer_counter += 1
-            if self.timer_counter <= 10/self.time_period:
+            if self.timer_counter <= 2/self.time_period:
+                self.cmd_vel.linear.x = 0.0
+                self.cmd_vel.angular.z = 0.0
+                self.cmd_pub.publish(self.cmd_vel)
+            elif 2/self.time_period < self.timer_counter <= 7/self.time_period:
                 self.cmd_vel.linear.x = 0.2
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
@@ -114,12 +122,16 @@ class carversavvyTestNode(Node):
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
 
+                self.mode = 3
+                self.timer_counter = 0
+                self.loop_counter = 0
+
         elif mode == 3:
             if self.timer_counter <= 2/self.time_period:
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = 0.0
                 self.cmd_pub.publish(self.cmd_vel)
-            if 2/self.time_period < self.timer_counter <= 12/self.time_period:
+            elif 2/self.time_period < self.timer_counter <= 12/self.time_period:
                 self.cmd_vel.linear.x = 0.0
                 self.cmd_vel.angular.z = -(2*np.pi)/10
                 self.cmd_pub.publish(self.cmd_vel)

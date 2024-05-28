@@ -12,6 +12,7 @@ from geometry_msgs.msg import Pose
 import yaml
 import os
 from ament_index_python.packages import get_package_share_directory
+import tf_transformations
 
 NS_TO_SEC= 1000000000
 
@@ -100,13 +101,6 @@ class carversavvyFKNode(Node):
         self.theta = 0.0
         self.time_last = self.get_clock().now()
 
-    def timer_callback(self):
-        if self.node_enabled:
-            try:
-                self.forward_kinematic_cal(self.wheelL_vel, self.wheelR_vel)
-            except:
-                self.get_logger().error('Did not receive joint_states yet')
-
     def wheelL_callback(self, msg:Float32):
         self.wheelL_vel = msg.data
 
@@ -140,12 +134,24 @@ class carversavvyFKNode(Node):
         # Publish the IMU data
         self.imu_msg = imu_msg
         self.imu_pub.publish(imu_msg)
+
+    def timer_callback(self):
+        if self.node_enabled:
+            try:
+                self.forward_kinematic_cal(self.wheelL_vel, self.wheelR_vel)
+            except:
+                self.get_logger().error('Did not receive joint_states yet')
     
     def forward_kinematic_cal(self, wl, wr):
         now = self.get_clock().now()
         dt = now - self.time_last
         self.time_last = now
         dt = dt.nanoseconds / NS_TO_SEC
+
+        if type(wl) == Float32:
+            wl = wl.data
+        if type(wr) == Float32:
+            wr = wr.data
 
         # calculate the linear and angular velocity of the robot
         vx = (self._WHEEL_RADIUS/2) * (wl + wr)
@@ -169,52 +175,34 @@ class carversavvyFKNode(Node):
             x = np.cos(dtheta) * ds
             y = -np.sin(dtheta) * ds
             # calculate the final position of the robot
-            self.x += (np.cos(self.theta) * x - np.sin(self.theta) * y)
-            self.y += (np.sin(self.theta) * x + np.cos(self.theta) * y)
+            self.x += ((np.cos(self.theta) * x) - (np.sin(self.theta) * y))
+            self.y += ((np.sin(self.theta) * x) + (np.cos(self.theta) * y))
 
-        # publish the pose information
-        pose = Pose()
-        pose.position.x = self.x
-        pose.position.y = self.y
-        pose.position.z = np.sqrt(self.x**2 + self.y**2)
-        pose.orientation.x = 0.0
-        pose.orientation.y = 0.0
-        pose.orientation.z = np.sin(self.theta / 2)
-        pose.orientation.w = np.cos(self.theta / 2)
-        self.pose_pub.publish(pose)
+        # Create the odometry message
+        odom_msg = Odometry()
+        odom_msg.header.stamp = self.get_clock().now().to_msg()
+        odom_msg.header.frame_id = 'odom'
+        odom_msg.child_frame_id = 'base_link'
 
-        # publish the odom information
-        quaternion = Quaternion()
-        quaternion.x = 0.0
-        quaternion.y = 0.0
-        quaternion.z = np.sin(self.theta / 2)
-        quaternion.w = np.cos(self.theta / 2)
+        # Set the position
+        odom_msg.pose.pose.position.x = self.x
+        odom_msg.pose.pose.position.y = self.y
+        odom_msg.pose.pose.position.z = 0.0
 
-        # Create an Odometry message to publish the odometry information
-        odom = Odometry()
-        odom.header.stamp = now.to_msg()
-        odom.header.frame_id = 'odom'
-        odom.pose.pose.position.x = self.x
-        odom.pose.pose.position.y = self.y
-        odom.pose.pose.position.z = 0.0
-        odom.pose.pose.orientation = quaternion
-        odom.child_frame_id = "base_link"
-        odom.twist.twist.linear.x = vx
-        odom.twist.twist.linear.y = 0.0
-        odom.twist.twist.angular.z = wz
-        odom.pose.covariance = [ 0.01, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
-                                 0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
-                                 0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
-                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
-        odom.twist.covariance = [ 0.01, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.01, 0.0, 0.0, 0.0, 0.0,
-                                 0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
-                                 0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
-                                 0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
-                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.01]
-        self.odom_pub.publish(odom)
+        # Convert yaw angle to quaternion
+        qx,qy,qz,qw = tf_transformations.quaternion_from_euler(0, 0, self.theta)
+        odom_msg.pose.pose.orientation.x = qx
+        odom_msg.pose.pose.orientation.y = qy
+        odom_msg.pose.pose.orientation.z = qz
+        odom_msg.pose.pose.orientation.w = qw
+
+        # Set the velocity
+        odom_msg.twist.twist.linear.x = vx
+        odom_msg.twist.twist.linear.y = 0.0
+        odom_msg.twist.twist.angular.z = wz
+        
+        # Publish the odometry message
+        self.odom_pub.publish(odom_msg)
 
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
