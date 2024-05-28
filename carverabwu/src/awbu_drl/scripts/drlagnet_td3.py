@@ -193,7 +193,7 @@ class TD3(BaseAgent):
         super().__init__(device, algorithm)
 
         # DRL parameters
-        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.3, min_sigma=0.15, decay_period=1_000_000)
+        self.noise = OUNoise(action_space=self.action_size, max_sigma=0.15, min_sigma=0.05, decay_period=1_000_000)
 
         # TD3 parameters
         self.policy_noise   = POLICY_NOISE
