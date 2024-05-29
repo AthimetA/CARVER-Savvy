@@ -46,24 +46,14 @@
       
       -->
       <!-- Physics x1 realtime-->
-      <!-- <max_step_size>0.001</max_step_size>
+      <max_step_size>0.001</max_step_size>
       <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>1</real_time_factor> -->
+      <real_time_factor>1</real_time_factor>
 
       <!-- Physics x2 realtime-->
       <!-- <max_step_size>0.002</max_step_size> 
       <real_time_update_rate>1000.0</real_time_update_rate>
       <real_time_factor>2</real_time_factor>  -->
-
-      <!-- Physics x3 realtime-->
-      <!-- <max_step_size>0.003</max_step_size>
-      <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>3</real_time_factor> -->
-
-      <!-- Physics x4 realtime-->
-      <max_step_size>0.004</max_step_size>
-      <real_time_update_rate>1000.0</real_time_update_rate>
-      <real_time_factor>4</real_time_factor>
 
       <ode>
         <solver>
@@ -88,7 +78,7 @@
         <argument>model_states:=model_states_plug</argument>
         <argument>link_states:=link_states_plug</argument>
       </ros>
-      <update_rate>10.0</update_rate>
+      <update_rate>30.0</update_rate>
     </plugin>
 
     <!-- A camera -->
@@ -118,10 +108,45 @@
 
     <!-- Walls -->
 
-    <!-- <include>
-      <uri>model://wall_outler</uri>
-    </include> -->
+    <include>
+      <uri>model://stage_1//wall_outler</uri>
+    </include>
 
+    <!-- Top Left Area -->
+    <include>
+      <uri>model://stage_1//wall_single_5m_1</uri>
+    </include>
+
+    <include>
+      <uri>model://stage_1//wall_single_5m_2</uri>
+    </include>
+
+    <!-- Top Right Area -->
+    <include>
+      <uri>model://stage_1//wall_Lshape_2_1</uri>
+    </include>
+
+    <include>
+      <uri>model://stage_1//pillar_2_1</uri>
+    </include>
+
+    <!-- Bottom Left Area -->
+    <include>
+      <uri>model://stage_1//pillar_1_1</uri>
+    </include>
+
+    <include>
+      <uri>model://stage_1//pillar_1_2</uri>
+    </include>
+
+    <!-- Bottom Right Area -->
+    <include>
+      <uri>model://stage_1//wall_single_5m_3</uri>
+    </include>
+
+    <include>
+      <uri>model://stage_1//wall_single_5m_4</uri>
+    </include>
 
   </world>
 </sdf>
