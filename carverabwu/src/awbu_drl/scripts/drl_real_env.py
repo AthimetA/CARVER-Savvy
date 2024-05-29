@@ -46,6 +46,7 @@ from env_utils import Robot, bcolors
 
 # ENVIRONMENT SETTINGS 
 from settings.constparams import REAL_TOPIC_SCAN, REAL_TOPIC_VELO, REAL_TOPIC_ODOM, REAL_TOPIC_OBSTACLES_ODOM
+from settings.constparams import SRV_RESET_OBSTACLES_CP, SRV_ENV_COMM, SRV_STEP_COMM, SRV_USER_SET_GOAL
 
 from settings.constparams import REAL_LIDAR_DISTANCE_CAP, REAL_THRESHOLD_COLLISION, REAL_THRESHOLD_GOAL
 
@@ -115,17 +116,17 @@ class DRLGazebo(Node):
         self.obstacle_odom_sub          = self.create_subscription(Obstacle, REAL_TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos_profile=qos)
 
         # Initialise services clients
-        self.obstacle_cp_reset_client   = self.create_client(Empty, '/reset_obstacle_cp')
+        self.obstacle_cp_reset_client   = self.create_client(Empty, SRV_RESET_OBSTACLES_CP)
 
         # Initialise services servers
-        self.step_comm_server = self.create_service(DrlStep, 'step_comm', self.step_comm_callback)
-        self.goal_comm_server = self.create_service(EnvReady, 'env_comm', self.env_comm_callback)
-        self.user_set_goal_server = self.create_service(UserSetGoal, 'abwu_drl_set_goal', self.user_set_goal_callback)
+        self.step_comm_server = self.create_service(DrlStep, SRV_STEP_COMM, self.step_comm_callback)
+        self.env_comm_server = self.create_service(EnvReady, SRV_ENV_COMM, self.env_comm_callback)
+        self.user_set_goal_server = self.create_service(UserSetGoal, SRV_USER_SET_GOAL, self.user_set_goal_callback)
 
         # Initialize the DRL node
         self.cmd_vel_pub.publish(Twist()) # Stop the robot if it is moving
         self.get_logger().info(bcolors.OKCYAN + "DRL Gazebo node has been initialized, Simulation Paused" + bcolors.ENDC)
-        self.get_logger().info(bcolors.OKGREEN + f"Please start the episode by calling the service... /abwu_drl_set_goal" + bcolors.ENDC)
+        self.get_logger().info(bcolors.OKGREEN + f"Please start the episode by calling the service... /{SRV_USER_SET_GOAL}" + bcolors.ENDC)
 
         # --------------- Time and Episode --------------- #
         self.episode_timeout = REAL_EPISODE_TIMEOUT_SECONDS

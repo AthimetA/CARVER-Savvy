@@ -42,7 +42,7 @@ from drlagnet_td3 import TD3
 from drlagnet_sac import SAC
 from drlutils_visual import *
 
-from settings.constparams import ENABLE_VISUAL
+from settings.constparams import ENABLE_VISUAL, SRV_ENV_COMM, SRV_STEP_COMM, SRV_SCORE_STEP_COMM
 
 
 class DrlAgent(Node):
@@ -109,9 +109,9 @@ class DrlAgent(Node):
         #                             Start Process                             #
         # ===================================================================== #
         # Create Clients for step action and goal position services
-        self.step_comm_client = self.create_client(DrlStep, 'step_comm')
-        self.env_comm_client = self.create_client(EnvReady, 'env_comm')
-        self.step_score_client = self.create_client(ScoreStep, 'score_step_comm')
+        self.step_comm_client = self.create_client(DrlStep, SRV_STEP_COMM)
+        self.env_comm_client = self.create_client(EnvReady, SRV_ENV_COMM)
+        self.step_score_client = self.create_client(ScoreStep, SRV_SCORE_STEP_COMM)
 
         # Start the process
         self.timer_hz = 50.0

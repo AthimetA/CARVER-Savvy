@@ -19,9 +19,14 @@ NUM_SCAN_SAMPLES = 180
 # ===================================================================== #
 #                         ENVIRONMENT SETTINGS                          #
 # ===================================================================== #
+# Srv name
+SRV_RESET_OBSTACLES_CP = '/reset_obstacle_cp'
+SRV_ENV_COMM = '/env_comm'
+SRV_STEP_COMM = '/step_comm'
+SRV_SCORE_STEP_COMM = '/score_step_comm'
 
 # Sensor and Topic
-TOPIC_SCAN = 'scan'
+TOPIC_SCAN = '/scan'
 TOPIC_VELO = '/abwubot/cmd_vel'
 TOPIC_ODOM = '/abwubot/odom'
 TOPIC_CLOCK = '/clock'
@@ -88,6 +93,8 @@ RESULTS_NUM = 5
 
 
 # --- REAL ROBOT ENVIRONMENT SETTINGS ---
+SRV_USER_SET_GOAL = '/abwu_drl_set_goal'
+
 REAL_TOPIC_SCAN = 'scan'
 REAL_TOPIC_VELO = '/abwubot/cmd_vel'
 REAL_TOPIC_ODOM = '/abwubot/odom'
