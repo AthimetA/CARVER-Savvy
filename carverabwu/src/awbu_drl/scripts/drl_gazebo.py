@@ -88,6 +88,9 @@ elif STAGE == 2:
 elif STAGE == 4:
     INTIAL_ROBOT_X = -8.0
     INTIAL_ROBOT_Y = 0.0
+elif STAGE == 5:
+    INTIAL_ROBOT_X = 0.0
+    INTIAL_ROBOT_Y = 0.0
 else:
     INTIAL_ROBOT_X = 0.0
     INTIAL_ROBOT_Y = 0.0
