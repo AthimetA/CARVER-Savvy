@@ -307,7 +307,7 @@ class DRLGazebo(Node):
             # self.obstacle_pos_x = self.robot.x + np.cos(self.robot.theta)
             # self.obstacle_pos_y = self.robot.y + np.sin(self.robot.theta)
 
-            self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP
+            self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP 
             self.obstacle_pos_y = self.robot.y / LIDAR_DISTANCE_CAP
 
             self.obstacle_vel_x = 0.0
