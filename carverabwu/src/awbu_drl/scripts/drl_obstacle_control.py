@@ -167,10 +167,9 @@ class ObstacleHandler(Node):
                     _pose.position.y = init_y
                     _pose.position.z = obstacle.initial_pose.position.z
                     _pose.orientation = obstacle.initial_pose.orientation
-                    obstacle.set_initial_pose(_pose)
 
-                    obstacle.target_twist = Twist()
-                    self.set_entity_state(obstacle.name, obstacle.initial_pose, obstacle.target_twist)
+                    _twist = Twist()
+                    self.set_entity_state(obstacle.name, _pose, _twist)
 
                 self.obstacle_status = False
 
