@@ -114,8 +114,8 @@ class ObstacleHandler(Node):
 
     def stage_4_obstacle_control(self):
         if self.obstacle_status:
-
             for obstacle in self.obstacle_list:
+
                 if obstacle.initial_pose.position.y > 0:
                     init_y = np.random.uniform(2.0, 8.0)
                     target_y = np.random.uniform(-8.0, -2.0)
@@ -151,6 +151,29 @@ class ObstacleHandler(Node):
     def obstacle_start_callback(self, request: ObstacleStart.Request, response: ObstacleStart.Response):
         response.obstacle_status = True
         self.obstacle_status = True
+
+        # For stage 4 
+        if self.stage == 4:
+            
+            # Have a 20% chance of stationary obstacles 
+            if np.random.uniform(0, 1) < 0.95:
+
+                init_y = 15.0
+
+                for obstacle in self.obstacle_list:
+
+                    _pose = Pose()
+                    _pose.position.x = obstacle.initial_pose.position.x
+                    _pose.position.y = init_y
+                    _pose.position.z = obstacle.initial_pose.position.z
+                    _pose.orientation = obstacle.initial_pose.orientation
+                    obstacle.set_initial_pose(_pose)
+
+                    obstacle.target_twist = Twist()
+                    self.set_entity_state(obstacle.name, obstacle.initial_pose, obstacle.target_twist)
+
+                self.obstacle_status = False
+
         return response
 
     def get_model_list(self):

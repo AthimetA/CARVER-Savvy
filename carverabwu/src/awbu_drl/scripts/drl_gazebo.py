@@ -297,22 +297,42 @@ class DRLGazebo(Node):
             # Get the closest obstacle
             max_cp_loc = np.argmax(msg.cp)
 
-            self.obstacle_pos_x = msg.pose_x[max_cp_loc] / LIDAR_DISTANCE_CAP
-            self.obstacle_pos_y = msg.pose_y[max_cp_loc] / LIDAR_DISTANCE_CAP
-  
-            self.obstacle_vel_x = msg.velocity_x[max_cp_loc] / MAX_OBS_SPEED_X
-            self.obstacle_vel_y = msg.velocity_y[max_cp_loc] / MAX_OBS_SPEED_Y
+            msg_pose_x = msg.pose_x[max_cp_loc] / LIDAR_DISTANCE_CAP
+            msg_pose_y = msg.pose_y[max_cp_loc] / LIDAR_DISTANCE_CAP
+
+            msg_velocity_x = msg.velocity_x[max_cp_loc] / MAX_OBS_SPEED_X
+            msg_velocity_y = msg.velocity_y[max_cp_loc] / MAX_OBS_SPEED_Y
+
+            # Check if the obstacle is out of range
+            if np.abs(msg_pose_x) > 1 or np.abs(msg_pose_y) > 1:
+
+                self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP
+                self.obstacle_pos_y = self.robot.y / LIDAR_DISTANCE_CAP
+
+                self.obstacle_vel_x = 0.0
+                self.obstacle_vel_y = 0.0
+
+                # self.get_logger().info(bcolors.FAIL + f"Value out of range, setting position: ({self.obstacle_pos_x:.2f}, {self.obstacle_pos_y:.2f})" + bcolors.ENDC)
+            
+            else:
+                # Update the obstacle position
+                self.obstacle_pos_x = msg_pose_x
+                self.obstacle_pos_y = msg_pose_y
+
+                self.obstacle_vel_x = msg_velocity_x
+                self.obstacle_vel_y = msg_velocity_y
+
+                # self.get_logger().info(bcolors.OKGREEN + f"Obstacle found, setting position: ({self.obstacle_pos_x:.2f}, {self.obstacle_pos_y:.2f})" + bcolors.ENDC)
 
         else:
-            # self.obstacle_pos_x = self.robot.x + np.cos(self.robot.theta)
-            # self.obstacle_pos_y = self.robot.y + np.sin(self.robot.theta)
 
-            self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP 
+            self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP
             self.obstacle_pos_y = self.robot.y / LIDAR_DISTANCE_CAP
 
             self.obstacle_vel_x = 0.0
             self.obstacle_vel_y = 0.0
 
+            # self.get_logger().info(bcolors.FAIL + f"No obstacle found, setting position: ({self.obstacle_pos_x:.2f}, {self.obstacle_pos_y:.2f})" + bcolors.ENDC)
     '''
     
     Service functions

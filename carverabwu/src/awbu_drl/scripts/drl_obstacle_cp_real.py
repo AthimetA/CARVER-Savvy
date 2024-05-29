@@ -315,7 +315,6 @@ class ObstacleCPHandler(Node):
         # print("TIME" , self.time_sec)
 
     def cp_reset_srv_callback(self, request, response):
-        self.get_logger().info('*************************Resetting Obstacle CP*************************')
         self.ID = 0
         self.Current_group = {}
         self.Previous_group = {}
@@ -539,7 +538,7 @@ class ObstacleCPHandler(Node):
                 self.visualize_grouped_points(self.Current_group)
 
             else:
-                self.get_logger().info(bcolors.FAIL + 'Previous group is empty' + bcolors.ENDC)
+                # self.get_logger().info(bcolors.FAIL + 'Previous group is empty' + bcolors.ENDC)
                 self._Start = True
 
 
@@ -643,7 +642,7 @@ class ObstacleCPHandler(Node):
                 if max(Pc_ttc_ARRAY) > 0.4 :
 
                     self.m_time += 1
-                    
+
         # Update time step
         self.time_step += 1        
 
