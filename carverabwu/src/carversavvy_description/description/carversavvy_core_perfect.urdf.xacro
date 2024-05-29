@@ -64,7 +64,7 @@
         <joint name="left_wheel_joint" type="continuous">
             <parent link="base_link"/>
             <child link="left_wheel"/>
-            <origin xyz="0 ${(wheel_thickness/2) + 0.105} 0" rpy="-${pi/2} 0 0" />
+            <origin xyz="0 ${(wheel_thickness/2) + 0.105525} 0" rpy="-${pi/2} 0 0" />
             <axis xyz="0 0 1"/>
         </joint>
 
@@ -94,7 +94,7 @@
         <joint name="right_wheel_joint" type="continuous">
             <parent link="base_link"/>
             <child link="right_wheel"/>
-            <origin xyz="0 -${(wheel_thickness/2) + 0.105} 0" rpy="${pi/2} 0 0" />
+            <origin xyz="0 -${(wheel_thickness/2) + 0.105525} 0" rpy="${pi/2} 0 0" />
             <axis xyz="0 0 -1"/>
         </joint>
 
@@ -124,7 +124,7 @@
         <joint name="caster_wheel_f_r_joint" type="fixed">
             <parent link="base_link"/>
             <child link="caster_wheel_f_r"/>
-            <origin xyz="0.20490726 -0.135475 0.0001" rpy="0 0 0"/>
+            <origin xyz="0.20490726 -0.135475 0.001" rpy="0 0 0"/>
         </joint>
 
         <link name="caster_wheel_f_r">
@@ -154,7 +154,7 @@
         <joint name="caster_wheel_f_l_joint" type="fixed">
             <parent link="base_link"/>
             <child link="caster_wheel_f_l"/>
-            <origin xyz="0.20490726 0.135475 0.0001" rpy="0 0 0"/>
+            <origin xyz="0.20490726 0.135475 0.001" rpy="0 0 0"/>
         </joint>
 
         <link name="caster_wheel_f_l">
@@ -184,7 +184,7 @@
         <joint name="caster_wheel_r_r_joint" type="fixed">
             <parent link="base_link"/>
             <child link="caster_wheel_r_r"/>
-            <origin xyz="-0.14804637 -0.135475 0.0001" rpy="0 0 0"/>
+            <origin xyz="-0.14804637 -0.135475 0.001" rpy="0 0 0"/>
         </joint>
 
         <link name="caster_wheel_r_r">
@@ -214,7 +214,7 @@
         <joint name="caster_wheel_r_l_joint" type="fixed">
             <parent link="base_link"/>
             <child link="caster_wheel_r_l"/>
-            <origin xyz="-0.14804637 0.135475 0.0001" rpy="0 0 0"/>
+            <origin xyz="-0.14804637 0.135475 0.001" rpy="0 0 0"/>
         </joint>
 
         <link name="caster_wheel_r_l">
