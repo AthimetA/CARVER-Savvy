@@ -148,6 +148,21 @@ class DrlAgent(Node):
             self.sm.new_session()
             self.sm.store_model(self.model)
 
+            # If the general weights is exist, load it
+            __general_weights_path = os.getenv('ABWUDRL_BASE_PATH') + f"/src/awbu_drl/model/weight/{self.algorithm}"
+
+            self.get_logger().info(bcolors.OKBLUE + f"Checking General Weights: {__general_weights_path}" + bcolors.ENDC)
+
+            if os.path.exists(__general_weights_path):
+
+                self.get_logger().info(bcolors.OKGREEN + f"General Weights Found" + bcolors.ENDC)
+
+                for _network in self.model.networks:
+                    _network.load_state_dict(torch.load(os.path.join(__general_weights_path, f"{_network.name}.pt")))
+                    self.get_logger().info(bcolors.OKGREEN + f"General {_network.name} weights loaded" + bcolors.ENDC)
+
+                self.observe_steps = 0 # Not need observe steps
+
         self.get_logger().info(bcolors.OKBLUE + "Storage Manager Initialized" + bcolors.ENDC)
 
         if self.training :
