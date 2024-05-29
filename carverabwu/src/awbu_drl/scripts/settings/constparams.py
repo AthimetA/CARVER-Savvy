@@ -24,6 +24,7 @@ SRV_RESET_OBSTACLES_CP = '/reset_obstacle_cp'
 SRV_ENV_COMM = '/env_comm'
 SRV_STEP_COMM = '/step_comm'
 SRV_SCORE_STEP_COMM = '/score_step_comm'
+SRV_OBSTACLE_START = '/obstacle_start'
 
 # Sensor and Topic
 TOPIC_SCAN = '/scan'
@@ -31,6 +32,8 @@ TOPIC_VELO = '/abwubot/cmd_vel'
 TOPIC_ODOM = '/abwubot/odom'
 TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
+TOPIC_OBSTACLE_VISUAL_RAW = 'ObstacleVis_raw'
+TOPIC_OBSTACLE_VISUAL_CP = 'ObstacleVis_cp'
 
 LIDAR_DISTANCE_CAP          = 8.0   # meters
 THRESHOLD_COLLISION         = 0.5  # meters

@@ -43,7 +43,8 @@ from awbu_interfaces.srv import ScoreStep
 
 from env_utils import get_simulation_speed, read_stage
 
-from settings.constparams import LIDAR_DISTANCE_CAP , THRESHOLD_COLLISION
+from settings.constparams import LIDAR_DISTANCE_CAP , THRESHOLD_COLLISION, SRV_SCORE_STEP_COMM, SRV_RESET_OBSTACLES_CP ,TOPIC_OBSTACLES_ODOM
+from settings.constparams import TOPIC_ODOM 
 
 SIM_SPD = get_simulation_speed(read_stage())
 RADIUS = 0.5
@@ -61,9 +62,9 @@ class ObstacleCP(Node):
         self.model_list = self.get_model_list()
         self.obstacle_list =  [model for model in self.model_list if 'obstacle' in model]
 
-        self.reset_simulation_service = self.create_service(Empty, 'reset_obstacle_cp', self.service_callback)
+        self.reset_simulation_service = self.create_service(Empty, SRV_RESET_OBSTACLES_CP, self.service_callback)
         
-        self.get_k_t_score = self.create_service(ScoreStep, 'score_step_comm', self.get_time_stepscore)
+        self.get_k_t_score = self.create_service(ScoreStep, SRV_SCORE_STEP_COMM, self.get_time_stepscore)
 
         self.get_logger().info(f'Obstacle List: {self.obstacle_list}')
 
@@ -80,9 +81,9 @@ class ObstacleCP(Node):
         10)
         self._visual_publisher= self.create_publisher(MarkerArray, 'Obstacle_ob', 10)
 
-        self.CP_publisher = self.create_publisher(Obstacle, '/abwubot/obstacleCP', 10)
+        self.CP_publisher = self.create_publisher(Obstacle, TOPIC_OBSTACLES_ODOM, 10)
         
-        self.odom_topic_name = '/abwubot/odom'
+        self.odom_topic_name = TOPIC_ODOM
         self.sub_odom = self.create_subscription(
             Odometry,
             self.odom_topic_name,

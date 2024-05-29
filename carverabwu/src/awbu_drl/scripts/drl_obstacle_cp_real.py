@@ -27,8 +27,7 @@
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
-from geometry_msgs.msg import Point, Quaternion
+from geometry_msgs.msg import Point
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock
@@ -45,159 +44,13 @@ import numpy as np
 from awbu_interfaces.msg import Obstacle
 from awbu_interfaces.srv import ScoreStep
 
-from env_utils import get_simulation_speed, read_stage, bcolors
+from settings.constparams import THRESHOLD_COLLISION, TOPIC_ODOM, TOPIC_SCAN, TOPIC_CLOCK, TOPIC_OBSTACLES_ODOM, TOPIC_OBSTACLE_VISUAL_RAW, TOPIC_OBSTACLE_VISUAL_CP
+from settings.constparams import SRV_RESET_OBSTACLES_CP, SRV_SCORE_STEP_COMM
 
-from settings.constparams import THRESHOLD_COLLISION, TOPIC_ODOM, TOPIC_SCAN, TOPIC_CLOCK
+
 ROBOT_WIDTH = 0.3
-
-sim_speed = get_simulation_speed(read_stage())
-
 TIME_STEP  = 1/10
 ALPHA = 0.5 # for CP
-MIN_DISTANCE = 0.05 # for tracking Missing object using KALMAN
-_RADIUS = 1 # object should have low radius
-
-class Object:
-    def __init__(self, center = (0., 0.), radius = 1.):
-        self.ID = None
-        self.position = None
-        self.velocity = (0. , 0.)
-        self.center = center
-        self.radius = radius
-        self.type = None
-        self.time = 0.
-        self.time_step = TIME_STEP
-        self.Predicted_KF = ( 0. , 0. , 0. ,0)
-        
-        dt = self.time_step
-
-        # Kalman Filter
-
-        self.F = np.array( # state transition matrix
-            [[1, 0, dt, 0], # x = x + vx * dt
-            [0, 1,  0, dt], # y = y + vy * dt
-            [0, 0,  1, 0], # vx = vx
-            [0, 0,  0, 1] # vy = vy
-                      ])
-        
-        self.G = np.array( # control input matrix
-            [[0.5 * dt**2, 0], # x = 0.5 * ax * dt^2
-            [0, 0.5 * dt**2], # y = 0.5 * ay * dt^2
-            [dt, 0], # vx = ax * dt
-            [0, dt] # vy = ay * dt
-                      ])
-        
-        self.Q = np.array( # process noise covariance matrix
-            [[0.1, 0.00, 0.00, 0.00], 
-            [0.00, 0.1, 0.00, 0.00],
-            [0.00, 0.00, 0.1, 0.00],
-            [0.00, 0.00, 0.00, 0.1]
-                      ])
-        
-        self.H = np.array( # observation matrix
-            [[1, 0, 0 ,0], # x = x
-            [0, 1, 0 ,0]] # y = y
-                     )
-        
-        self.R = np.array([# observation noise covariance matrix
-                    [0.001 , 0.0],
-                    [0.0 , 0.001]])
-        
-        self.P = np.array([ # initial estimate covariance matrix
-            [0.1, 0.0, 0.0, 0.0],
-            [0.0, 0.1, 0.0, 0.0],
-            [0.0, 0.0, 0.1, 0.0],
-            [0.0, 0.0, 0.0, 0.1]
-                      ])
-                
-        self.x = np.array([center[0], center[1], 0., 0.]).reshape(4,1)
-
-        self.kf = KalmanFilter(self.F, self.G, self.Q, self.H, self.R, self.P, self.x)
-        
-        self._missing_frame = 0
-        self.max_missing_frame = 2 *30
-        self.CP = 0.0
-
-    def predict_kf(self):
-        # [x, y, vx, vy]
-        x = self.kf.get_state_estimate()
-        return [x[0,0], x[1,0], x[2,0], x[3,0]]
-    
-class KalmanFilter:
-    def __init__(self, 
-    #-- State Model--#
-    F, # State Transition Matrix
-    G, # Control Input Matrix
-    Q, # Process Noise Covariance
-    #-- Measurement Model--#
-    H, # Measurement Matrix
-    R, # Measurement Noise Covariance
-    #-- Initial State--#
-    P, # Initial Estimate Covariance
-    x  # Initial State Estimate
-    ):
-        # initialize the state model
-        self.F = F
-        self.G = G
-        self.Q = Q
-        self.H = H
-        self.R = R
-        self.P = P
-        self.x = x
-
-        # initialize the state estimate
-        self.x_hat = self.x
-        self.P_hat = self.P
-
-        self.x_hat_prev = self.x_hat
-        self.P_hat_prev = self.P_hat
-
-        # Convert numpy arrays to matrices
-        self.F = np.matrix(self.F)
-        self.G = np.matrix(self.G)
-        self.Q = np.matrix(self.Q)
-        self.H = np.matrix(self.H)
-        self.R = np.matrix(self.R)
-        self.P = np.matrix(self.P)
-        self.x = np.matrix(self.x)
-        self.x_hat = np.matrix(self.x_hat)
-        self.P_hat = np.matrix(self.P_hat)
-        self.x_hat_prev = np.matrix(self.x_hat_prev)
-        self.P_hat_prev = np.matrix(self.P_hat_prev)
-    
-    def update(self, 
-        z, # Measurement
-        u = np.matrix([[0], [0]]), # Control Input
-    ):
-        # Predict state estimate
-        # F*Xt-1 + G*Ut
-        self.x_hat = self.F * self.x_hat_prev + self.G * u
-
-        # Predict estimate covariance
-        # F*Pt-1*F^T + Q
-        self.P_hat = self.F * self.P_hat_prev * self.F.T + self.Q
-
-        # Calculate Kalman Gain
-        # P*H^T*(H*P*H^T + R)^-1
-        K = self.P_hat * self.H.T * np.linalg.inv(self.H * self.P_hat * self.H.T + self.R)
-
-        # Update state estimate
-        # Xt = Xt + K*(Zt - H*Xt)
-        self.x_hat = self.x_hat + K * (z - self.H * self.x_hat)
-
-        # Update estimate covariance
-        # (I - K*H)*P
-        self.P_hat = (np.eye(self.P.shape[0]) - K * self.H) * self.P_hat
-
-        # Update previous state estimate and covariance
-        self.x_hat_prev = self.x_hat
-        self.P_hat_prev = self.P_hat
-
-        return self.x_hat
-
-    
-    def get_state_estimate(self):
-        return self.x_hat
 
 class ObstacleCPHandler(Node):
 
@@ -235,26 +88,26 @@ class ObstacleCPHandler(Node):
         # Publishers
         self._visual_publisher_raw = self.create_publisher(
             MarkerArray,
-            'ObstacleVis_raw', 
+            TOPIC_OBSTACLE_VISUAL_RAW,
             qos_default)
         self._visual_publisher_cp = self.create_publisher(
             MarkerArray, 
-            'ObstacleVis_cp', 
+            TOPIC_OBSTACLE_VISUAL_CP,
             qos_default)
         self.CP_publisher = self.create_publisher(
             Obstacle, 
-            '/abwubot/obstacleCP', 
+            TOPIC_OBSTACLES_ODOM,
             qos_default)
         
         # Service server
         self.reset_simulation_service = self.create_service(
             Empty, 
-            'reset_obstacle_cp', 
+            SRV_RESET_OBSTACLES_CP,
             self.cp_reset_srv_callback)
 
         self.get_k_t_score = self.create_service(
             ScoreStep, 
-            'score_step_comm', 
+            SRV_SCORE_STEP_COMM,
             self.get_time_stepscore_srv_callback)
         
         # Initialize variables
@@ -810,13 +663,149 @@ class ObstacleCPHandler(Node):
                 a += 1
                 marker_array2.markers.append(marker)
 
-
-
-
         self._visual_publisher_cp.publish(marker_array2)
 
+class Object:
+    def __init__(self, center = (0., 0.), radius = 1.):
+        self.ID = None
+        self.position = None
+        self.velocity = (0. , 0.)
+        self.center = center
+        self.radius = radius
+        self.type = None
+        self.time = 0.
+        self.time_step = TIME_STEP
+        self.Predicted_KF = ( 0. , 0. , 0. ,0)
+        
+        dt = self.time_step
 
+        # Kalman Filter
 
+        self.F = np.array( # state transition matrix
+            [[1, 0, dt, 0], # x = x + vx * dt
+            [0, 1,  0, dt], # y = y + vy * dt
+            [0, 0,  1, 0], # vx = vx
+            [0, 0,  0, 1] # vy = vy
+                      ])
+        
+        self.G = np.array( # control input matrix
+            [[0.5 * dt**2, 0], # x = 0.5 * ax * dt^2
+            [0, 0.5 * dt**2], # y = 0.5 * ay * dt^2
+            [dt, 0], # vx = ax * dt
+            [0, dt] # vy = ay * dt
+                      ])
+        
+        self.Q = np.array( # process noise covariance matrix
+            [[0.1, 0.00, 0.00, 0.00], 
+            [0.00, 0.1, 0.00, 0.00],
+            [0.00, 0.00, 0.1, 0.00],
+            [0.00, 0.00, 0.00, 0.1]
+                      ])
+        
+        self.H = np.array( # observation matrix
+            [[1, 0, 0 ,0], # x = x
+            [0, 1, 0 ,0]] # y = y
+                     )
+        
+        self.R = np.array([# observation noise covariance matrix
+                    [0.001 , 0.0],
+                    [0.0 , 0.001]])
+        
+        self.P = np.array([ # initial estimate covariance matrix
+            [0.1, 0.0, 0.0, 0.0],
+            [0.0, 0.1, 0.0, 0.0],
+            [0.0, 0.0, 0.1, 0.0],
+            [0.0, 0.0, 0.0, 0.1]
+                      ])
+                
+        self.x = np.array([center[0], center[1], 0., 0.]).reshape(4,1)
+
+        self.kf = KalmanFilter(self.F, self.G, self.Q, self.H, self.R, self.P, self.x)
+        
+        self._missing_frame = 0
+        self.max_missing_frame = 2 *30
+        self.CP = 0.0
+
+    def predict_kf(self):
+        # [x, y, vx, vy]
+        x = self.kf.get_state_estimate()
+        return [x[0,0], x[1,0], x[2,0], x[3,0]]
+    
+class KalmanFilter:
+    def __init__(self, 
+    #-- State Model--#
+    F, # State Transition Matrix
+    G, # Control Input Matrix
+    Q, # Process Noise Covariance
+    #-- Measurement Model--#
+    H, # Measurement Matrix
+    R, # Measurement Noise Covariance
+    #-- Initial State--#
+    P, # Initial Estimate Covariance
+    x  # Initial State Estimate
+    ):
+        # initialize the state model
+        self.F = F
+        self.G = G
+        self.Q = Q
+        self.H = H
+        self.R = R
+        self.P = P
+        self.x = x
+
+        # initialize the state estimate
+        self.x_hat = self.x
+        self.P_hat = self.P
+
+        self.x_hat_prev = self.x_hat
+        self.P_hat_prev = self.P_hat
+
+        # Convert numpy arrays to matrices
+        self.F = np.matrix(self.F)
+        self.G = np.matrix(self.G)
+        self.Q = np.matrix(self.Q)
+        self.H = np.matrix(self.H)
+        self.R = np.matrix(self.R)
+        self.P = np.matrix(self.P)
+        self.x = np.matrix(self.x)
+        self.x_hat = np.matrix(self.x_hat)
+        self.P_hat = np.matrix(self.P_hat)
+        self.x_hat_prev = np.matrix(self.x_hat_prev)
+        self.P_hat_prev = np.matrix(self.P_hat_prev)
+    
+    def update(self, 
+        z, # Measurement
+        u = np.matrix([[0], [0]]), # Control Input
+    ):
+        # Predict state estimate
+        # F*Xt-1 + G*Ut
+        self.x_hat = self.F * self.x_hat_prev + self.G * u
+
+        # Predict estimate covariance
+        # F*Pt-1*F^T + Q
+        self.P_hat = self.F * self.P_hat_prev * self.F.T + self.Q
+
+        # Calculate Kalman Gain
+        # P*H^T*(H*P*H^T + R)^-1
+        K = self.P_hat * self.H.T * np.linalg.inv(self.H * self.P_hat * self.H.T + self.R)
+
+        # Update state estimate
+        # Xt = Xt + K*(Zt - H*Xt)
+        self.x_hat = self.x_hat + K * (z - self.H * self.x_hat)
+
+        # Update estimate covariance
+        # (I - K*H)*P
+        self.P_hat = (np.eye(self.P.shape[0]) - K * self.H) * self.P_hat
+
+        # Update previous state estimate and covariance
+        self.x_hat_prev = self.x_hat
+        self.P_hat_prev = self.P_hat
+
+        return self.x_hat
+
+    
+    def get_state_estimate(self):
+        return self.x_hat
 
 def main(args=None):
     rclpy.init(args=args)

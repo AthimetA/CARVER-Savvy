@@ -25,34 +25,21 @@
 #               Tanut   Bumrungvongsiri , FIBO, KMUTT
 # Date : 2024-05-26
 
-import time
 import numpy as np
 import rclpy
 from rclpy.node import Node
-import yaml
 
 from geometry_msgs.msg import Twist, Pose
-from nav_msgs.msg import Odometry
 from std_srvs.srv import Empty
 
-from gazebo_msgs.msg import ModelState, ModelStates
 from gazebo_msgs.srv import GetModelList, SetEntityState, GetEntityState
 
-from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
-from rosgraph_msgs.msg import Clock
-
-from settings.constparams import EPISODE_TIMEOUT_SECONDS
-
-# Topic name imports
-from settings.constparams import TOPIC_CLOCK
-
+from settings.constparams import EPISODE_TIMEOUT_SECONDS, SRV_OBSTACLE_START
 from awbu_interfaces.srv import ObstacleStart
 
 from env_utils import get_simulation_speed, read_stage, bcolors
 
 OBSTACLE_VELOCITY_SCALING = 1.0
-
-from ament_index_python import get_package_share_directory
 class ObstacleHandler(Node):
     def __init__(self):
         super().__init__('ObstacleHandler')
@@ -61,7 +48,7 @@ class ObstacleHandler(Node):
         self.sim_speed = get_simulation_speed(stage=self.stage)
         
         # Initialise services servers
-        self.obstacle_start_srv = self.create_service(ObstacleStart, '/obstacle_start', self.obstacle_start_callback)
+        self.obstacle_start_srv = self.create_service(ObstacleStart, SRV_OBSTACLE_START, self.obstacle_start_callback)
         self.obstacle_status = False
 
         # Gazebo service client
