@@ -98,11 +98,6 @@ RESULTS_NUM = 5
 # --- REAL ROBOT ENVIRONMENT SETTINGS ---
 SRV_USER_SET_GOAL = '/abwu_drl_set_goal'
 
-REAL_TOPIC_SCAN = 'scan'
-REAL_TOPIC_VELO = '/abwubot/cmd_vel'
-REAL_TOPIC_ODOM = '/abwubot/odom'
-REAL_TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
-
 REAL_SPEED_LINEAR_MAX       = 1.0   # in m/s
 REAL_SPEED_ANGULAR_MAX      = 2.0   # in rad/s
 

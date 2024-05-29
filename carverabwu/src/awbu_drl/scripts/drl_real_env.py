@@ -45,7 +45,7 @@ from env_utils import Robot, bcolors
 
 
 # ENVIRONMENT SETTINGS 
-from settings.constparams import REAL_TOPIC_SCAN, REAL_TOPIC_VELO, REAL_TOPIC_ODOM, REAL_TOPIC_OBSTACLES_ODOM
+from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_OBSTACLES_ODOM
 from settings.constparams import SRV_RESET_OBSTACLES_CP, SRV_ENV_COMM, SRV_STEP_COMM, SRV_USER_SET_GOAL
 
 from settings.constparams import REAL_LIDAR_DISTANCE_CAP, REAL_THRESHOLD_COLLISION, REAL_THRESHOLD_GOAL
@@ -108,12 +108,12 @@ class DRLGazebo(Node):
         '''
 
         # Initialise publishers
-        self.cmd_vel_pub                = self.create_publisher(Twist, REAL_TOPIC_VELO, qos)
+        self.cmd_vel_pub                = self.create_publisher(Twist, TOPIC_VELO, qos)
 
         # subscribers
-        self.odom_sub                   = self.create_subscription(Odometry, REAL_TOPIC_ODOM, self.odom_callback, qos_profile=qos)
-        self.scan_sub                   = self.create_subscription(LaserScan, REAL_TOPIC_SCAN, self.scan_callback, qos_profile=qos_profile_sensor_data)
-        self.obstacle_odom_sub          = self.create_subscription(Obstacle, REAL_TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos_profile=qos)
+        self.odom_sub                   = self.create_subscription(Odometry, TOPIC_ODOM, self.odom_callback, qos_profile=qos)
+        self.scan_sub                   = self.create_subscription(LaserScan, TOPIC_SCAN, self.scan_callback, qos_profile=qos_profile_sensor_data)
+        self.obstacle_odom_sub          = self.create_subscription(Obstacle, TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos_profile=qos)
 
         # Initialise services clients
         self.obstacle_cp_reset_client   = self.create_client(Empty, SRV_RESET_OBSTACLES_CP)
