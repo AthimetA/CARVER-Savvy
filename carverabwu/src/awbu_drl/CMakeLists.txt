@@ -30,6 +30,8 @@ install(PROGRAMS
   scripts/testnode.py
   scripts/drl_gazebo.py
   scripts/drl_agent.py
+  scripts/drl_real_env.py
+  scripts/drl_real_agent.py
   scripts/drl_obstacle_control.py
   scripts/drl_obstacle_cp.py
   scripts/drl_obstacle_cp_real.py
