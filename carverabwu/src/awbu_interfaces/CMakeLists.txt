@@ -38,8 +38,11 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/DrlStep.srv"
+  "srv/EnvReady.srv"
   "srv/Goal.srv"
-  "srv/RingGoal.srv"
+  "srv/ObstacleStart.srv"
+  "srv/ScoreStep.srv"
+  "msg/Obstacle.msg"
   # DEPENDENCIES std_msgs
   # DEPENDENCIES nav_msgs
 )

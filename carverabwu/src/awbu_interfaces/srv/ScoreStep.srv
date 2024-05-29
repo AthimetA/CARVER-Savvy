@@ -1,0 +1,5 @@
+bool empty
+---
+float32 k_time 
+float32 m_time
+float32 total_time
