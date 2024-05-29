@@ -178,3 +178,5 @@ Example/EX1_B/src/carver_navigation
 zhbbot/build
 zhbbot/install
 zhbbot/log
+carverabwu/src/awbu_drl/model/AAPC/sac/sac_0/sac_agent_model.pkl
+*.pkl
