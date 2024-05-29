@@ -49,6 +49,7 @@ from drlutils_logger import Logger
 from drlutils_visual import *
 
 from settings.constparams import ENABLE_VISUAL, OBSERVE_STEPS, MODEL_STORE_INTERVAL, GRAPH_DRAW_INTERVAL
+from settings.constparams import SRV_ENV_COMM, SRV_STEP_COMM, SRV_SCORE_STEP_COMM
 
 
 class DrlAgent(Node):
@@ -201,9 +202,9 @@ class DrlAgent(Node):
         #                             Start Process                             #
         # ===================================================================== #
         # Create Clients for step action and goal position services
-        self.step_comm_client = self.create_client(DrlStep, 'step_comm')
-        self.env_comm_client = self.create_client(EnvReady, 'env_comm')
-        self.step_score_client = self.create_client(ScoreStep, 'score_step_comm')
+        self.step_comm_client = self.create_client(DrlStep, SRV_STEP_COMM)
+        self.env_comm_client = self.create_client(EnvReady, SRV_ENV_COMM)
+        self.step_score_client = self.create_client(ScoreStep, SRV_SCORE_STEP_COMM)
 
         if not self.real_robot:
             self.gazebo_pause = self.create_client(Empty, '/pause_physics')

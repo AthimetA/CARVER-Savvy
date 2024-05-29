@@ -71,6 +71,8 @@ from settings.constparams import UNKNOWN, SUCCESS, COLLISION, TIMEOUT, TUMBLE
 # Robot specific settings
 from settings.constparams import NUM_SCAN_SAMPLES
 
+from settings.constparams import SRV_STEP_COMM, SRV_ENV_COMM, SRV_OBSTACLE_START, SRV_RESET_OBSTACLES_CP
+
 MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
 
 MAX_OBS_SPEED_X = (ARENA_LENGTH / EPISODE_TIMEOUT_SECONDS)
@@ -175,15 +177,15 @@ class DRLGazebo(Node):
         # Initialise services clients
         self.delete_entity_client       = self.create_client(DeleteEntity, '/delete_entity')
         self.reset_simulation_client    = self.create_client(Empty, '/reset_world')
-        self.obstacle_cp_reset_client   = self.create_client(Empty, '/reset_obstacle_cp')
+        self.obstacle_cp_reset_client   = self.create_client(Empty, SRV_RESET_OBSTACLES_CP)
         self.gazebo_pause               = self.create_client(Empty, '/pause_physics')
         self.gazebo_unpause             = self.create_client(Empty, '/unpause_physics')
         self.set_entity_state_client    = self.create_client(SetEntityState, '/gazebo_drl/set_entity_state')
-        self.obstacle_start_client      = self.create_client(ObstacleStart, '/obstacle_start')
+        self.obstacle_start_client      = self.create_client(ObstacleStart, SRV_OBSTACLE_START)
 
         # Initialise services servers
-        self.step_comm_server = self.create_service(DrlStep, 'step_comm', self.step_comm_callback)
-        self.goal_comm_server = self.create_service(EnvReady, 'env_comm', self.env_comm_callback)
+        self.step_comm_server = self.create_service(DrlStep, SRV_STEP_COMM, self.step_comm_callback)
+        self.goal_comm_server = self.create_service(EnvReady, SRV_ENV_COMM, self.env_comm_callback)
 
         # Initialize Node
         self.init_drl()
