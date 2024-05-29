@@ -1,0 +1,1 @@
+/home/nuc11/CARVER-Savvy/carverabwu/build/awbu_interfaces/rosidl_generator_c/awbu_interfaces/srv/detail/env_ready__type_support.h

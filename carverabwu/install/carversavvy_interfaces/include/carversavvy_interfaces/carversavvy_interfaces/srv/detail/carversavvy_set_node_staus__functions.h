@@ -1,1 +1,0 @@
-/home/nuc11/CARVER-Savvy/carverabwu/build/carversavvy_interfaces/rosidl_generator_c/carversavvy_interfaces/srv/detail/carversavvy_set_node_staus__functions.h

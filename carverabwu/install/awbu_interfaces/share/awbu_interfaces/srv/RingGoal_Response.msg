@@ -1,1 +1,0 @@
-/home/nuc11/CARVER-Savvy/carverabwu/build/awbu_interfaces/rosidl_cmake/srv/RingGoal_Response.msg

@@ -1,1 +1,0 @@
-/home/nuc11/CARVER-Savvy/carverabwu/build/carversavvy_interfaces/rosidl_cmake/srv/CarversavvySetNodeStaus_Response.msg
