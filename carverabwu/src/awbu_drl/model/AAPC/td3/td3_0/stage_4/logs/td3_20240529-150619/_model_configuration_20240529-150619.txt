@@ -1,0 +1,79 @@
+device = cuda
+algorithm = td3
+state_size = 194
+action_size = 2
+hidden_size = 256
+input_size = 194
+batch_size = 128
+buffer_size = 128000
+discount_factor = 0.99
+learning_rate_actor = 0.0001
+learning_rate_critic = 0.0001
+tau = 0.05
+loss_function = <function mse_loss at 0x7964fd541bd0>
+epsilon = 0.99
+epsilon_decay = 0.9995
+epsilon_minimum = 0.2
+visual = None
+networks = [Actor(
+  (fa1): Linear(in_features=194, out_features=256, bias=True)
+  (fa2): Linear(in_features=256, out_features=256, bias=True)
+  (fa3): Linear(in_features=256, out_features=256, bias=True)
+  (fa4): Linear(in_features=256, out_features=2, bias=True)
+), Actor(
+  (fa1): Linear(in_features=194, out_features=256, bias=True)
+  (fa2): Linear(in_features=256, out_features=256, bias=True)
+  (fa3): Linear(in_features=256, out_features=256, bias=True)
+  (fa4): Linear(in_features=256, out_features=2, bias=True)
+), Critic(
+  (l01): Linear(in_features=196, out_features=256, bias=True)
+  (l02): Linear(in_features=256, out_features=256, bias=True)
+  (l03): Linear(in_features=256, out_features=256, bias=True)
+  (l04): Linear(in_features=256, out_features=1, bias=True)
+  (l11): Linear(in_features=196, out_features=256, bias=True)
+  (l12): Linear(in_features=256, out_features=256, bias=True)
+  (l13): Linear(in_features=256, out_features=256, bias=True)
+  (l14): Linear(in_features=256, out_features=1, bias=True)
+), Critic(
+  (l01): Linear(in_features=196, out_features=256, bias=True)
+  (l02): Linear(in_features=256, out_features=256, bias=True)
+  (l03): Linear(in_features=256, out_features=256, bias=True)
+  (l04): Linear(in_features=256, out_features=1, bias=True)
+  (l11): Linear(in_features=196, out_features=256, bias=True)
+  (l12): Linear(in_features=256, out_features=256, bias=True)
+  (l13): Linear(in_features=256, out_features=256, bias=True)
+  (l14): Linear(in_features=256, out_features=1, bias=True)
+)]
+iteration = 0
+noise = <drlagent_base_agent.OUNoise object at 0x7964d5f42fe0>
+policy_noise = 0.2
+noise_clip = 0.4
+policy_freq = 2
+last_actor_loss = 0
+actor_optimizer = AdamW (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0.01
+)
+critic_optimizer = AdamW (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0.01
+)
+

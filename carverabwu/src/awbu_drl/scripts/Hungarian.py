@@ -137,7 +137,9 @@ class Hungarian:
 
             # If number of zeros in the matrix is zero before finding all the results then an error has occurred.
             if not zero_locations.any():
-                raise HungarianError("Unable to find results. Algorithm has failed.")
+                # raise HungarianError("Unable to find results. Algorithm has failed.")
+                print("Unable to find results. Algorithm has failed.")
+                break
 
             # Find results and mark rows and columns for deletion
             matched_rows, matched_columns = self.__find_matches(zero_locations)

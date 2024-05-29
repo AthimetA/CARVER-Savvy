@@ -155,8 +155,8 @@ class ObstacleHandler(Node):
         # For stage 4 
         if self.stage == 4:
             
-            # Have a 20% chance of stationary obstacles 
-            if np.random.uniform(0, 1) < 0.95:
+            # Have a x% chance of stationary obstacles 
+            if np.random.uniform(0, 1) < 0.40:
 
                 init_y = 15.0
 
@@ -167,10 +167,10 @@ class ObstacleHandler(Node):
                     _pose.position.y = init_y
                     _pose.position.z = obstacle.initial_pose.position.z
                     _pose.orientation = obstacle.initial_pose.orientation
-                    obstacle.set_initial_pose(_pose)
 
-                    obstacle.target_twist = Twist()
-                    self.set_entity_state(obstacle.name, obstacle.initial_pose, obstacle.target_twist)
+                    _twist = Twist()
+                
+                    self.set_entity_state(obstacle.name, _pose, _twist)
 
                 self.obstacle_status = False
 
