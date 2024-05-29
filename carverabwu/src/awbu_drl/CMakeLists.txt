@@ -29,9 +29,10 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/testnode.py
   scripts/drl_gazebo.py
-  scripts/drl_environment.py
   scripts/drl_agent.py
-  scripts/clustering.py
+  scripts/drl_obstacle_control.py
+  scripts/drl_obstacle_cp.py
+  scripts/drl_obstacle_cp_real.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -39,12 +40,9 @@ install(PROGRAMS
 install(DIRECTORY
   # add directories here
   scripts
-  scripts/common
-  scripts/drl_gazebo
-  scripts/settings
-  scripts/drl_environment
   config
   launch
+  obstacles
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

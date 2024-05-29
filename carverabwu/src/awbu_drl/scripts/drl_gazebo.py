@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+#
 # Copyright 2019 ROBOTIS CO., LTD.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,96 +16,185 @@
 #
 # Authors: Ryan Shim, Gilbert, Tomas
 
-# Modified by: Athimet Aiewcharoen, FIBO, KMUTT
-# Date: 2024-04-24
+# original implementation from: 
+# https://github.com/tomasvr/turtlebot3_drlnav
+# https://github.com/ailabspace/drl-based-mapless-crowd-navigation-with-perceived-risk
+# 
 
-import os
-import random
+# Modified by:  Athimet Aiewcharoen     , FIBO, KMUTT
+#               Tanut   Bumrungvongsiri , FIBO, KMUTT
+# Date : 2024-05-26
+
 import math
-import numpy
-import time
-
-from gazebo_msgs.srv import DeleteEntity, SpawnEntity
-from std_srvs.srv import Empty
-from geometry_msgs.msg import Pose
-
+import copy
+import numpy as np
 import rclpy
 from rclpy.qos import QoSProfile
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
 
-from awbu_interfaces.srv import RingGoal
-import xml.etree.ElementTree as ET
-from settings.constparams import ENABLE_TRUE_RANDOM_GOALS, ARENA_LENGTH, ARENA_WIDTH, ENABLE_DYNAMIC_GOALS
+from gazebo_msgs.srv import DeleteEntity
+from gazebo_msgs.srv import SetEntityState
+from std_srvs.srv import Empty
+from geometry_msgs.msg import Pose
 
-NO_GOAL_SPAWN_MARGIN = 0.3 # meters away from any wall
+from geometry_msgs.msg import Pose, Twist
+from rosgraph_msgs.msg import Clock
+from nav_msgs.msg import Odometry
+from sensor_msgs.msg import LaserScan
+from awbu_interfaces.srv import DrlStep, EnvReady, ObstacleStart
+from awbu_interfaces.msg import Obstacle
+
+from drlutils_reward import Reward
+from env_utils import GoalManager, Robot, bcolors, read_stage
+
+# GENERAL SETTINGS
+from settings.constparams import ENABLE_BACKWARD, ENABLE_DYNAMIC_GOALS, ENABLE_TRUE_RANDOM_GOALS
+
+# ENVIRONMENT SETTINGS 
+# Sensor
+from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_CLOCK, TOPIC_OBSTACLES_ODOM,\
+                                 LIDAR_DISTANCE_CAP, THRESHOLD_COLLISION, THREHSOLD_GOAL,\
+                                 ENABLE_MOTOR_NOISE
+# Simulation Environment Settings
+# Arena dimensions
+from settings.constparams import ARENA_LENGTH, ARENA_WIDTH
+# Obstacle settings
+from settings.constparams import MAX_NUMBER_OBSTACLES, DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT , DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN, DYNAMIC_GOAL_SEPARATION_DISTANCE_MAX
+# General
+from settings.constparams import EPISODE_TIMEOUT_SECONDS, SPEED_LINEAR_MAX, SPEED_ANGULAR_MAX,\
+                                 LINEAR_VELOCITY_LOC, ANGULAR_VELOCITY_LOC
+
+# DRL ALGORITHM SETTINGS
+from settings.constparams import UNKNOWN, SUCCESS, COLLISION, TIMEOUT, TUMBLE
+
+# Robot specific settings
+from settings.constparams import NUM_SCAN_SAMPLES
+
+MAX_GOAL_DISTANCE = math.sqrt(ARENA_LENGTH**2 + ARENA_WIDTH**2)
+
+MAX_OBS_SPEED_X = (ARENA_LENGTH / EPISODE_TIMEOUT_SECONDS)
+MAX_OBS_SPEED_Y = (ARENA_WIDTH / EPISODE_TIMEOUT_SECONDS)
+
+STAGE = read_stage()
+if STAGE == 1:
+    INTIAL_ROBOT_X = 0.0
+    INTIAL_ROBOT_Y = 0.0
+elif STAGE == 2:
+    INTIAL_ROBOT_X = -8.0
+    INTIAL_ROBOT_Y = 0.0
+elif STAGE == 4:
+    INTIAL_ROBOT_X = -8.0
+    INTIAL_ROBOT_Y = 0.0
+else:
+    INTIAL_ROBOT_X = 0.0
+    INTIAL_ROBOT_Y = 0.0
+
 
 class DRLGazebo(Node):
     def __init__(self):
         super().__init__('drl_gazebo')
 
-        """************************************************************
-        ** Initialise variables
-        ************************************************************"""
+        '''
+        
+        Goal Box entity
+        
+        '''
 
-        self._entity_dir_path = os.environ['SIM_MODEL_PATH'] + '/goal_box'
-        # self.get_logger().info("Goal entity directory path: " + self._entity_dir_path)
-        self._entity_path = os.path.join(self._entity_dir_path, 'model.sdf')
-        self.entity = open(self._entity_path, 'r').read()
-        self.entity_name = 'goal_box'
+        self.entity_name = 'goal_area'
 
-        self.get_logger().info("DRL Gazebo node has been started.")
-        self.get_logger().info("Goal entity path: " + self._entity_path)
-        # self.get_logger().info("Goal entity Object: " + self.entity)
-
-        # with open('/tmp/drlnav_current_stage.txt', 'r') as f:
-        #     self.stage = int(f.read())
-        # print(f"running on stage: {self.stage}, dynamic goals enabled: {ENABLE_DYNAMIC_GOALS}")
-
-        self.prev_x, self.prev_y = -1, -1
+        '''
+        
+        Initialize variables
+        
+        '''
+        
+        # --------------- Robot --------------- #
+        self.robot = Robot(initial_x=INTIAL_ROBOT_X, initial_y=INTIAL_ROBOT_Y)
+        # --------------- Goal --------------- #
+        self.goal_ready = False
         self.goal_x, self.goal_y = 0.0, 0.0
 
-        """************************************************************
-        ** Initialise ROS publishers, subscribers and clients
-        ************************************************************"""
+        self.obstacle_pos_x = self.robot.x + LIDAR_DISTANCE_CAP     # meters
+        self.obstacle_pos_y = self.robot.y + LIDAR_DISTANCE_CAP     # meters
+
+        self.obstacle_vel_x = 0.0
+        self.obstacle_vel_y = 0.0
+
+        # --------------- Laser Scanner --------------- #
+        self.scan_ranges = [LIDAR_DISTANCE_CAP] * NUM_SCAN_SAMPLES
+        self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
+        self.obstacle_distances = [np.inf] * MAX_NUMBER_OBSTACLES
+
+        # --------------- Time and Episode --------------- #
+        self.episode_timeout = EPISODE_TIMEOUT_SECONDS
+        self.time_sec = 0
+        self.episode_start_time = 0
+        # Episode variables
+        self.episode_deadline = np.inf
+        self.reset_deadline = False
+
+        self._EP_done = False
+        self._EP_succeed = UNKNOWN
+        self.local_step = 0 # Local step counter
+
+        # --------------- ROS Parameters --------------- #
+        qos = QoSProfile(depth=10)
+        qos_clock = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST
+        )
+
+        '''
+        
+        Manager
+        
+        '''
+        self.goal_manager = GoalManager()
+        self._goals_reset_flag = True
+        self._dynamic_goals_radius = DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT
+        self.reward_manager = Reward()
+
+
+        '''
+        
+        Initialize Node
+        
+        '''
+
         # Initialise publishers
-        self.goal_pose_pub = self.create_publisher(Pose, 'goal_pose', QoSProfile(depth=10))
+        self.cmd_vel_pub                = self.create_publisher(Twist, TOPIC_VELO, qos)
 
-        # Initialise client
-        self.delete_entity_client       = self.create_client(DeleteEntity, 'delete_entity')
-        self.spawn_entity_client        = self.create_client(SpawnEntity, 'spawn_entity')
-        self.reset_simulation_client    = self.create_client(Empty, 'reset_world')
-        self.gazebo_pause = self.create_client(Empty, '/pause_physics')
-        self.gazebo_unpause = self.create_client(Empty, '/unpause_physics')
+        # subscribers
+        self.odom_sub                   = self.create_subscription(Odometry, TOPIC_ODOM, self.odom_callback, qos)
+        self.scan_sub                   = self.create_subscription(LaserScan, TOPIC_SCAN, self.scan_callback, qos_profile=qos_profile_sensor_data)
+        self.clock_sub                  = self.create_subscription(Clock, TOPIC_CLOCK, self.clock_callback, qos_profile=qos_clock)
+        self.obstacle_odom_sub          = self.create_subscription(Obstacle, TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos)
 
-        # Initialise servers
-        self.task_succeed_server    = self.create_service(RingGoal, 'task_succeed', self.task_succeed_callback)
-        self.task_fail_server       = self.create_service(RingGoal, 'task_fail', self.task_fail_callback)
+        # Initialise services clients
+        self.delete_entity_client       = self.create_client(DeleteEntity, '/delete_entity')
+        self.reset_simulation_client    = self.create_client(Empty, '/reset_world')
+        self.obstacle_cp_reset_client   = self.create_client(Empty, '/reset_obstacle_cp')
+        self.gazebo_pause               = self.create_client(Empty, '/pause_physics')
+        self.gazebo_unpause             = self.create_client(Empty, '/unpause_physics')
+        self.set_entity_state_client    = self.create_client(SetEntityState, '/gazebo_drl/set_entity_state')
+        self.obstacle_start_client      = self.create_client(ObstacleStart, '/obstacle_start')
 
-        self.obstacle_coordinates   = self.get_obstacle_coordinates()
-        self.get_logger().info(f"Obstacle coordinates: {self.obstacle_coordinates}")
+        # Initialise services servers
+        self.step_comm_server = self.create_service(DrlStep, 'step_comm', self.step_comm_callback)
+        self.goal_comm_server = self.create_service(EnvReady, 'env_comm', self.env_comm_callback)
+
+        # Initialize Node
         self.init_drl()
 
-        # self.timer = self.create_timer(3.0, self.test_callback)
+        # Debug timer
+        self.timer = self.create_timer(1.0, self.test_callback)
+        self.real_node_time_sec = 0
 
     def test_callback(self):
-        # self.get_logger().info("====================fail: task_fail_callback============================")
-        # self.pause_simulation()
-        # time.sleep(0.1)
-        # self.delete_entity()
-        # time.sleep(0.25)
-        # self.reset_simulation()
-        # time.sleep(0.1)
-        # self.generate_goal_pose(robot_x=0.0, robot_y=0.0, radius=5.0)
-        # self.publish_callback()
-        # time.sleep(0.1)
-        # self.unpause_simulation()
-        # time.sleep(0.1)
-        # self.get_logger().info(f"fail: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
-        self.get_logger().info("Test callback")
+        self.real_node_time_sec += 1
 
-    """*******************************************************************************
-    ** Callback functions and relevant functions
-    *******************************************************************************"""
     '''
     
     Gazebo simulation control functions
@@ -135,47 +224,373 @@ class DRLGazebo(Node):
             self.get_logger().info('unpause gazebo service not available, waiting again...')
         self.gazebo_unpause.call_async(Empty.Request())
 
-
-    def spawn_entity(self):
-        goal_pose = Pose()
-        goal_pose.position.x = self.goal_x
-        goal_pose.position.y = self.goal_y
-        req = SpawnEntity.Request()
-        req.name = self.entity_name
-        req.xml = self.entity
-        req.initial_pose = goal_pose
-        while not self.spawn_entity_client.wait_for_service(timeout_sec=1.0):
+    def reset_obstacle_cp(self):
+        self.get_logger().info('Resetting obstacle CP...')
+        while not self.obstacle_cp_reset_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
-        self.spawn_entity_client.call_async(req)
-        self.get_logger().info("Entity spawned")
+        self.obstacle_cp_reset_client.call_async(Empty.Request())
 
+    def set_entity_state(self, goal_x: float, goal_y: float):
+        request = SetEntityState.Request()
+        request.state.name = self.entity_name
+        request.state.pose = Pose()
+        request.state.pose.position.x = goal_x
+        request.state.pose.position.y = goal_y
+        request.state.twist = Twist()
+        request.state.reference_frame = 'world'
+        while not self.set_entity_state_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        try:
+            # self.get_logger().info(f'Setting entity state for {entity_name}...')
+            self.set_entity_state_client.call_async(request)
+        except Exception as e:
+            self.get_logger().info(f'Error: {e}')
+
+    def obstacle_start(self):
+        req = ObstacleStart.Request()
+        while not self.obstacle_start_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
+        self.obstacle_start_client.call_async(req)
+
+    '''
+    
+    Client Callbacks Functions
+    
+    '''
+    def odom_callback(self, msg: Odometry):
+        # Update the robot position
+        self.robot.update_position(msg)
+
+    def scan_callback(self, msg: LaserScan):
+        if len(msg.ranges) != NUM_SCAN_SAMPLES:
+            # Downsample the scan data
+            scan_step = len(msg.ranges) // NUM_SCAN_SAMPLES
+            scandata = msg.ranges[::scan_step]
+        else:
+            scandata = msg.ranges
+        # normalize laser values
+        self.obstacle_distance_nearest = 1
+        for i in range(NUM_SCAN_SAMPLES):
+                # Normalize the scan values
+                self.scan_ranges[i] = np.clip(float(scandata[i]) / LIDAR_DISTANCE_CAP, 0, 1)
+                # Check for obstacles
+                if self.scan_ranges[i] < self.obstacle_distance_nearest:
+                    self.obstacle_distance_nearest = self.scan_ranges[i]
+        # Scale the obstacle distance
+        self.obstacle_distance_nearest *= LIDAR_DISTANCE_CAP
+
+    def clock_callback(self, msg: Clock):
+        # Get current time
+        self.time_sec = msg.clock.sec
+        # Reset episode deadline
+        if not self.reset_deadline:
+            return
+        # Reset episode deadline
+        episode_time = self.episode_timeout
+        # Set deadline
+        self.episode_deadline = self.time_sec + episode_time
+        # Reset variables
+        self.reset_deadline = False
+
+    def obstacle_odom_callback(self, msg: Obstacle):
+        if len(msg.id) != 0:
+            # Get the closest obstacle
+            max_cp_loc = np.argmax(msg.cp)
+
+            msg_pose_x = msg.pose_x[max_cp_loc] / LIDAR_DISTANCE_CAP
+            msg_pose_y = msg.pose_y[max_cp_loc] / LIDAR_DISTANCE_CAP
+
+            msg_velocity_x = msg.velocity_x[max_cp_loc] / MAX_OBS_SPEED_X
+            msg_velocity_y = msg.velocity_y[max_cp_loc] / MAX_OBS_SPEED_Y
+
+            # Check if the obstacle is out of range
+            if np.abs(msg_pose_x) > 1 or np.abs(msg_pose_y) > 1:
+
+                self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP
+                self.obstacle_pos_y = self.robot.y / LIDAR_DISTANCE_CAP
+
+                self.obstacle_vel_x = 0.0
+                self.obstacle_vel_y = 0.0
+
+                # self.get_logger().info(bcolors.FAIL + f"Value out of range, setting position: ({self.obstacle_pos_x:.2f}, {self.obstacle_pos_y:.2f})" + bcolors.ENDC)
+            
+            else:
+                # Update the obstacle position
+                self.obstacle_pos_x = msg_pose_x
+                self.obstacle_pos_y = msg_pose_y
+
+                self.obstacle_vel_x = msg_velocity_x
+                self.obstacle_vel_y = msg_velocity_y
+
+                # self.get_logger().info(bcolors.OKGREEN + f"Obstacle found, setting position: ({self.obstacle_pos_x:.2f}, {self.obstacle_pos_y:.2f})" + bcolors.ENDC)
+
+        else:
+
+            self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP
+            self.obstacle_pos_y = self.robot.y / LIDAR_DISTANCE_CAP
+
+            self.obstacle_vel_x = 0.0
+            self.obstacle_vel_y = 0.0
+
+            # self.get_logger().info(bcolors.FAIL + f"No obstacle found, setting position: ({self.obstacle_pos_x:.2f}, {self.obstacle_pos_y:.2f})" + bcolors.ENDC)
     '''
     
     Service functions
     
     '''
-
-    def task_succeed_callback(self, request: RingGoal.Request, response: RingGoal.Response)->RingGoal.Response:
-        self.get_logger().info("====================success: task_succeed_callback============================")
-        self.delete_entity()
-        self.generate_goal_pose(robot_x=request.robot_pose_x, robot_y=request.robot_pose_y, radius=request.radius)
-        self.publish_callback()
-        time.sleep(0.1)
-        self.unpause_simulation()
-        self.get_logger().info(f"success: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
+    # --------------- Goal Service --------------- #
+    #
+    # Callback function for the goal service
+    #
+    # Will be called when agent starts a new episode
+    #
+    def env_comm_callback(self, request: EnvReady.Request, response: EnvReady.Response):
+        response.env_status = self.goal_ready
         return response
+    
+    def get_state(self, action_linear_previous: float, action_angular_previous: float):
+        # Distance Obervation
+        state = copy.deepcopy(self.scan_ranges)
+        # Goal Related Obervation
+        dtg = self.robot.distance_to_goal / LIDAR_DISTANCE_CAP
+        atg = self.robot.goal_angle
+        # Robot Observation
+        # X and Y components of the robot
+        x = self.robot.x / LIDAR_DISTANCE_CAP
+        y = self.robot.y / LIDAR_DISTANCE_CAP
+        # Calculate the velocity components
+        _vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
+        # Correcting the velocity components calculation
+        Vx = _vel * math.cos(self.robot.theta)
+        Vy = _vel * math.sin(self.robot.theta)
+        # Angular Components of the robot
+        theta = self.robot.theta
+        omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
+        # Obstacle Observation
+        obstacle_x = self.obstacle_pos_x # Already normalized
+        obstacle_y = self.obstacle_pos_y # Already normalized
+        obstacle_vel_x = self.obstacle_vel_x # Already normalized
+        obstacle_vel_y = self.obstacle_vel_y # Already normalized
 
-    def task_fail_callback(self, request: RingGoal.Request, response: RingGoal.Response)->RingGoal.Response:
-        self.get_logger().info("====================fail: task_fail_callback============================")
-        self.delete_entity()
-        self.reset_simulation()
-        self.generate_goal_pose(robot_x=request.robot_pose_x, robot_y=request.robot_pose_y, radius=request.radius)
-        self.publish_callback()
+        # Append the state
+        # Goal Related Obervation
+        state.append(float(dtg))
+        state.append(float(atg))
+        # Robot Observation
+        state.append(float(x))
+        state.append(float(y))
+        state.append(float(theta))
+        state.append(float(Vx))
+        state.append(float(Vy))
+        state.append(float(omega))
+        # Obstacle observation
+        state.append(float(obstacle_x))
+        state.append(float(obstacle_y))
+        state.append(float(obstacle_vel_x))
+        state.append(float(obstacle_vel_y))
+        # Last action observation
+        state.append(float(action_linear_previous))
+        state.append(float(action_angular_previous))
+        # self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
+        # self.get_logger().info(f'State: {state}')
+        self.local_step += 1
+        return state
+    
+    def episode_check(self):
+        # self.get_logger().info(f"Obstacle distance: {self.obstacle_distance_nearest:.2f}")
+        # Success
+        if self.robot.distance_to_goal < THREHSOLD_GOAL:
+            self.get_logger().info(bcolors.OKGREEN + "Episode done, Agent reached the goal!" + bcolors.ENDC)
+            self._EP_succeed = SUCCESS
+        # Timeout
+        elif self.time_sec >= self.episode_deadline:
+            self.get_logger().info(bcolors.WARNING + "Episode done, Agent reached the timeout!" + bcolors.ENDC)
+            self._EP_succeed = TIMEOUT
+        # Collision
+        elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
+            self.get_logger().info(bcolors.FAIL + f"Episode done, Collision with obstacle: {self.obstacle_distance_nearest:.2f}" + bcolors.ENDC)
+            self._EP_succeed = COLLISION
+        # Tumble [row, pitch > 45°]
+        elif np.abs(self.robot.row) > math.pi/4 or np.abs(self.robot.pitch) > math.pi/4:
+            self.get_logger().info(bcolors.FAIL + f"Episode done, Tumble: {math.degrees(self.robot.row):.2f}, {math.degrees(self.robot.pitch):.2f}" + bcolors.ENDC)
+            self._EP_succeed = TUMBLE
 
+        # Check if the episode is done [Success, Collision, Timeout, Tumble] 
+        if self._EP_succeed is not UNKNOWN:
+            self.episode_done(self._EP_succeed)
+    
+    def episode_done(self, status: int):
+        # Stop the robot 
+        self.cmd_vel_pub.publish(Twist())
+        # Reset the episode deadline
+        self.episode_deadline = np.inf
+        self._EP_done = True
+        if status == SUCCESS and STAGE == 1:
+            self._goals_reset_flag = False # Do not reset the simulation
+        else:
+            self._goals_reset_flag = True # Reset the simulation
+
+        # If Dynamic goals are enabled
+        if ENABLE_DYNAMIC_GOALS:
+            if status == SUCCESS:
+                # Increase the goal radius
+                self._dynamic_goals_radius *= 1.01
+                self.get_logger().info(bcolors.OKGREEN + f"Goal reached, increasing goal radius to {self._dynamic_goals_radius:.2f}" + bcolors.ENDC)
+            else:
+                # Decrease the goal radius
+                self._dynamic_goals_radius *= 0.99
+                self.get_logger().info(bcolors.FAIL + f"Goal not reached, decreasing goal radius to {self._dynamic_goals_radius:.2f}" + bcolors.ENDC)
+            self._dynamic_goals_radius = np.clip(self._dynamic_goals_radius, DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN, DYNAMIC_GOAL_SEPARATION_DISTANCE_MAX)
+
+    def initalize_episode(self, response: DrlStep.Response):
+        '''
+
+        DRLStep service [Request/Response] structure :
+        
+        float32[] action
+        float32[] previous_action
+        ---
+        float32[] state
+        float32 reward
+        bool done
+        uint32 success
+        float32 distance_traveled
+        
+        
+        '''
+        # Pause the simulation
+        self.pause_simulation()
+
+        # Reset the simulation [only when episode is not successful]
+        if self._goals_reset_flag:
+            # Reset the goals
+            self.reset_simulation()
+
+        # Reset the obstacles
+        self.reset_obstacle_cp()
+
+        # Generate a new goal
+        self.goal_x, self.goal_y = self.goal_manager.generate_goal_pose(self.robot.x, self.robot.y, self._dynamic_goals_radius)
+
+        # Set the goal entity
+        self.set_entity_state(self.goal_x, self.goal_y)
+
+        # Clear the obstacle distances
+        self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
+
+        # Update the robot goal
+        self.robot.update_goal(self.goal_x, self.goal_y)
+
+        if self._goals_reset_flag:
+            # Reset the robot
+            self.robot.reset()
+        else:
+            # Reset the goal success [Position and angle not reset but the calculation is performed]
+            t = self.robot.reset_task_success()
+            self.get_logger().info(bcolors.OKGREEN + t + bcolors.ENDC)
+
+        # Start the robot
+        self.cmd_vel_pub.publish(Twist())
+
+        # Start the obstacles
+        self.obstacle_start()
+
+        # Reset the episode variables
+        self.reset_deadline = True
+
+        response.state = self.get_state(action_linear_previous=0.0, action_angular_previous=0.0)
+        response.reward = 0.0
+        response.done = False
+        response.success = UNKNOWN
+        response.distance_traveled = 0.0
+        
+        self.get_logger().info(f"=====================================")
+        self.get_logger().info(bcolors.OKBLUE + f"Goal location: ({self.goal_x:.2f}, {self.goal_y:.2f}) DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°" + bcolors.ENDC)
+
+        self.reward_manager.reward_initalize(self.robot.distance_to_goal / MAX_GOAL_DISTANCE, self.robot.goal_angle / math.pi)
+
+        # Unpause the simulation
+        self.episode_start_time = self.time_sec
         self.unpause_simulation()
-        self.get_logger().info(f"fail: generate a new goal, goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
-        return response
 
+        return response
+    
+    def step_comm_callback(self, request: DrlStep.Request, response: DrlStep.Response):
+
+        '''
+
+        DRLStep service [Request/Response] structure :
+        
+        float32[] action
+        float32[] previous_action
+        ---
+        float32[] state
+        float32 reward
+        bool done
+        uint32 success
+        float32 distance_traveled
+        
+        
+        '''
+        # Check if the episode has been initialized
+        if len(request.action) == 0:
+            return self.initalize_episode(response)
+
+        # if ENABLE_MOTOR_NOISE:
+        #     request.action[LINEAR_VELOCITY_LOC] += np.clip(np.random.normal(0, 0.05), -0.1, 0.1)
+        #     request.action[ANGULAR_VELOCITY_LOC] += np.clip(np.random.normal(0, 0.05), -0.1, 0.1)
+
+        # Un-normalize actions
+        if ENABLE_BACKWARD:
+            action_linear = request.action[LINEAR_VELOCITY_LOC] * SPEED_LINEAR_MAX
+        else:
+            action_linear = (request.action[LINEAR_VELOCITY_LOC] + 1) / 2 * SPEED_LINEAR_MAX
+
+        action_angular = request.action[ANGULAR_VELOCITY_LOC] * SPEED_ANGULAR_MAX
+
+        # Publish action cmd
+        twist = Twist()
+        twist.linear.x = action_linear
+        twist.angular.z = action_angular
+        self.cmd_vel_pub.publish(twist)
+
+        # Prepare repsonse
+        response.state = self.get_state(
+            action_linear_previous  = request.previous_action[LINEAR_VELOCITY_LOC],
+            action_angular_previous = request.previous_action[ANGULAR_VELOCITY_LOC])
+        # Check if the episode is done
+        self.episode_check()
+        # Calculate reward
+        reward_out, [R_DISTANCE, R_ANGLE, R_WAYPOINT, R_FONT_SCAN, R_OTHER_SCAN] = self.reward_manager.get_reward(
+            status              = self._EP_succeed,
+            action_linear       = request.action[LINEAR_VELOCITY_LOC], # not used
+            action_angular      = request.action[ANGULAR_VELOCITY_LOC], # not used
+            distance_to_goal    = self.robot.distance_to_goal / MAX_GOAL_DISTANCE, # Normalize the distance
+            angle_to_goal       = self.robot.goal_angle / math.pi, # Normalize the angle
+            omega               = action_angular, # not used
+            scan_ranges         = self.scan_ranges # Lidar scan all normalized
+        )
+        # self.get_logger().info(f"R_DISTANCE: {R_DISTANCE:.2f} R_ANGLE: {R_ANGLE:.2f} R_FONT_SCAN: {R_FONT_SCAN:.2f} R_OTHER_SCAN: {R_OTHER_SCAN:.2f}")
+        if R_WAYPOINT != 0:
+            self.get_logger().info(bcolors.OKCYAN+ f"Waypoint reached at {self.robot.distance_to_goal:.2f} meters, reward: {reward_out:.2f}, DTG: {self.robot.distance_to_goal:.2f} AG: {math.degrees(self.robot.goal_angle):.1f}°" + bcolors.ENDC)
+        response.reward = reward_out
+        response.done = self._EP_done
+        response.success = self._EP_succeed
+        response.distance_traveled = 0.0
+        # Check if the episode is done
+        if self._EP_done:
+            self.get_logger().info(f"Reward: {response.reward:<8.2f} DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°")
+            self.get_logger().info(f'Time use in episode: {self.time_sec - self.episode_start_time} seconds / {self.episode_timeout} seconds')
+            response.distance_traveled = self.robot.distance_traveled
+            # Reset variables
+            self._EP_succeed = UNKNOWN
+            self.local_step = 0
+            self._EP_done = False
+        if self.local_step % 2 == 0:
+            print(f"T: {self.time_sec:<8}RT:{self.real_node_time_sec:<8}EPD: {self.episode_deadline:<8}\t")
+            print(f"Reward: {response.reward:<8.2f}DTG: {self.robot.distance_to_goal:<8.2f}AG: {math.degrees(self.robot.goal_angle):.1f}°\t")
+            print(f"MinOBD: {self.obstacle_distance_nearest:<8.2f}Alin: {request.action[LINEAR_VELOCITY_LOC]:<7.1f}Aturn: {request.action[ANGULAR_VELOCITY_LOC]:<7.1f}")
+        return response
 
     '''
 
@@ -184,119 +599,15 @@ class DRLGazebo(Node):
     '''
 
     def init_drl(self)->None:
-        self.delete_entity()
-        self.reset_simulation()
-        self.unpause_simulation()
-        self.publish_callback()
-        # time.sleep(0.1)
-        self.get_logger().info(f"DRL Gazebo node has been initialized, Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
-
-    def publish_callback(self)->None:
-        # Publish goal pose
-        goal_pose = Pose()
-        goal_pose.position.x = self.goal_x
-        goal_pose.position.y = self.goal_y
-        self.goal_pose_pub.publish(goal_pose)
-        self.get_logger().info(f"Goal pose: {self.goal_x:.2f}, {self.goal_y:.2f}")
-        self.spawn_entity()
-        self.get_logger().info("Goal published by publishe_callback")
-
-    def goal_is_valid(self, goal_x: float, goal_y: float)->bool:
-        if goal_x > ARENA_LENGTH/2 or goal_x < -ARENA_LENGTH/2 or goal_y > ARENA_WIDTH/2 or goal_y < -ARENA_WIDTH/2:
-            return False
-        for obstacle in self.obstacle_coordinates:
-            # Obstacle is defined by 4 points [top_right, bottom_right, bottom_left, top_left] with [x, y] coordinates
-            if goal_x < obstacle[0][0] and goal_x > obstacle[2][0] and goal_y < obstacle[0][1] and goal_y > obstacle[2][1]: # check if goal is inside the obstacle
-                    return False
-        return True
-    
-    '''
-    
-    Goal generation functions
-    
-    '''
-    def generate_goal_pose(self, robot_x: float, robot_y: float, radius: float)->None:
-        MAX_ITERATIONS = 100
-        GOAL_SEPARATION_DISTANCE = 5.0
-        DYNAMIC_GOAL_RADIUS = float(radius) if radius > GOAL_SEPARATION_DISTANCE else GOAL_SEPARATION_DISTANCE
-        PREDEFINED_GOAL_LOCATIONS = [[-(ARENA_LENGTH/2 - 1), -(ARENA_WIDTH/2 - 1)], [ARENA_LENGTH/2 - 1, ARENA_WIDTH/2 - 1], [ARENA_LENGTH/2 - 1, -(ARENA_WIDTH/2 - 1)], [-(ARENA_LENGTH/2 - 1), ARENA_WIDTH/2 - 1]]
-        self.prev_y = self.goal_y
-        iterations = 0
-        while iterations < MAX_ITERATIONS:
-            self.get_logger().info(f"Goal generation iteration: {iterations}")
-            iterations += 1 # Prevent infinite loop
-            if ENABLE_TRUE_RANDOM_GOALS:
-                # Random goal generation within the arena
-                goal_x = random.uniform(-ARENA_LENGTH/2, ARENA_LENGTH/2)
-                goal_y = random.uniform(-ARENA_WIDTH/2, ARENA_WIDTH/2)
-            elif ENABLE_DYNAMIC_GOALS:
-                # Dynamic goal generation within a radius of the robot position
-                goal_x = random.uniform(robot_x - DYNAMIC_GOAL_RADIUS, robot_x + DYNAMIC_GOAL_RADIUS)
-                goal_y = random.uniform(robot_y - DYNAMIC_GOAL_RADIUS, robot_y + DYNAMIC_GOAL_RADIUS)
-            else:
-                # Get the goal from the predefined list
-                index = random.randint(0, len(PREDEFINED_GOAL_LOCATIONS) - 1)
-                goal_x = PREDEFINED_GOAL_LOCATIONS[index][0]
-                goal_y = PREDEFINED_GOAL_LOCATIONS[index][1]
-
-            # Check if the goal is valid and far enough from the previous goal
-            if self.goal_is_valid(goal_x, goal_y) and math.sqrt((goal_x - self.prev_x)**2 + (goal_y - self.prev_y)**2) > GOAL_SEPARATION_DISTANCE:
-                    break
-            else:
-                continue 
-        if iterations >= MAX_ITERATIONS:
-            self.get_logger().info("Goal generation failed default to 0, 0")
-            goal_x = 0.0 # Default goal
-            goal_y = 0.0 # Default goal
-        # Set the goal pose
-        self.goal_x = goal_x
-        self.goal_y = goal_y
-    
-
-    '''
-    
-    Obstacle functions
-
-    '''
-
-    def get_obstacle_coordinates(self):
-        obstacle_name = ['wall_outler', 'pillar1', 'pillar2']
-        obstacle_coordinates = []
-        for name in obstacle_name:
-            obstacle_coordinates += self._sdf_obstacle_reader(name)
-        return obstacle_coordinates
-    
-    def _sdf_obstacle_reader(self, name: str)->list:
-        path = os.environ['SIM_MODEL_PATH'] + name + '/model.sdf'
-        tree = ET.parse(path)
-        root = tree.getroot()
-        obstacle_coordinates = []
-        # Get the coordinates of the walls
-        for wall in root.find('model').findall('link'):
-            pose = wall.find('pose').text.split(" ")
-            size = wall.find('collision').find('geometry').find('box').find('size').text.split()
-            pose_x = float(pose[0])
-            pose_y = float(pose[1])
-            # Check if the wall is rotated
-            # If the wall is rotated the size is swapped for x and y
-            rotation = float(pose[-1])
-            if rotation == 0 or rotation == 3.14159:
-                size_x = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
-                size_y = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
-            else:
-                size_x = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
-                size_y = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
-            # Calculate the corners of the obstacle
-            step_x = size_x / 2
-            step_y = size_y / 2
-            top_left = [pose_x - step_x, pose_y + step_y]
-            top_right = [pose_x + step_x, pose_y + step_y]
-            bottom_right = [pose_x + step_x, pose_y - step_y]
-            bottom_left = [pose_x - step_x, pose_y - step_y]
-            # Create a list of the corners
-            wall_points = [top_right, bottom_right, bottom_left, top_left]
-            obstacle_coordinates.append(wall_points)
-        return obstacle_coordinates
+        # Initialize the DRL node
+        self.pause_simulation()
+        self.reset_simulation() # Reset the simulation
+        self.cmd_vel_pub.publish(Twist()) # Stop the robot if it is moving
+        self.unpause_simulation() 
+        self.get_logger().info(bcolors.OKCYAN + "DRL Gazebo node has been initialized, Simulation Paused" + bcolors.ENDC)
+        self.get_logger().info(bcolors.OKGREEN + f"Please start the episode by calling the service..." + bcolors.ENDC)
+        # Goal is ready
+        self.goal_ready = True
 
 def main():
     rclpy.init()
