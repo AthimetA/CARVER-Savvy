@@ -222,6 +222,17 @@ class TD3(BaseAgent):
         self.hard_update(self.actor_target, self.actor)
         self.hard_update(self.critic_target, self.critic)
 
+    def get_action_real(self, state, visualize=False):
+        state = torch.from_numpy(np.asarray(state, np.float32)).to(self.device)
+        action = self.actor(state, visualize)
+
+        if visualize:
+            self.visual.tab_state_update(states = state)
+            sa = torch.cat((state, action), dim=0)
+            self.critic.visualize_forward(sa)
+
+        return action.detach().cpu().data.numpy().tolist()
+
     def get_action(self, state, is_training, step, visualize=False):
         state = torch.from_numpy(np.asarray(state, np.float32)).to(self.device)
         action = self.actor(state, visualize)

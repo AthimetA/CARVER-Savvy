@@ -1,0 +1,4 @@
+float32 goal_pose_x
+float32 goal_pose_y
+---
+bool status

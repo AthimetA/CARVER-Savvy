@@ -266,6 +266,9 @@ class SAC(BaseAgent):
 
         return action.detach().cpu().numpy().tolist()[0]
     
+    def get_action_real(self, state, visualize=False):
+        return self.get_action(state, is_training=False, step=0, visualize=visualize)
+    
     def grad_norm_zero_assert(self, m: torch.nn.Module):
         _p_grad_norm = []
         for p in m.parameters():

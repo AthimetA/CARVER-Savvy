@@ -42,6 +42,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Goal.srv"
   "srv/ObstacleStart.srv"
   "srv/ScoreStep.srv"
+  "srv/UserSetGoal.srv"
   "msg/Obstacle.msg"
   # DEPENDENCIES std_msgs
   # DEPENDENCIES nav_msgs
