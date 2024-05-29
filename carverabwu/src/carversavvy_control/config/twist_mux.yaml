@@ -5,6 +5,10 @@ twist_mux:
         topic   : /carversavvy_vel_ref
         timeout : 0.5
         priority: 15
+      drl_cmd:
+        topic   : /abwubot/cmd_vel
+        timeout : 0.5
+        priority: 10
       keyboard:        
         topic   : /cmd_vel        
         timeout : 0.5        

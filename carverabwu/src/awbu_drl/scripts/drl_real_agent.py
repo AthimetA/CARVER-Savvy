@@ -93,7 +93,7 @@ class DrlAgent(Node):
             self.get_logger().info(bcolors.OKGREEN + f"General Weights Found" + bcolors.ENDC)
 
             for _network in self.model.networks:
-                _network.load_state_dict(torch.load(os.path.join(__general_weights_path, f"{_network.name}.pt")))
+                _network.load_state_dict(torch.load(os.path.join(__general_weights_path, f"{_network.name}.pt"), map_location=self.device))
                 self.get_logger().info(bcolors.OKGREEN + f"General {_network.name} weights loaded" + bcolors.ENDC)
         else:
             self.get_logger().info(bcolors.FAIL + f"No General Weights Found" + bcolors.ENDC)

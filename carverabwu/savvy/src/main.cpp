@@ -208,7 +208,10 @@ PID pidController1(&pidParameter1.encInput, &pidParameter1.output, &pidParameter
                    0, 0, 0, DIRECT);
 PID pidController2(&pidParameter2.encInput, &pidParameter2.output, &pidParameter2.setPoint,
                    0, 0, 0, DIRECT);
-
+PID pidController3(&pidParameter3.encInput, &pidParameter3.output, &pidParameter3.setPoint,
+				   0, 0, 0, DIRECT);	
+PID pidController4(&pidParameter4.encInput, &pidParameter4.output, &pidParameter4.setPoint,
+				   0, 0, 0, DIRECT);
 
 double preIntervelMillis = 0;
 double prePubMillis = 0;
@@ -298,11 +301,11 @@ void uROSsetup()
 	RCCHECK(rclc_publisher_init_default(&wheelR_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "wheelR_vel"));
 	// RCCHECK(rclc_publisher_init_default(&outputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputL"));
 	// RCCHECK(rclc_publisher_init_default(&outputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputR"));
-	RCCHECK(rclc_publisher_init_default(&inputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputL"));
-	RCCHECK(rclc_publisher_init_default(&inputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputR"));
-	// RCCHECK(rclc_publisher_init_default(&IMU_yaw_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_yaw"));
-	// RCCHECK(rclc_publisher_init_default(&IMU_vz_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_vz"));
-	// RCCHECK(rclc_publisher_init_default(&IMU_ax_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_ax"));
+	// RCCHECK(rclc_publisher_init_default(&inputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputL"));
+	// RCCHECK(rclc_publisher_init_default(&inputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputR"));
+	RCCHECK(rclc_publisher_init_default(&IMU_yaw_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_yaw"));
+	RCCHECK(rclc_publisher_init_default(&IMU_vz_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_vz"));
+	RCCHECK(rclc_publisher_init_default(&IMU_ax_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_ax"));
 //   RCCHECK(rclc_publisher_init_default(&IMU_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "IMU"));
 	//create subscriber
 	RCCHECK(rclc_subscription_init_default(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "carversavvy_cmd_vel"));
@@ -477,6 +480,16 @@ void controlSetup()
   pidParameter2.Kd = 0.1;
   pidParameter2.sampleTime = 1000/sampling_time;
 
+  pidParameter3.Kp = 0.048;//3;  //1;   //4
+  pidParameter3.Ki = 0.002;//0.18;//0.5; //8;
+  pidParameter3.Kd = 0.0;
+  pidParameter3.sampleTime = 1000/sampling_time;
+
+  pidParameter4.Kp = 0.048;//* 0.45;//3;  //1;   //4 0.03
+  pidParameter4.Ki = 0.002;//1.2*0.06/2.8;//0.5; //8;0.18
+  pidParameter4.Kd = 0.0;
+  pidParameter4.sampleTime = 1000/sampling_time;
+
   motorR.pwmChannel = 1;
   motorR.pwmPin = 25;
   motorR.outAPin = 27;
@@ -494,12 +507,16 @@ void controlSetup()
 	//encoder setup--------------------------------------------------------------------------------------------------------------------
 	// //motor setup
 	control.initialMotor(&motorL, 100, 8);
-  control.initialMotor(&motorR, 100, 8);
+  	control.initialMotor(&motorR, 100, 8);
 	// //PID setup
 	control.initialPID(&pidController1, &pidParameter1, limitOffset1);
-  control.initialPID(&pidController2, &pidParameter2, limitOffset2);
+ 	control.initialPID(&pidController2, &pidParameter2, limitOffset2);
+	control.initialPID(&pidController3, &pidParameter3, limitOffset1);	
+	control.initialPID(&pidController4, &pidParameter4, limitOffset2);
 	control.zeroOutputSum(&pidController1);
 	control.zeroOutputSum(&pidController2);
+	control.zeroOutputSum(&pidController3);
+	control.zeroOutputSum(&pidController4);
 }
 
 void controlLoop()
@@ -554,19 +571,30 @@ void controlLoop()
 		// // inverse kinematics
 		pidParameter1.setPoint = rad_to_enc(robotVelocityCmd.v1);// 4096 pulse per revolution
 		pidParameter2.setPoint = rad_to_enc(robotVelocityCmd.v2);
+		pidParameter3.setPoint = rad_to_enc(robotVelocityCmd.v1);
+		pidParameter4.setPoint = rad_to_enc(robotVelocityCmd.v2);
     // pidParameter1.setPoint = robotVelocityCmd.v1;
     // pidParameter2.setPoint = robotVelocityCmd.v2;
 		encoderLrad = enc_to_rad(control.getIntervalEnc(&encoder)); 
     	encoderRrad = enc_to_rad(control.getIntervalEnc(&encoder2));
-		// setpoint
-		control.setpoint(&pidController1, &pidParameter1, &encoderL);
-		control.setpoint(&pidController2, &pidParameter2, &encoderR);
-		//feed forward control
 		feedfowardL = InverseTFofMotorL(encoderLrad, robotVelocityCmd.v1);
 		feedfowardR = InverseTFofMotorR(encoderRrad, robotVelocityCmd.v2);
-		
-		feedfowardL = feedfowardL +pidParameter1.output;
-		feedfowardR = feedfowardR +pidParameter2.output;
+		// setpoint
+		if (robotVelocityCmd.w != 0)
+		{
+			control.setpoint(&pidController3, &pidParameter3, &encoderL);
+			control.setpoint(&pidController4, &pidParameter4, &encoderR);
+			feedfowardL = feedfowardL +pidParameter3.output;
+			feedfowardR = feedfowardR +pidParameter4.output;
+		}
+		else
+		{
+			control.setpoint(&pidController1, &pidParameter1, &encoderL);
+			control.setpoint(&pidController2, &pidParameter2, &encoderR);
+			feedfowardL = feedfowardL +pidParameter1.output;
+			feedfowardR = feedfowardR +pidParameter2.output;
+		}
+		//feed forward control
 		// feedfowardL = pidParameter1.output;
 		// feedfowardR = pidParameter2.output;
 		if (feedfowardL > 250)
@@ -583,6 +611,8 @@ void controlLoop()
 			control.drive(&motorR, 0);
 			control.zeroOutputSum(&pidController1);
 			control.zeroOutputSum(&pidController2);
+			control.zeroOutputSum(&pidController3);
+			control.zeroOutputSum(&pidController4);
 		}
 		else
 		{           

@@ -17,61 +17,103 @@ import yaml
 def generate_launch_description():
 
     # Use sim time
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    # Pause simulation
-    pause = LaunchConfiguration('pause', default='true')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+
+    carversavvy_description_package_name = 'carversavvy_description'
+    carversavvy_description_dir = get_package_share_directory(carversavvy_description_package_name)
+    carversavvy_control_package_name = 'carversavvy_control'
+    carversavvy_control_dir = get_package_share_directory(carversavvy_control_package_name)
+
+    # Robot Description
+    description_file_subpath = 'description/carversavvy.urdf.xacro'
+    xacro_file = os.path.join(carversavvy_description_dir, description_file_subpath) # Use xacro to process the file
+    robot_description_raw = xacro.process_file(xacro_file).toxml()
+    # ROBOT STATE PUBLISHER NODE:
+    node_robot_state_publisher = Node(     # Configure the node
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='both',
+        parameters=[{'robot_description': robot_description_raw}, 
+                    {'use_sim_time': use_sim_time}]
+    )
+
+
+    # Forward Kinematics Node
+    carversavvy_forward_kinematic = Node(
+        package=carversavvy_control_package_name,
+        executable='carversavvy_forward_kinematic.py',
+        name='carversavvyFKNode',
+    )
+
+    # Robot Localization
+    ekf_parameters_file_dir = os.path.join(carversavvy_control_dir, 'config')
+    ekf_filter_node_odom = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node',
+	        output='screen',
+            parameters=[
+                os.path.join(ekf_parameters_file_dir, 'carversavvy_ekf.yaml'),
+            ],
+            remappings=[('odometry/filtered', '/carversavvy/odom')]           
+           )
     
-    test_node = Node(
-            package='awbu_drl',
-            executable='testnode.py',
-            name='testnode',
-            parameters=[{'use_sim_time': use_sim_time}],
-         )
+    # RPLidar Node
+    channel_type =  LaunchConfiguration('channel_type', default='serial')
+    serial_port = LaunchConfiguration('serial_port', default='/dev/ttyUSB1')
+    serial_baudrate = LaunchConfiguration('serial_baudrate', default='115200')
+    frame_id = LaunchConfiguration('frame_id', default='lidar_link')
+    inverted = LaunchConfiguration('inverted', default='false')
+    angle_compensate = LaunchConfiguration('angle_compensate', default='true')
+    scan_mode = LaunchConfiguration('scan_mode', default='Express')
+
+    rplidar_node = Node(
+            package='sllidar_ros2',
+            executable='sllidar_node',
+            name='sllidar_node',
+            parameters=[{'channel_type':channel_type,
+                         'serial_port': serial_port, 
+                         'serial_baudrate': serial_baudrate, 
+                         'frame_id': frame_id,
+                         'inverted': inverted, 
+                         'angle_compensate': angle_compensate,
+                         'scan_mode': scan_mode}],
+            output='screen')
+
+    # Twist Mux
+    twist_mux_config = os.path.join(
+        get_package_share_directory(carversavvy_control_package_name),
+        'config',
+        'twist_mux.yaml')
     
-    drl_gazebo = Node(
-            package='awbu_drl',
-            executable='drl_gazebo.py',
-            name='drl_gazebo',
-            parameters=[{'use_sim_time': use_sim_time}],
-         )
-    
-    drl_env = Node(
-            package='awbu_drl',
-            executable='drl_environment.py',
-            name='drl_env',
-            parameters=[{'use_sim_time': use_sim_time}],
-         )
+    twist_mux_node = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        name='twist_mux',
+        parameters=[twist_mux_config],
+        remappings=[('/cmd_vel_out','/carversavvy_cmd_vel')],
+        )
 
-#     package_name = 'abwu_simulation'
-
-#     joy_params = os.path.join(get_package_share_directory(package_name),'config','joystick.yaml')
-
-#     joy_node = Node(
-#             package='joy',
-#             executable='joy_node',
-#             parameters=[joy_params, {'use_sim_time': use_sim_time}],
-#          )
-
-#     teleop_node = Node(
-#             package='teleop_twist_joy',
-#             executable='teleop_node',
-#             name='teleop_node',
-#             parameters=[joy_params, {'use_sim_time': use_sim_time}],
-#             # remappings=[('/cmd_vel','/diff_cont/cmd_vel_unstamped')]
-#             remappings=[('/cmd_vel','/cmd_vel_joy')]
-#          )
+    control_path = get_package_share_directory('carversavvy_control')
+    launch_path = os.path.join(control_path, 'launch')
+    launch_file = os.path.join(launch_path, 'carversavvy_rviz.launch.py')
+    rviz_node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(launch_file)
+    )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
 
-        test_node,
+        node_robot_state_publisher,
 
-        drl_gazebo,
+        carversavvy_forward_kinematic,
 
-        drl_env,
+        ekf_filter_node_odom,
 
-        # joy_node,
+        rplidar_node,
 
-        # teleop_node,
+        twist_mux_node,
+
+        rviz_node
 
     ])

@@ -29,7 +29,8 @@ SRV_OBSTACLE_START = '/obstacle_start'
 # Sensor and Topic
 TOPIC_SCAN = '/scan'
 TOPIC_VELO = '/abwubot/cmd_vel'
-TOPIC_ODOM = '/abwubot/odom'
+# TOPIC_ODOM = '/abwubot/odom'
+TOPIC_ODOM = '/carversavvy/odom'
 TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 TOPIC_OBSTACLE_VISUAL_RAW = 'ObstacleVis_raw'
@@ -98,8 +99,8 @@ RESULTS_NUM = 5
 # --- REAL ROBOT ENVIRONMENT SETTINGS ---
 SRV_USER_SET_GOAL = '/abwu_drl_set_goal'
 
-REAL_SPEED_LINEAR_MAX       = 1.0   # in m/s
-REAL_SPEED_ANGULAR_MAX      = 2.0   # in rad/s
+REAL_SPEED_LINEAR_MAX       = 0.1   # in m/s
+REAL_SPEED_ANGULAR_MAX      = 0.1   # in rad/s
 
 REAL_LIDAR_DISTANCE_CAP     = 8.0   # meters
 REAL_THRESHOLD_COLLISION    = 0.5  # meters
