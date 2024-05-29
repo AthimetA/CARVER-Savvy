@@ -25,7 +25,7 @@
 
     <!-- Gazebo Laser sensor -->
     <gazebo reference="lidar_link">
-        <sensor name="laser" type="gpu_ray">
+        <sensor name="laser" type="ray">
             <pose> 0 0 0 0 0 0 </pose>
             <visualize>false</visualize>
             <update_rate>50</update_rate>
