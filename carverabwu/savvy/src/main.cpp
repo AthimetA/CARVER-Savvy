@@ -194,7 +194,8 @@ bool encoder2Paused = false;
 // PID parameters
 PIDparam pidParameter1;
 PIDparam pidParameter2;
-
+PIDparam pidParameter3;
+PIDparam pidParameter4;
 // dcMotor
 dcMotor motorL;
 dcMotor motorR;
