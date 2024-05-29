@@ -31,43 +31,33 @@ import numpy as np
 import rclpy
 from rclpy.qos import QoSProfile
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, qos_profile_sensor_data, ReliabilityPolicy, HistoryPolicy
+from rclpy.qos import QoSProfile, qos_profile_sensor_data
 
 from std_srvs.srv import Empty
 from geometry_msgs.msg import Pose, Twist
-from rosgraph_msgs.msg import Clock
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 from awbu_interfaces.srv import DrlStep, EnvReady, UserSetGoal
 from awbu_interfaces.msg import Obstacle
 
 from drlutils_reward import Reward
-from env_utils import GoalManager, Robot, bcolors
+from env_utils import Robot, bcolors
 
-# GENERAL SETTINGS
-from settings.constparams import ENABLE_BACKWARD, ENABLE_DYNAMIC_GOALS, ENABLE_TRUE_RANDOM_GOALS
 
 # ENVIRONMENT SETTINGS 
-# Sensor
-from settings.constparams import TOPIC_SCAN, TOPIC_VELO, TOPIC_ODOM, TOPIC_CLOCK, TOPIC_OBSTACLES_ODOM,\
-                                 LIDAR_DISTANCE_CAP, THRESHOLD_COLLISION, THREHSOLD_GOAL,\
-                                 ENABLE_MOTOR_NOISE
-# Simulation Environment Settings
-# Arena dimensions
-from settings.constparams import ARENA_LENGTH, ARENA_WIDTH
-# Obstacle settings
-from settings.constparams import MAX_NUMBER_OBSTACLES, DYNAMIC_GOAL_SEPARATION_DISTANCE_INIT , DYNAMIC_GOAL_SEPARATION_DISTANCE_MIN, DYNAMIC_GOAL_SEPARATION_DISTANCE_MAX
-# General
-from settings.constparams import EPISODE_TIMEOUT_SECONDS, SPEED_LINEAR_MAX, SPEED_ANGULAR_MAX,\
-                                 LINEAR_VELOCITY_LOC, ANGULAR_VELOCITY_LOC
+from settings.constparams import REAL_TOPIC_SCAN, REAL_TOPIC_VELO, REAL_TOPIC_ODOM, REAL_TOPIC_OBSTACLES_ODOM
+
+from settings.constparams import REAL_LIDAR_DISTANCE_CAP, REAL_THRESHOLD_COLLISION, REAL_THRESHOLD_GOAL
+
+from settings.constparams import REAL_SPEED_LINEAR_MAX, REAL_SPEED_ANGULAR_MAX, LINEAR_VELOCITY_LOC, ANGULAR_VELOCITY_LOC                            
 
 # DRL ALGORITHM SETTINGS
-from settings.constparams import UNKNOWN, SUCCESS, COLLISION, TIMEOUT, TUMBLE
+from settings.constparams import UNKNOWN, SUCCESS, COLLISION, TIMEOUT, TUMBLE, REAL_EPISODE_TIMEOUT_SECONDS
 
 # Robot specific settings
 from settings.constparams import NUM_SCAN_SAMPLES
 
-MAX_GOAL_DISTANCE = 5.0 # meters
+MAX_GOAL_DISTANCE = 10.0 # meters
 
 MAX_OBS_SPEED_X = 2.0 # m/s
 MAX_OBS_SPEED_Y = 2.0 # m/s
@@ -98,10 +88,8 @@ class DRLGazebo(Node):
         self.obstacle_vel_y = 0.0
 
         # --------------- Laser Scanner --------------- #
-        self.scan_ranges = [LIDAR_DISTANCE_CAP] * NUM_SCAN_SAMPLES
-        self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
-        self.obstacle_distances = [np.inf] * MAX_NUMBER_OBSTACLES
-
+        self.scan_ranges = [REAL_LIDAR_DISTANCE_CAP] * NUM_SCAN_SAMPLES
+        self.obstacle_distance_nearest = REAL_LIDAR_DISTANCE_CAP
         # --------------- ROS Parameters --------------- #
         qos = QoSProfile(depth=10)
         '''
@@ -119,12 +107,12 @@ class DRLGazebo(Node):
         '''
 
         # Initialise publishers
-        self.cmd_vel_pub                = self.create_publisher(Twist, TOPIC_VELO, qos)
+        self.cmd_vel_pub                = self.create_publisher(Twist, REAL_TOPIC_VELO, qos)
 
         # subscribers
-        self.odom_sub                   = self.create_subscription(Odometry, TOPIC_ODOM, self.odom_callback, qos)
-        self.scan_sub                   = self.create_subscription(LaserScan, TOPIC_SCAN, self.scan_callback, qos_profile=qos_profile_sensor_data)
-        self.obstacle_odom_sub          = self.create_subscription(Obstacle, TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos)
+        self.odom_sub                   = self.create_subscription(Odometry, REAL_TOPIC_ODOM, self.odom_callback, qos_profile=qos)
+        self.scan_sub                   = self.create_subscription(LaserScan, REAL_TOPIC_SCAN, self.scan_callback, qos_profile=qos_profile_sensor_data)
+        self.obstacle_odom_sub          = self.create_subscription(Obstacle, REAL_TOPIC_OBSTACLES_ODOM, self.obstacle_odom_callback, qos_profile=qos)
 
         # Initialise services clients
         self.obstacle_cp_reset_client   = self.create_client(Empty, '/reset_obstacle_cp')
@@ -137,10 +125,10 @@ class DRLGazebo(Node):
         # Initialize the DRL node
         self.cmd_vel_pub.publish(Twist()) # Stop the robot if it is moving
         self.get_logger().info(bcolors.OKCYAN + "DRL Gazebo node has been initialized, Simulation Paused" + bcolors.ENDC)
-        self.get_logger().info(bcolors.OKGREEN + f"Please start the episode by calling the service..." + bcolors.ENDC)
+        self.get_logger().info(bcolors.OKGREEN + f"Please start the episode by calling the service... /abwu_drl_set_goal" + bcolors.ENDC)
 
         # --------------- Time and Episode --------------- #
-        self.episode_timeout = EPISODE_TIMEOUT_SECONDS
+        self.episode_timeout = REAL_EPISODE_TIMEOUT_SECONDS
         self.time_sec = 0
         self.episode_start_time = 0
         # Episode variables
@@ -201,20 +189,20 @@ class DRLGazebo(Node):
         self.obstacle_distance_nearest = 1
         for i in range(NUM_SCAN_SAMPLES):
                 # Normalize the scan values
-                self.scan_ranges[i] = np.clip(float(scandata[i]) / LIDAR_DISTANCE_CAP, 0, 1)
+                self.scan_ranges[i] = np.clip(float(scandata[i]) / REAL_LIDAR_DISTANCE_CAP, 0, 1)
                 # Check for obstacles
                 if self.scan_ranges[i] < self.obstacle_distance_nearest:
                     self.obstacle_distance_nearest = self.scan_ranges[i]
         # Scale the obstacle distance
-        self.obstacle_distance_nearest *= LIDAR_DISTANCE_CAP
+        self.obstacle_distance_nearest *= REAL_LIDAR_DISTANCE_CAP
 
     def obstacle_odom_callback(self, msg: Obstacle):
         if len(msg.id) != 0:
             # Get the closest obstacle
             max_cp_loc = np.argmax(msg.cp)
 
-            msg_pose_x = msg.pose_x[max_cp_loc] / LIDAR_DISTANCE_CAP
-            msg_pose_y = msg.pose_y[max_cp_loc] / LIDAR_DISTANCE_CAP
+            msg_pose_x = msg.pose_x[max_cp_loc] / REAL_LIDAR_DISTANCE_CAP
+            msg_pose_y = msg.pose_y[max_cp_loc] / REAL_LIDAR_DISTANCE_CAP
 
             msg_velocity_x = msg.velocity_x[max_cp_loc] / MAX_OBS_SPEED_X
             msg_velocity_y = msg.velocity_y[max_cp_loc] / MAX_OBS_SPEED_Y
@@ -222,8 +210,8 @@ class DRLGazebo(Node):
             # Check if the obstacle is out of range
             if np.abs(msg_pose_x) > 1 or np.abs(msg_pose_y) > 1:
 
-                self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP
-                self.obstacle_pos_y = self.robot.y / LIDAR_DISTANCE_CAP
+                self.obstacle_pos_x = self.robot.x / REAL_LIDAR_DISTANCE_CAP
+                self.obstacle_pos_y = self.robot.y / REAL_LIDAR_DISTANCE_CAP
 
                 self.obstacle_vel_x = 0.0
                 self.obstacle_vel_y = 0.0
@@ -242,8 +230,8 @@ class DRLGazebo(Node):
 
         else:
 
-            self.obstacle_pos_x = self.robot.x / LIDAR_DISTANCE_CAP
-            self.obstacle_pos_y = self.robot.y / LIDAR_DISTANCE_CAP
+            self.obstacle_pos_x = self.robot.x / REAL_LIDAR_DISTANCE_CAP
+            self.obstacle_pos_y = self.robot.y / REAL_LIDAR_DISTANCE_CAP
 
             self.obstacle_vel_x = 0.0
             self.obstacle_vel_y = 0.0
@@ -269,7 +257,7 @@ class DRLGazebo(Node):
         self.reset_obstacle_cp()
 
         # Clear the obstacle distances
-        self.obstacle_distance_nearest = LIDAR_DISTANCE_CAP
+        self.obstacle_distance_nearest = REAL_LIDAR_DISTANCE_CAP
 
         # Update the robot goal
         self.robot.update_goal(self.goal_x, self.goal_y)
@@ -300,20 +288,20 @@ class DRLGazebo(Node):
         # Distance Obervation
         state = copy.deepcopy(self.scan_ranges)
         # Goal Related Obervation
-        dtg = self.robot.distance_to_goal / LIDAR_DISTANCE_CAP
+        dtg = self.robot.distance_to_goal / REAL_LIDAR_DISTANCE_CAP
         atg = self.robot.goal_angle
         # Robot Observation
         # X and Y components of the robot
-        x = self.robot.x / LIDAR_DISTANCE_CAP
-        y = self.robot.y / LIDAR_DISTANCE_CAP
+        x = self.robot.x / REAL_LIDAR_DISTANCE_CAP
+        y = self.robot.y / REAL_LIDAR_DISTANCE_CAP
         # Calculate the velocity components
-        _vel = self.robot.linear_velocity / SPEED_LINEAR_MAX
+        _vel = self.robot.linear_velocity / REAL_SPEED_LINEAR_MAX
         # Correcting the velocity components calculation
         Vx = _vel * math.cos(self.robot.theta)
         Vy = _vel * math.sin(self.robot.theta)
         # Angular Components of the robot
         theta = self.robot.theta
-        omega = self.robot.angular_velocity / SPEED_ANGULAR_MAX
+        omega = self.robot.angular_velocity / REAL_SPEED_ANGULAR_MAX
         # Obstacle Observation
         obstacle_x = self.obstacle_pos_x # Already normalized
         obstacle_y = self.obstacle_pos_y # Already normalized
@@ -347,7 +335,7 @@ class DRLGazebo(Node):
     def episode_check(self):
         # self.get_logger().info(f"Obstacle distance: {self.obstacle_distance_nearest:.2f}")
         # Success
-        if self.robot.distance_to_goal < THREHSOLD_GOAL:
+        if self.robot.distance_to_goal < REAL_THRESHOLD_GOAL:
             self.get_logger().info(bcolors.OKGREEN + "Episode done, Agent reached the goal!" + bcolors.ENDC)
             self._EP_succeed = SUCCESS
         # Timeout
@@ -355,7 +343,7 @@ class DRLGazebo(Node):
             self.get_logger().info(bcolors.WARNING + "Episode done, Agent reached the timeout!" + bcolors.ENDC)
             self._EP_succeed = TIMEOUT
         # Collision
-        elif self.obstacle_distance_nearest < THRESHOLD_COLLISION:
+        elif self.obstacle_distance_nearest < REAL_THRESHOLD_COLLISION:
             self.get_logger().info(bcolors.FAIL + f"Episode done, Collision with obstacle: {self.obstacle_distance_nearest:.2f}" + bcolors.ENDC)
             self._EP_succeed = COLLISION
         # Tumble [row, pitch > 45°]
@@ -406,9 +394,9 @@ class DRLGazebo(Node):
             return response
 
         # Get the action
-        action_linear = (request.action[LINEAR_VELOCITY_LOC] + 1) / 2 * SPEED_LINEAR_MAX
+        action_linear = (request.action[LINEAR_VELOCITY_LOC] + 1) / 2 * REAL_SPEED_LINEAR_MAX
 
-        action_angular = request.action[ANGULAR_VELOCITY_LOC] * SPEED_ANGULAR_MAX
+        action_angular = request.action[ANGULAR_VELOCITY_LOC] * REAL_SPEED_ANGULAR_MAX
 
         # Publish action cmd
         twist = Twist()
@@ -451,7 +439,6 @@ class DRLGazebo(Node):
 
         # Return the response
         return response
-
 
 def main():
     rclpy.init()

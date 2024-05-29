@@ -16,13 +16,9 @@ GRAPH_AVERAGE_REWARD     = 10       # Average the reward graph over every N epis
 # ===================================================================== #
 NUM_SCAN_SAMPLES = 180
 
-
 # ===================================================================== #
 #                         ENVIRONMENT SETTINGS                          #
 # ===================================================================== #
-
-# --- SIMULATION ENVIRONMENT SETTINGS ---
-REWARD_FUNCTION = "A"           # Defined in reward.py
 
 # Sensor and Topic
 TOPIC_SCAN = 'scan'
@@ -32,8 +28,8 @@ TOPIC_CLOCK = '/clock'
 TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
 LIDAR_DISTANCE_CAP          = 8.0   # meters
-THRESHOLD_COLLISION         = 0.50  # meters
-THREHSOLD_GOAL              = 1.0  # meters
+THRESHOLD_COLLISION         = 0.5  # meters
+THREHSOLD_GOAL              = 0.5  # meters
 
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
 LINEAR_VELOCITY_LOC       = 0     # 0 = no noise, 1 = noise enabled
@@ -67,33 +63,20 @@ HIDDEN_SIZE     = 256       # Number of neurons in hidden layers
 BATCH_SIZE      = 128       # Number of samples per training batch
 BUFFER_SIZE     = BATCH_SIZE * 1000 # Number of samples stored in replay buffer before FIFO
 DISCOUNT_FACTOR = 0.99
-LEARNING_RATE   = 1e-3
+LEARNING_RATE   = 1e-4
 LEARNING_RATE_ACTOR = 1e-4
 LEARNING_RATE_CRITIC = 1e-4
 TAU             = 0.05
 
 OBSERVE_STEPS   = BATCH_SIZE * 10 # At training start random actions are taken for N steps for better exploration
-STEP_TIME       = 0.01      # Delay between steps, can be set to 0
 EPSILON_INITIAL = 0.99       # Initial epsilon value for epsilon-greedy policy
 EPSILON_DECAY   = 0.9995    # Epsilon decay per step
 EPSILON_MINIMUM = 0.20
 
-# DQN parameters
-DQN_ACTION_SIZE = 5
-TARGET_UPDATE_FREQUENCY = 1000
-
-# DDPG parameters
-
 # TD3 parameters
-# POLICY_NOISE            = 0.4
-# POLICY_NOISE_CLIP       = 0.6
 POLICY_NOISE            = 0.2
 POLICY_NOISE_CLIP       = 0.4
 POLICY_UPDATE_FREQUENCY = 2
-
-# Stacking
-STACK_DEPTH = 3             # Number of subsequent frames processed per step
-FRAME_SKIP  = 4             # Number of frames skipped in between subsequent frames
 
 # Episode outcome enumeration
 UNKNOWN = 0
@@ -105,23 +88,16 @@ RESULTS_NUM = 5
 
 
 # --- REAL ROBOT ENVIRONMENT SETTINGS ---
-REAL_TOPIC_SCAN  = 'scan'
-REAL_TOPIC_VELO  = 'cmd_vel'
-REAL_TOPIC_ODOM  = 'odom'
+REAL_TOPIC_SCAN = 'scan'
+REAL_TOPIC_VELO = '/abwubot/cmd_vel'
+REAL_TOPIC_ODOM = '/abwubot/odom'
+REAL_TOPIC_OBSTACLES_ODOM = '/abwubot/obstacleCP'
 
-# LiDAR density count your robot is providing
-# NOTE: If you change this value you also have to modify
-# NUM_SCAN_SAMPLES for the model in drl_environment.py
-# e.g. if you increase this by 320 samples also increase
-# NUM_SCAN_SAMPLES by 320 samples.
-REAL_N_SCAN_SAMPLES         = 40
-
-REAL_ARENA_LENGTH           = 4.2   # meters
-REAL_ARENA_WIDTH            = 4.2   # meters
-REAL_SPEED_LINEAR_MAX       = 2.0  # in m/s
+REAL_SPEED_LINEAR_MAX       = 1.0   # in m/s
 REAL_SPEED_ANGULAR_MAX      = 2.0   # in rad/s
 
-REAL_LIDAR_CORRECTION       = 0.40  # meters, subtracted from the real LiDAR values
-REAL_LIDAR_DISTANCE_CAP     = 3.5   # meters, scan distances are capped this value
-REAL_THRESHOLD_COLLISION    = 0.11  # meters, minimum distance to an object that counts as a collision
-REAL_THRESHOLD_GOAL         = 0.35  # meters, minimum distance to goal that counts as reaching the goal
+REAL_LIDAR_DISTANCE_CAP     = 8.0   # meters
+REAL_THRESHOLD_COLLISION    = 0.5  # meters
+REAL_THRESHOLD_GOAL         = 0.5   # meters
+
+REAL_EPISODE_TIMEOUT_SECONDS = 5*60  # Number of seconds after which episode timeout occurs

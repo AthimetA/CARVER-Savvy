@@ -172,8 +172,7 @@ class DrlAgent(Node):
     
     def wait_env_to_be_ready(self):
         while(self.get_env_status() == False):
-            print(f'Goal status: {self.get_env_status()}')
-            print("Waiting for new goal... (if persists: reset gazebo_goals node)")
+            self.get_logger().info(bcolors.WARNING + "Waiting for Environment to be ready... call '/abwu_drl_set_goal' service" + bcolors.ENDC)
             time.sleep(1.0)
 
     '''
@@ -336,27 +335,15 @@ def main(args=sys.argv[1:]):
     rclpy.init(args=args)
     if len(args) == 1:
         algorithm = args[0]
-        process = "train"
-
-    elif len(args) == 2:
-        algorithm = args[0]
-        process = args[1]
-
     else:
         algorithm = "td3"
-        process = "train"
 
     # Check if the algorithm is valid
     if algorithm not in ["td3", "sac"]:
         print("Invalid Algorithm Using TD3")
         algorithm = "td3"
-
-    if process.lower() == "test":
-        train = False
-    else  : train = True
-
     
-    drl_agent = DrlAgent(algorithm=algorithm, training=train, real_robot=False, load_session=True)
+    drl_agent = DrlAgent(algorithm=algorithm)
 
     rclpy.spin(drl_agent)
     drl_agent.destroy()

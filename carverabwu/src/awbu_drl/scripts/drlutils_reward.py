@@ -25,7 +25,7 @@
 #               Tanut   Bumrungvongsiri , FIBO, KMUTT
 # Date : 2024-05-26
 
-from settings.constparams import REWARD_FUNCTION, COLLISION, TUMBLE, SUCCESS, TIMEOUT,\
+from settings.constparams import COLLISION, TUMBLE, SUCCESS, TIMEOUT,\
       SPEED_LINEAR_MAX, THRESHOLD_COLLISION, SPEED_ANGULAR_MAX, NUM_SCAN_SAMPLES
 import numpy as np
 from env_utils import get_simulation_speed, read_stage, bcolors
