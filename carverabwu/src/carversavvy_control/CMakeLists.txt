@@ -42,7 +42,6 @@ install(DIRECTORY
   maps
   scripts
   rviz2
-  experimentresult
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()
