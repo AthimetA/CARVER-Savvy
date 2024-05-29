@@ -81,6 +81,8 @@ class ObstacleHandler(Node):
             self.stage_2_obstacle_control()
         elif self.stage == 4:
             self.stage_4_obstacle_control()
+        elif self.stage == 5:
+            self.stage_5_obstacle_control()
 
     def stage_1_obstacle_control(self):
         if self.obstacle_status:
@@ -134,16 +136,47 @@ class ObstacleHandler(Node):
 
                 self.obstacle_status = False
 
+    def stage_5_obstacle_control(self):
+        if self.obstacle_status:
+            for obstacle in self.obstacle_list:
+
+                init_y = np.random.uniform(-4.0, -1.0)
+                target_y = np.random.uniform(1.0, 2.0)
+
+                # Set the initial pose of the obstacles
+                init_Pose = Pose()
+                init_Pose.position.x = obstacle.initial_pose.position.x
+                init_Pose.position.y = init_y
+                init_Pose.position.z = obstacle.initial_pose.position.z
+                init_Pose.orientation = obstacle.initial_pose.orientation
+                obstacle.set_initial_pose(init_Pose)
+
+                # Set the final pose of the obstacles
+                target_Pose = Pose()
+                target_Pose.position.x = obstacle.initial_pose.position.x
+                target_Pose.position.y = target_y
+                target_Pose.position.z = obstacle.initial_pose.position.z
+                target_Pose.orientation = obstacle.initial_pose.orientation
+                obstacle.set_target_pose(target_Pose)
+
+                # Calculate the velocity to reach the target pose
+                obstacle.linear_path_velocity_calculation()
+
+                # Set entity state
+                self.set_entity_state(obstacle.name, obstacle.initial_pose, obstacle.target_twist)
+
+                self.obstacle_status = False
+
 
     def obstacle_start_callback(self, request: ObstacleStart.Request, response: ObstacleStart.Response):
         response.obstacle_status = True
         self.obstacle_status = True
 
-        # For stage 4 
-        if self.stage == 4:
+        # For stage 4 and 5, set the obstacles to move
+        if self.stage == 4 or self.stage == 5:
             
             # Have a x% chance of stationary obstacles 
-            if np.random.uniform(0, 1) < 0.40:
+            if np.random.uniform(0, 1) < 0.30:
 
                 init_y = 15.0
 

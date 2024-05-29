@@ -36,8 +36,8 @@ TOPIC_OBSTACLE_VISUAL_RAW = 'ObstacleVis_raw'
 TOPIC_OBSTACLE_VISUAL_CP = 'ObstacleVis_cp'
 
 LIDAR_DISTANCE_CAP          = 8.0   # meters
-THRESHOLD_COLLISION         = 0.5  # meters
-THREHSOLD_GOAL              = 0.5  # meters
+THRESHOLD_COLLISION         = 0.30  # meters
+THREHSOLD_GOAL              = 0.25  # meters
 
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
 LINEAR_VELOCITY_LOC       = 0     # 0 = no noise, 1 = noise enabled
@@ -49,8 +49,8 @@ ARENA_WIDTH                 = 20   # meters
 
 # General
 EPISODE_TIMEOUT_SECONDS     = 20    # Number of seconds after which episode timeout occurs
-SPEED_LINEAR_MAX            = 2.0  # m/s
-SPEED_ANGULAR_MAX           = 2.0   # rad/s
+SPEED_LINEAR_MAX            = 0.5   # m/s
+SPEED_ANGULAR_MAX           = 1.0   # rad/s
 
 # Obstacles
 OBSTACLE_RADIUS             = 0.16  # meters
