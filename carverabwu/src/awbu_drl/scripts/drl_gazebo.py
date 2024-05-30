@@ -396,7 +396,7 @@ class DRLGazebo(Node):
         # Last action observation
         state.append(float(action_linear_previous))
         state.append(float(action_angular_previous))
-        # self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || V: {vel:.2f} Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
+        self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
         # self.get_logger().info(f'State: {state}')
         self.local_step += 1
         return state
