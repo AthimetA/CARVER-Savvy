@@ -10,7 +10,7 @@ discount_factor = 0.99
 learning_rate_actor = 0.0001
 learning_rate_critic = 0.0001
 tau = 0.05
-loss_function = <function mse_loss at 0x785e5d3417e0>
+loss_function = <function mse_loss at 0x7926ecb397e0>
 epsilon = 0.99
 epsilon_decay = 0.9995
 epsilon_minimum = 0.2
@@ -45,7 +45,7 @@ networks = [Actor(
   (l14): Linear(in_features=256, out_features=1, bias=True)
 )]
 iteration = 0
-noise = <drlagent_base_agent.OUNoise object at 0x785e35718400>
+noise = <drlagent_base_agent.OUNoise object at 0x7926d4f0c400>
 policy_noise = 0.2
 noise_clip = 0.4
 policy_freq = 2
