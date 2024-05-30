@@ -37,7 +37,7 @@ TOPIC_OBSTACLE_VISUAL_RAW = 'ObstacleVis_raw'
 TOPIC_OBSTACLE_VISUAL_CP = 'ObstacleVis_cp'
 
 LIDAR_DISTANCE_CAP          = 8.0   # meters
-THRESHOLD_COLLISION         = 0.30  # meters
+THRESHOLD_COLLISION         = 0.50  # meters
 THREHSOLD_GOAL              = 0.25  # meters
 
 ENABLE_MOTOR_NOISE          = False # Add normally distributed noise to motor output to simulate hardware imperfections
@@ -99,8 +99,13 @@ RESULTS_NUM = 5
 # --- REAL ROBOT ENVIRONMENT SETTINGS ---
 SRV_USER_SET_GOAL = '/abwu_drl_set_goal'
 
+<<<<<<< Updated upstream
 REAL_SPEED_LINEAR_MAX       = 0.1   # in m/s
 REAL_SPEED_ANGULAR_MAX      = 0.1   # in rad/s
+=======
+REAL_SPEED_LINEAR_MAX       = 0.5   # in m/s
+REAL_SPEED_ANGULAR_MAX      = 1.0  # in rad/s
+>>>>>>> Stashed changes
 
 REAL_LIDAR_DISTANCE_CAP     = 8.0   # meters
 REAL_THRESHOLD_COLLISION    = 0.5  # meters
