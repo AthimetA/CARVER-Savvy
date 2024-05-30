@@ -1,3 +1,1 @@
-string<=256 node_namespace
-string<=256 node_name
-Entity[] entities
+/home/nuc11/CARVER-Savvy/carverabwu/src/uros/micro_ros_msgs/msg/Node.msg

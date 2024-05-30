@@ -47,16 +47,31 @@ def generate_launch_description():
 
     # Robot Localization
     ekf_parameters_file_dir = os.path.join(carversavvy_control_dir, 'config')
+    ekf_parameters_file_path = os.path.join(ekf_parameters_file_dir, 'carversavvy_ekf.yaml')
     ekf_filter_node_odom = Node(
             package='robot_localization', 
             executable='ekf_node', 
             name='ekf_filter_node',
 	        output='screen',
             parameters=[
-                os.path.join(ekf_parameters_file_dir, 'carversavvy_ekf.yaml'),
+                ekf_parameters_file_path,
+                {'use_sim_time': use_sim_time}
             ],
             remappings=[('odometry/filtered', '/carversavvy/odom')]           
            )
+    
+    ekf_filter_node_map = Node(
+            package='robot_localization', 
+            executable='ekf_node', 
+            name='ekf_filter_node_map',
+	        output='screen',
+            parameters=[
+                ekf_parameters_file_path,
+                {'use_sim_time': use_sim_time}
+            ],
+            remappings=[('odometry/filtered', '/carversavvy/odom_map')]           
+           )
+
     
     # RPLidar Node
     channel_type =  LaunchConfiguration('channel_type', default='serial')
@@ -131,6 +146,7 @@ def generate_launch_description():
         carversavvy_forward_kinematic,
 
         ekf_filter_node_odom,
+        ekf_filter_node_map,
 
         rplidar_node,
 

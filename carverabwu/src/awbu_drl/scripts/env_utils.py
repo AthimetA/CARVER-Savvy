@@ -368,7 +368,7 @@ class Robot:
         if angle < -np.pi:
             # If the angle is less than -pi, add 2pi
             angle += 2 * np.pi
-        return target_angle
+        return angle
 
     def euler_from_quaternion(self, quat: Quaternion):
         """

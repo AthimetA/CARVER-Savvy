@@ -14,6 +14,11 @@ import os
 from ament_index_python.packages import get_package_share_directory
 import tf_transformations
 
+from tf2_ros import TransformBroadcaster
+from std_msgs.msg import Header
+from geometry_msgs.msg import (Point, Pose, PoseWithCovariance, Quaternion,
+                               Twist, TransformStamped,TwistWithCovariance, Vector3)
+
 NS_TO_SEC= 1000000000
 
 class carversavvyFKNode(Node):
@@ -90,6 +95,8 @@ class carversavvyFKNode(Node):
         self.pose_pub = self.create_publisher(Pose, self.pose_topic_name, 10)
 
         self.distance_pub = self.create_publisher(Float64, '/carversavvy_distance', 10)
+
+        self.tf_br = TransformBroadcaster(self)
 
         # create timer_callback
         self.timer_hz = 30
@@ -204,6 +211,18 @@ class carversavvyFKNode(Node):
         # Publish the odometry message
         self.odom_pub.publish(odom_msg)
 
+        # Broadcast transform
+        transform = TransformStamped()
+        transform.header.stamp = odom_msg.header.stamp
+        transform.header.frame_id = 'odom'
+        transform.child_frame_id = 'base_link'  # Make sure it matches the child frame ID in odom_output
+        transform.transform.translation.x = odom_msg.pose.pose.position.x
+        transform.transform.translation.y = odom_msg.pose.pose.position.y
+        transform.transform.translation.z = odom_msg.pose.pose.position.z
+        transform.transform.rotation = odom_msg.pose.pose.orientation
+
+        # self.tf_br.sendTransform(transform)
+        
 # Main function to initialize and run the ROS 2 node
 def main(args=None):
     rclpy.init(args=args)
