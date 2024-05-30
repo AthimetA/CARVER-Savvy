@@ -78,6 +78,8 @@ class carversavvyTestNode(Node):
 
     def cmd_timer_callback(self):
         mode = self.mode
+
+
         if mode == 1:
             self.timer_counter += 1
             if self.timer_counter <= 2/self.time_period:
@@ -87,23 +89,29 @@ class carversavvyTestNode(Node):
                 dist = 0.0
                 self.distance_pub.publish(Float64(data = dist))
             else:
-                if self.loop_counter < len(self.QV):
-                    self.cmd_vel.linear.x = self.QV[self.loop_counter]
+                if self.timer_counter > 2/self.time_period and self.timer_counter <= 10/self.time_period:
+                    self.cmd_vel.linear.x = 0.25
                     self.cmd_vel.angular.z = 0.0
                     self.cmd_pub.publish(self.cmd_vel)
+                    # self.distance_pub.publish(Float64(data=self.QX[self.loop_counter])
+                    # self.loop_counter += 1
+                # if self.loop_counter < len(self.QV):
+                    # self.cmd_vel.linear.x = self.QV[self.loop_counter]
+                    # self.cmd_vel.angular.z = 0.0
+                    # self.cmd_pub.publish(self.cmd_vel)
 
-                    self.distance_pub.publish(Float64(data=self.QX[self.loop_counter]))
-                    self.loop_counter += 1
+                    # self.distance_pub.publish(Float64(data=self.QX[self.loop_counter]))
+                    # self.loop_counter += 1
 
                 else:
                     self.cmd_vel.linear.x = 0.0
                     self.cmd_vel.angular.z = 0.0
                     self.cmd_pub.publish(self.cmd_vel)
-                    self.distance_pub.publish(Float64(data=self.QX[self.loop_counter-1]))
+                    # self.distance_pub.publish(Float64(data=self.QX[self.loop_counter-1]))
 
-                    self.mode = 3
-                    self.timer_counter = 0
-                    self.loop_counter = 0
+                    # self.mode = 3
+                    # self.timer_counter = 0
+                    # self.loop_counter = 0
                     
             
 

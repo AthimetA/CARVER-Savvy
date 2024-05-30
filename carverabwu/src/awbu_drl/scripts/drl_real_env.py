@@ -58,6 +58,9 @@ from settings.constparams import UNKNOWN, SUCCESS, COLLISION, TIMEOUT, TUMBLE, R
 # Robot specific settings
 from settings.constparams import NUM_SCAN_SAMPLES
 
+from drlutils_visual_observation import VisualObservation
+import PyQt5.QtWidgets as QtWidgets
+
 MAX_GOAL_DISTANCE = 10.0 # meters
 
 MAX_OBS_SPEED_X = 2.0 # m/s
@@ -65,6 +68,9 @@ MAX_OBS_SPEED_Y = 2.0 # m/s
 
 INTIAL_ROBOT_X = 0
 INTIAL_ROBOT_Y = 0
+
+STATE_SIZE = NUM_SCAN_SAMPLES + 2 + 6 + 4 + 2
+HIDDEN_SIZE = 256
 
 class DRLGazebo(Node):
     def __init__(self):
@@ -141,8 +147,13 @@ class DRLGazebo(Node):
         self.local_step = 0 # Local step counter
 
         # Timer for the node
-        self.__timer_period = 0.1
+        self.__timer_period = 0.03333
         self.timer = self.create_timer(self.__timer_period, self.node_clock_callback)
+
+
+        # Visualize the environment
+        self.qapp = QtWidgets.QApplication([])
+        self.visual_observation = VisualObservation(state_size=STATE_SIZE)
 
     '''
     
@@ -163,6 +174,14 @@ class DRLGazebo(Node):
     
     '''
     def node_clock_callback(self):
+
+        # Update the visual observation
+        self.visual_observation.tab_state_update(
+            states=self.get_state(action_linear_previous=0.0, action_angular_previous=0.0),
+        )
+
+        QtWidgets.QApplication.processEvents()
+
         if self.env_ready is False:
             self.cmd_vel_pub.publish(Twist())
         # Get current time
@@ -182,12 +201,21 @@ class DRLGazebo(Node):
         self.robot.update_position(msg)
 
     def scan_callback(self, msg: LaserScan):
+        
+
         if len(msg.ranges) != NUM_SCAN_SAMPLES:
             # Downsample the scan data
             scan_step = len(msg.ranges) // NUM_SCAN_SAMPLES
             scandata = msg.ranges[::scan_step]
+
         else:
             scandata = msg.ranges
+        # Replace NaN and Inf values with the maximum distance
+        scandata = [REAL_LIDAR_DISTANCE_CAP if math.isnan(x) or math.isinf(x) or x > REAL_LIDAR_DISTANCE_CAP else x for x in scandata]
+
+        # Offset the scan data
+        scandata = np.asanyarray(scandata) - 0.25
+
         # normalize laser values
         self.obstacle_distance_nearest = 1
         for i in range(NUM_SCAN_SAMPLES):
@@ -330,7 +358,7 @@ class DRLGazebo(Node):
         # Last action observation
         state.append(float(action_linear_previous))
         state.append(float(action_angular_previous))
-        self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
+        # self.get_logger().info(f'DTG: {dtg:.2f} ATG: {atg:.2f} X: {x:.2f} Y: {y:.2f} Θ: {theta:.2f} || Ω: {omega:.2f}  || OX: {obstacle_x:.2f} OY: {obstacle_y:.2f} OVX: {obstacle_vel_x:.2f} OVY: {obstacle_vel_y:.2f}')
         # self.get_logger().info(f'State: {state}')
         self.local_step += 1
         return state

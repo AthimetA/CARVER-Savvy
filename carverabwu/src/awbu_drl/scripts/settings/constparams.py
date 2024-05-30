@@ -99,11 +99,11 @@ RESULTS_NUM = 5
 SRV_USER_SET_GOAL = '/abwu_drl_set_goal'
 TOPIC_REAL_ODOM = '/carversavvy/odom'
 
-REAL_SPEED_LINEAR_MAX       = 0.5   # in m/s
-REAL_SPEED_ANGULAR_MAX      = 1.0  # in rad/s
+REAL_SPEED_LINEAR_MAX       = 0.25   # in m/s
+REAL_SPEED_ANGULAR_MAX      = 0.5  # in rad/s
 
 REAL_LIDAR_DISTANCE_CAP     = 8.0   # meters
-REAL_THRESHOLD_COLLISION    = 0.5  # meters
-REAL_THRESHOLD_GOAL         = 0.5   # meters
+REAL_THRESHOLD_COLLISION    = 0.30  # meters
+REAL_THRESHOLD_GOAL         = 0.50   # meters
 
 REAL_EPISODE_TIMEOUT_SECONDS = 5*60  # Number of seconds after which episode timeout occurs

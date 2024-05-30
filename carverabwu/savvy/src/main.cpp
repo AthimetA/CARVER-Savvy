@@ -365,11 +365,11 @@ float InverseTFofMotorL(float Velo, float PredictVelo)
 	// Voltage = (PredictVelo - (1.298649403776808*Velo) + (0.413830007244888*VeloLast) - (0.492093238713741*VoltageLast))/0.660367603263632;
 	if (PredictVelo > 0) 
 	{
-		Voltage = ((PredictVelo*2.6699 +3.3474)) - ((2.6699 *Velo));
+		Voltage = ((PredictVelo*2.2937 +3.5326)) - ((2.2937 *Velo));
 	}
 	else
 	{
-		Voltage = ((2.093*PredictVelo -2.9458) )- ((2.093*Velo) );
+		Voltage = ((2.076*PredictVelo -3.1637) )- ((2.076*Velo) );
 	}
 	// Voltage = PredictVelo - ((2.4677*Velo) +  1.8768/2.0);
 	Pwm = (Voltage * 255)/24.0;
@@ -470,7 +470,7 @@ void controlSetup()
 	//IMU setup--------------------------------------------------------------------------------------------------------------------	
 	//move parameter to general_params.h
 	//parameter setup
-  pidParameter1.Kp = 0.035;//3;  //1;   //4 
+  pidParameter1.Kp = 0.034;//3;  //1;   //4 
   pidParameter1.Ki = 0.001;//0.18;//0.5; //8;
   pidParameter1.Kd = 0.1;
   pidParameter1.sampleTime = 1000/sampling_time;
@@ -620,7 +620,7 @@ void controlLoop()
 			control.drive(&motorL, feedfowardL);
 			control.drive(&motorR, feedfowardR);
 		}
-		// control.drive(&motorL, -250);
+		// control.drive(&motorL, 250);
 		// control.drive(&motorR, -250);
 
 	// encoderLrad = control.getIntervalEnc(&encoderL); 

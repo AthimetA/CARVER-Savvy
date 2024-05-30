@@ -44,6 +44,8 @@ from drlutils_visual import *
 
 from settings.constparams import ENABLE_VISUAL, SRV_ENV_COMM, SRV_STEP_COMM, SRV_SCORE_STEP_COMM
 
+ENABLE_VISUAL = False
+
 
 class DrlAgent(Node):
     def __init__(self,
@@ -98,12 +100,6 @@ class DrlAgent(Node):
         else:
             self.get_logger().info(bcolors.FAIL + f"No General Weights Found" + bcolors.ENDC)
             quit()
-        
-        # ========================Visual Initialization======================== #
-        if ENABLE_VISUAL:
-            self.qapp = QtWidgets.QApplication([])
-            self.visual = DrlVisual(self.model.state_size, self.model.hidden_size)
-            self.model.attach_visual(self.visual)
 
         # ===================================================================== #
         #                             Start Process                             #
@@ -114,7 +110,7 @@ class DrlAgent(Node):
         self.step_score_client = self.create_client(ScoreStep, SRV_SCORE_STEP_COMM)
 
         # Start the process
-        self.timer_hz = 50.0
+        self.timer_hz = 30.0
         self.timer_period = 1e9/self.timer_hz # Convert to nanoseconds
         self.episode_start_time = 0.0
         self.episode_done = False
@@ -172,8 +168,8 @@ class DrlAgent(Node):
     
     def wait_env_to_be_ready(self):
         while(self.get_env_status() == False):
-            self.get_logger().info(bcolors.WARNING + "Waiting for Environment to be ready... call '/abwu_drl_set_goal' service" + bcolors.ENDC)
-            time.sleep(1.0)
+            # self.get_logger().info(bcolors.WARNING + "Waiting for Environment to be ready... call '/abwu_drl_set_goal' service" + bcolors.ENDC)
+            time.sleep(0.1)
 
     '''
     
@@ -255,10 +251,7 @@ class DrlAgent(Node):
             current_time = time.perf_counter_ns()
 
             if (current_time - self.process_start_time) > self.timer_period:
-                
-                if ENABLE_VISUAL:
-                    # Process the visual events 
-                    QtWidgets.QApplication.processEvents()
+            
 
                 if self.agent_status == "IDLE":
                     # Wait for environment to be ready
@@ -283,7 +276,6 @@ class DrlAgent(Node):
                         state=state, # Pass the current state just in case the model needs it
                         visualize=ENABLE_VISUAL,
                     )
-
                     # Set the current action 
                     action_current = action
 

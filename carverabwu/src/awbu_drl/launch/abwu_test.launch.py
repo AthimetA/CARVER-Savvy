@@ -94,12 +94,34 @@ def generate_launch_description():
         remappings=[('/cmd_vel_out','/carversavvy_cmd_vel')],
         )
 
-    control_path = get_package_share_directory('carversavvy_control')
-    launch_path = os.path.join(control_path, 'launch')
-    launch_file = os.path.join(launch_path, 'carversavvy_rviz.launch.py')
-    rviz_node = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(launch_file)
+    rviz_config_file = os.path.join(carversavvy_control_dir, 'rviz2', 'carversavvy_rviz2.rviz')
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', rviz_config_file]
     )
+
+    drl_gazebo = Node(
+            package='awbu_drl',
+            executable='drl_real_env.py',
+            name='drl_gazebo',
+            parameters=[{'use_sim_time': use_sim_time}],
+         )
+    
+    drl_obstacle_cp = Node(
+            package='awbu_drl',
+            executable='drl_obstacle_cp_real.py',
+            name='drl_obstacle_cp',
+            parameters=[{'use_sim_time': use_sim_time}],
+         )
+    
+    dr_agent = Node(
+            package='awbu_drl',
+            executable='drl_real_agent.py',
+            name='drl_agent',
+         )
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
     return LaunchDescription([
@@ -114,6 +136,13 @@ def generate_launch_description():
 
         twist_mux_node,
 
-        rviz_node
+        rviz_node,
+
+        drl_gazebo,
+
+        drl_obstacle_cp,
+
+        dr_agent,
+        
 
     ])
