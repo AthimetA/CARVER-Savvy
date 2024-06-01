@@ -315,7 +315,7 @@ When edit Physic in Gazebo, if you want to run the simulation in real-time (x1) 
 
 Note: when edit real_time_update_rate, the controller parameters config file should be changed to the same value as the real_time_update_rate in the world file. You can edit at `carversavvy_description/config/carversavvy_controller.yaml` file.
 
-```
+```yaml
 controller_manager:
   ros__parameters:
 
