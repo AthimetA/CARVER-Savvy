@@ -14,6 +14,9 @@
   * [Optional Configuration](#optional-configuration)
   * [Utilities](#utilities)
 * [Physical Robot](#physical-robot)
+  * [Micro-Ros-node](#micro-ros-node)
+  * [ROS Bridge](#ros-bridge)
+  * [DRL Agent](#drl-agent)
 
 # **Introduction**
 
