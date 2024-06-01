@@ -361,39 +361,69 @@ There is a viusalization of the collision probability using rviz. Example of the
 ## **ROS Bridge**
 
 This node serves to compute Wheel Odometry and calibrate IMU data. It takes inputs such as Wheel Velocity and Raw IMU data from topics sent by the ESP32.
-<p float="left">
- <img src="media/velocity.png" width="800">
+<p float="center">
+ <img src="media/velocity.png" width="600">
 </p>
-<p float="left">
- <img src="media/velocity2.png" width="800">
+<p float="center">
+ <img src="media/velocity2.png" width="600">
 </p>
 
 ```python
- # Create the odometry message
-odom_msg = Odometry()
-odom_msg.header.stamp = self.get_clock().now().to_msg()
-odom_msg.header.frame_id = 'odom'
-odom_msg.child_frame_id = 'base_link'
+def forward_kinematic_cal(self, wl, wr):
+    now = self.get_clock().now()
+    dt = now - self.time_last
+    self.time_last = now
+    dt = dt.nanoseconds / NS_TO_SEC
 
-# Set the position
-odom_msg.pose.pose.position.x = self.x
-odom_msg.pose.pose.position.y = self.y
-odom_msg.pose.pose.position.z = 0.0
+    if type(wl) == Float32:
+        wl = wl.data
+    if type(wr) == Float32:
+        wr = wr.data
 
-# Convert yaw angle to quaternion
-qx,qy,qz,qw = tf_transformations.quaternion_from_euler(0, 0, self.theta)
-odom_msg.pose.pose.orientation.x = qx
-odom_msg.pose.pose.orientation.y = qy
-odom_msg.pose.pose.orientation.z = qz
-odom_msg.pose.pose.orientation.w = qw
+    # calculate the linear and angular velocity of the robot
+    vx = (self._WHEEL_RADIUS/2) * (wl + wr)
+    wz = (self._WHEEL_RADIUS/self._BASE_WIDTH) * (wr - wl)
 
-# Set the velocity
-odom_msg.twist.twist.linear.x = vx
-odom_msg.twist.twist.linear.y = 0.0
-odom_msg.twist.twist.angular.z = wz
+    # Position
+    ds = vx * dt
+    dtheta = wz * dt
 
-# Publish the odometry message
-self.odom_pub.publish(odom_msg)
+    if wz != 0:
+        self.theta += dtheta
+
+    if vx != 0:
+        # calculate distance traveled in x and y
+        x = np.cos(dtheta) * ds
+        y = -np.sin(dtheta) * ds
+        # calculate the final position of the robot
+        self.x += ((np.cos(self.theta) * x) - (np.sin(self.theta) * y))
+        self.y += ((np.sin(self.theta) * x) + (np.cos(self.theta) * y))
+
+    # Create the odometry message
+    odom_msg = Odometry()
+    odom_msg.header.stamp = self.get_clock().now().to_msg()
+    odom_msg.header.frame_id = 'odom'
+    odom_msg.child_frame_id = 'base_link'
+
+    # Set the position
+    odom_msg.pose.pose.position.x = self.x
+    odom_msg.pose.pose.position.y = self.y
+    odom_msg.pose.pose.position.z = 0.0
+
+    # Convert yaw angle to quaternion
+    qx,qy,qz,qw = tf_transformations.quaternion_from_euler(0, 0, self.theta)
+    odom_msg.pose.pose.orientation.x = qx
+    odom_msg.pose.pose.orientation.y = qy
+    odom_msg.pose.pose.orientation.z = qz
+    odom_msg.pose.pose.orientation.w = qw
+
+    # Set the velocity
+    odom_msg.twist.twist.linear.x = vx
+    odom_msg.twist.twist.linear.y = 0.0
+    odom_msg.twist.twist.angular.z = wz
+
+    # Publish the odometry message
+    self.odom_pub.publish(odom_msg)
 ```
 
 ## **EKF Configuration**
