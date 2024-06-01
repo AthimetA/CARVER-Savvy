@@ -356,6 +356,89 @@ There is a viusalization of the collision probability using rviz. Example of the
  <img src="media/collision_probability.gif" width="800">
 </p>
 
+# **Micro-Ros-node**
+
+## **Set up Micro-Ros**
+
+```bash
+cd microros_ws
+ros2 run micro_ros_setup create_agent_ws.sh
+ros2 run micro_ros_setup build_agent.sh
+source install/local_setup.bash
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
+```
+## Microcontroller Programming
+- **IMU set-up**
+
+  ```cpp
+  if (!bno08x.begin_I2C()) {
+    	while (1) {
+      	delay(10);
+        }
+      }
+	for (int n = 0; n < bno08x.prodIds.numEntries; n++) {
+
+    Serial.print(bno08x.prodIds.entry[n].swPartNumber);
+    // Serial.print(": Version :");
+    Serial.print(bno08x.prodIds.entry[n].swVersionMajor);
+    // Serial.print(".");
+    Serial.print(bno08x.prodIds.entry[n].swVersionMinor);
+    // Serial.print(".");
+    Serial.print(bno08x.prodIds.entry[n].swVersionPatch);
+    // Serial.print(" Build ");
+    Serial.println(bno08x.prodIds.entry[n].swBuildNumber);
+  	}
+  if (!bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED)) {
+  }
+  if (!bno08x.enableReport(SH2_LINEAR_ACCELERATION)) {
+  }
+  if(!bno08x.enableReport(SH2_ROTATION_VECTOR)){
+  }
+  ```
+- **IMU read loop**
+  ```cpp
+  if (bno08x.wasReset()) {
+    		// Serial.print("sensor was reset ");
+    		// setReports();
+  			}		
+  		if (!bno08x.getSensorEvent(&sensorValue)) {
+    		return;
+  			}
+  		switch (sensorValue.sensorId) {
+			case SH2_GYROSCOPE_CALIBRATED:
+				IMU_data[0] = sensorValue.un.gyroscope.x;
+				IMU_data[1] = sensorValue.un.gyroscope.y;
+				IMU_data[2] = sensorValue.un.gyroscope.z;
+				break;
+			case SH2_LINEAR_ACCELERATION:
+				IMU_data[3] = -1.0 * sensorValue.un.linearAcceleration.x;
+				IMU_data[4] = -1.0 * sensorValue.un.linearAcceleration.y;
+				IMU_data[5] = -1.0 * sensorValue.un.linearAcceleration.z;
+				break;
+			case SH2_ROTATION_VECTOR:
+				IMU_data[6] = sensorValue.un.rotationVector.real;
+				IMU_data[7] = sensorValue.un.rotationVector.i;
+				IMU_data[8] = sensorValue.un.rotationVector.j;
+				IMU_data[9] = sensorValue.un.rotationVector.k;
+				break;
+  		}
+  ```
+  | Index | Size |         Data          |
+  | :---: | :--: | :-------------------: |
+  |   0   |  32  |  Angular Velocity X   |
+  |   1   |  32  |  Angular Velocity Y   |
+  |   2   |  32  |  Angular Velocity Z   |
+  |   3   |  32  | Linear Acceleration X |
+  |   4   |  32  | Linear Acceleration Y |
+  |   5   |  32  | Linear Acceleration Z |
+  |   6   |  32  |  Rotational Vector    |  
+  |   7   |  32  |         Roll          |
+  |   8   |  32  |         Pitch         |
+  |   9   |  32  |          Yaw          |
+
+
+  The performance of the data transmission is approximately 25Hz.
+
 # **Physical Robot**
 
 ## **ROS Bridge**
