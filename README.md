@@ -96,6 +96,21 @@ nvidia-smi
 
 Which should display version numbers and GPU information. If you see this, you are enabled to train on the GPU.
 
+Example output:
+```
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 535.171.04    Driver Version: 535.171.04    CUDA Version: 12.2   |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  GeForce RTX 3060    Off  | 00000000:01:00.0 Off |                  N/A |
+|  0%   41C    P8    15W / 350W |      0MiB / 24268MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+```
+
 ## **Downloading the Repository**
 
 Open a terminal in the desired location for the new workspace. Clone the repository using:
