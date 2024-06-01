@@ -208,7 +208,7 @@ Your can change the obstacle detection and velocity calculation method by changi
 
 ``` 
 
-Note: By using drl_obstacle_cp_real.py script, the Evaluation matrix is calculation is not implemented yet.
+Note: By using drl_obstacle_cp_real.py script, the Evaluation matrix is calculation is <b>not implemented</b> yet.
 
 3. Start the reinforcement learning agent:
 ```
