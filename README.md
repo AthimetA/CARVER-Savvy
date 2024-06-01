@@ -131,7 +131,10 @@ source install.bash
 
 Next, Build the workspace using colcon:
 ```
+# If you are in the CARVER-Savvy directory
 cd carverabwu/
+# Build the workspace using colcon
+# Always build with --symlink-install to avoid having to rebuild the workspace after every change
 colcon build --symlink-install
 ```
 After colcon has finished building source the repository using: 
@@ -144,28 +147,20 @@ or add the following line to your `~/.bashrc` file (if the repository is in your
 source ~/CARVER-Savvy/carverabwu/install/setup.bash
 ```
 
-The last thing we need to do before running the code is add a few lines to our `~/.bashrc` file so that they are automatically executed whenever we open a new terminal. Add the following lines at the end of your `~/.bashrc` file and **replace ~/path/to/turtlebot3_drlnav/repo with the path where you cloned the repository. (e.g. ~/turtlebot3_drlnav)**
+The last thing we need to do before running the code is add a few lines to our `~/.bashrc` file so that they are automatically executed whenever we open a new terminal. Add the following lines at the end of your `~/.bashrc` file and **replace the path to the workspace with the path to your workspace**:
+
 ```
 # ROS2 domain id for network communication, machines with the same ID will receive each others' messages
 export ROS_DOMAIN_ID=1
 
-# Fill in the path to where you cloned the turtlebot3_drlnav repo
-WORKSPACE_DIR=~/path/to/turtlebot3_drlnav
-export DRLNAV_BASE_PATH=$WORKSPACE_DIR
+WORKSPACE_DIR=~/CARVER-Savvy/carverabwu
+export ABWUDRL_BASE_PATH=$WORKSPACE_DIR
 
-# Source the workspace
-source $WORKSPACE_DIR/install/setup.bash
+# Model path for Gazebo
+export SIM_MODEL_PATH=$WORKSPACE_DIR/src/abwu_gazebo/models/
 
-# Allow gazebo to find our turtlebot3 models
-export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$WORKSPACE_DIR/src/turtlebot3_simulations/turtlebot3_gazebo/models
-
-# Select which turtlebot3 model we will be using (default: burger, waffle, waffle_pi)
-export TURTLEBOT3_MODEL=burger
-
-# Allow Gazebo to find the plugin for moving the obstacles
-export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:$WORKSPACE_DIR/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_drl_world/obstacle_plugin/lib
+#Allow gazebo to find models
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$WORKSPACE_DIR/src/abwu_gazebo/models
 ```
-
-For more detailed instructions on ros workspaces check [this guide](https://automaticaddison.com/how-to-create-a-workspace-ros-2-foxy-fitzroy/).
 
 **Note: Always make sure to first run ```source install/setup.bash``` or open a fresh terminal after building with `colcon build`.**
