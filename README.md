@@ -361,6 +361,8 @@ There is a viusalization of the collision probability using rviz. Example of the
 
 # **Physical Robot**
 
+The physical robot is a Carver-Savvy, a differential drive mobile robot equipped with sensors: 2D lidar, IMU, and encoders.
+
 ## **Micro-Ros-node**
 
 ### **Set up Micro-Ros**
@@ -853,3 +855,5 @@ slam_map_path = os.path.join(
 slam_map_file = LaunchConfiguration('map', default=slam_map_path)
 ```
 
+
+## **DRL Agent** 
