@@ -175,7 +175,7 @@ System architecture of the project is shown below:
 
 The project is divided into three main components: the reinforcement learning agent, the reinforcement learning environment, and the robot. 
 * The agent is responsible for learning the optimal policy for navigating the robot in the environment. 
-* The environment is responsible for providing the agent with the necessary information to learn the policy.
-* The robot is responsible for executing the policy learned by the agent in the real world.
+* The environment is responsible for providing the agent with the necessary information to learn the policy. In training, the environment is simulated in Gazebo and the micro-ros node is used to communicate with the robot. In testing, the environment is the real world and the robot is controlled by the agent.
+* The robot is responsible for executing the policy learned by the agent in the environment. In training, the robot is simulated in Gazebo and the micro-ros node is used to communicate with the environment. In testing, the robot is the physical robot.
 
 ## **Training the Agent**
