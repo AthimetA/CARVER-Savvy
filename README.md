@@ -1,6 +1,6 @@
 # Carver-Savvy : Deep Learning-based Navigation for Mobile Robots in Dynamic Environments
 
-## A ROS2 Project for DRL autonomous navigation on mobile robots with LiDAR.
+## A ROS2 Project for DRL autonomous navigation on mobile robots with LiDAR. Documentation: [link](https://drive.google.com/file/d/1YvqdD2zfSpZBf8gw019WrEhlrialaLND/view?usp=sharing)
 
 <p float="left">
  <img src="media/project_overview.gif" width="800">
