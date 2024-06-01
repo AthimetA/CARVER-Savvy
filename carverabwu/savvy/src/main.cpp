@@ -242,15 +242,7 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 {
   RCLC_UNUSED(last_call_time);
   if (timer != NULL) {
-	// ENCR_msg.data = counttimer; 
-	// ENCL_msg.data = counttimer;
-	// outputcontrolL_msg.data = pidParameter1.output;
-	// outputcontrolR_msg.data = pidParameter2.output;
-	// outputcontrolL_msg.data = feedfowardL;
-	// outputcontrolR_msg.data = feedfowardR;
-	
-	// inputcontrolL_msg.data = robotVelocityCmd.v1;
-	// inputcontrolR_msg.data = robotVelocityCmd.v2;
+
 	inputcontrolL_msg.data = Sub_speedL;
 	inputcontrolR_msg.data = Sub_speedR;
 	wheelL_vel_msg.data = encoderLrad;
@@ -265,17 +257,12 @@ void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
 	// IMU_msg.orientation.x = IMU_data[7];
 	// IMU_msg.orientation.y = IMU_data[8];
 	IMU_yaw_msg.data = IMU_data[8];
-	// RCSOFTCHECK(rcl_publish(&ENCL_publisher, &ENCL_msg, NULL));
-	// RCSOFTCHECK(rcl_publish(&ENCR_publisher, &ENCR_msg, NULL));
+
 	RCSOFTCHECK(rcl_publish(&wheelL_vel_publisher, &wheelL_vel_msg, NULL));
 	RCSOFTCHECK(rcl_publish(&wheelR_vel_publisher, &wheelR_vel_msg, NULL));
-	// RCSOFTCHECK(rcl_publish(&IMU_publisher, &IMU_msg, NULL));
 	RCSOFTCHECK(rcl_publish(&IMU_yaw_publisher, &IMU_yaw_msg, NULL));
 	RCSOFTCHECK(rcl_publish(&IMU_vz_publisher, &IMU_vz_msg, NULL));
 	RCSOFTCHECK(rcl_publish(&IMU_ax_publisher, &IMU_ax_msg, NULL));
-	// RCSOFTCHECK(rcl_publish(&IMU_publisher, &IMU_msg, NULL));
-	// RCSOFTCHECK(rcl_publish(&outputL_publisher, &outputcontrolL_msg, NULL));
-	// RCSOFTCHECK(rcl_publish(&outputR_publisher, &outputcontrolR_msg, NULL));
 	RCSOFTCHECK(rcl_publish(&inputL_publisher, &inputcontrolL_msg, NULL));
 	RCSOFTCHECK(rcl_publish(&inputR_publisher, &inputcontrolR_msg, NULL));
 	// counttimer++;
@@ -295,12 +282,10 @@ void uROSsetup()
 	  // sync time
   	// rmw_uros_sync_session(1000);
 	//create publisher
-	// RCCHECK(rclc_publisher_init_default(&ENCL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "rawENCL"));
-	// RCCHECK(rclc_publisher_init_default(&ENCR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "rawENCR"));
+
 	RCCHECK(rclc_publisher_init_default(&wheelL_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "wheelL_vel"));
 	RCCHECK(rclc_publisher_init_default(&wheelR_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "wheelR_vel"));
-	// RCCHECK(rclc_publisher_init_default(&outputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputL"));
-	// RCCHECK(rclc_publisher_init_default(&outputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16), "outputR"));
+
 	RCCHECK(rclc_publisher_init_default(&inputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputL"));
 	RCCHECK(rclc_publisher_init_default(&inputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputR"));
 	// RCCHECK(rclc_publisher_init_default(&IMU_yaw_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_yaw"));
