@@ -94,25 +94,13 @@ You can then verify that CUDA is installed using:
 nvidia-smi
 ```
 
-This should display the GPU information and driver version.
+Which should display version numbers and GPU information. If you see this, you are enabled to train on the GPU.
 
-Which should display version numbers and GPU information. If you see this, you are ready to train on the GPU.
-
-## **Downloading the code base and building**
-<!-- Now it's time to create a workspace that will serve as the basis for our project. To do this, follow the tutorial [here](https://automaticaddison.com/how-to-create-a-workspace-ros-2-foxy-fitzroy/) -->
-
-Now it's time to download the repository to the actual code.
-
-Since ROS2 does not yet support metapackages, we will have to download the whole workspace from Git.
-
-First, make sure you have the `turtlebot3-description` package by running:
-```
-sudo apt-get install ros-foxy-turtlebot3-description
-```
+## **Downloading the Repository**
 
 Open a terminal in the desired location for the new workspace. Clone the repository using:
 ```
-git clone https://github.com/tomasvr/turtlebot3_drlnav.git
+git clone https://github.com/AthimetA/CARVER-Savvy.git
 ```
 
 `cd` into the directory and make sure you are on the main branch
