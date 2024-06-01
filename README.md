@@ -124,18 +124,14 @@ cd CARVER-Savvy/
 git checkout main
 ```
 
-Next, install the ros2 dependencies by running:
-```
-sudo apt install python3-rosdep2
-```
-
-Then initialize rosdep by running (this will install all the necessary dependencies for the project):
+Next, the ros2 dependencies by running (this will install all the necessary dependencies for the project):
 ```
 source install.bash
 ```
 
 Next, Build the workspace using colcon:
 ```
+cd carverabwu/
 colcon build --symlink-install
 ```
 After colcon has finished building source the repository using: 
