@@ -250,6 +250,91 @@ The `settings/constparams.py` file contains most of the interesting parameters t
 
 The `drlutils_reward.py` file contains the reward design. You can change the reward function to improve the agent's performance.
 
+### Map and Obstacle: change the map and obstacle design
+
+You can change the map and obstacle design by editing the `abwu_gazebo/maps` and `abwu_gazebo/models` directories.
+
+the `abwu_gazebo/maps` directory contains the map files that define the environment. The map files are in the `.world` format and can be edited using Gazebo.
+
+the `abwu_gazebo/models` directory contains the obstacle models that are placed in the environment. The obstacle models are in the `.sdf` format and can be edited using Gazebo.
+
+for dynamic goal, the goal position can be changed by editing the model file in the `abwu_gazebo/models` directory.
+
+When edit Physic in Gazebo, if you want to run the simulation in real-time (x1) or faster (x2) you can change in the world file as shown below:
+
+```
+    <physics type="ode">
+
+      <!-- Physics Rule 
+      
+      1. max_step_size: 
+          The maximum time step size that can be taken by a variable time-step solver (such as simbody) during simulation. 
+          For physics engines with fixed-step solvers (like ODE), this is simply the time step size. 
+          The default value in Gazebo is 0.001 seconds.
+      2. real_time_update_rate: 
+          This is the frequency at which the simulation time steps are advanced. 
+          The default value in Gazebo is 1000 Hz. Multiplying with the default max_step_size of 0.001 seconds gives a real_time_factor of 1.
+          If real_time_update_rate is set to 0 the simulation will run as fast as it can. 
+          If Gazebo is not able to update at the desired rate, it will update as fast as it can, based on the computing power.
+      3. real_time_factor:
+          max_step_size x real_time_update_rate sets an upper bound of real_time_factor. 
+          If real_time_factor < 1 the simulation is slower than real time.
+          real_time_factor = 1 means the simulation runs in real-time.
+          real_time_factor = 2 means the simulation runs twice as fast as real-time.
+
+      [real_time_factor = max_step_size * real_time_update_rate]
+      
+      -->
+      <!-- Physics x1 realtime-->
+      <max_step_size>0.001</max_step_size>
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>1</real_time_factor>
+
+      <!-- Physics x2 realtime-->
+      <!-- <max_step_size>0.002</max_step_size> 
+      <real_time_update_rate>1000.0</real_time_update_rate>
+      <real_time_factor>2</real_time_factor>  -->
+
+      <ode>
+        <solver>
+          <type>quick</type>
+          <iters>150</iters>
+          <precon_iters>0</precon_iters>
+          <sor>1.400000</sor>
+          <use_dynamic_moi_rescaling>1</use_dynamic_moi_rescaling>
+        </solver>
+        <constraints>
+          <cfm>0.00001</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>2000.000000</contact_max_correcting_vel>
+          <contact_surface_layer>0.01000</contact_surface_layer>
+        </constraints>
+      </ode>
+    </physics>
+```
+
+Note: when edit real_time_update_rate, the controller parameters config file should be changed to the same value as the real_time_update_rate in the world file. You can edit at `carversavvy_description/config/carversavvy_controller.yaml` file.
+
+```
+controller_manager:
+  ros__parameters:
+
+    use_sim_time: true
+    
+    # x1 Simulator
+    update_rate: 1000 # Hz
+
+    # x2 Simulator
+    # update_rate: 500 # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    
+    velocity_cont:
+      type: velocity_controllers/JointGroupVelocityController
+
+```
+
 ## **Utilities**
 
 ### Visualization: visualize the neural network activity
