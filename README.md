@@ -27,3 +27,6 @@ The applications enabled by the current framework:
 * Implement a pre-existing model onto an actual robot for navigation and obstacle avoidance.
 * Analyze the impact of various hyperparameters on training duration and performance.
 * Develop custom Deep Reinforcement Learning (DRL) algorithm options [Algorithim in this repo: TD3, SAC.]
+* Micro-ros integration for real-time communication with the robot.
+* Kalman filter for sensor fusion and odometry correction using robot_localization package.
+* ROS2 Navigation stack integration for testing.
