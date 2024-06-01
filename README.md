@@ -31,3 +31,9 @@ The applications enabled by the current framework:
 * ROS2 Navigation for testing robot navigation in real-world environments.
 
 # **Installation**
+
+## **Dependencies**
+
+*   Ubuntu 22.04 LTS (Jammy Jellyfish) [link](https://releases.ubuntu.com/jammy/)
+*   ROS 2 Humble Hawksbill [link](https://docs.ros.org/en/humble/Installation.html)
+*   PyTorch (Version: 2.3.0)
