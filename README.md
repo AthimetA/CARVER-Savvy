@@ -170,12 +170,12 @@ export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$WORKSPACE_DIR/src/abwu_gazebo/model
 System architecture of the project is shown below:
 
 <p float="left">
- <img src="media/SystemArchitecture.png" width="600">
+ <img src="media/SystemArchitecture.jpg" width="600">
 </p>
 
-The project is divided into two. 
-* The environment is created using ROS2 and Gazebo, where the agent is trained.
-* The trained agent is then used to navigate the robot in the real world. The robot is equipped with a 2D LiDAR, IMU, and encoders. The robot's odometry is corrected using the robot_localization package. 
-* The robot communicates with the agent using the micro-ROS package.
+The project is divided into three main components: the reinforcement learning agent, the reinforcement learning environment, and the robot. 
+* The agent is responsible for learning the optimal policy for navigating the robot in the environment. 
+* The environment is responsible for providing the agent with the necessary information to learn the policy.
+* The robot is responsible for executing the policy learned by the agent in the real world.
 
 ## **Training the Agent**
