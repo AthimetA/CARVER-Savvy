@@ -91,15 +91,14 @@ The next step is to download the correct CUDA version. This will depend on your 
 sudo apt install nvidia-cuda-toolkit
 ```
 You can then verify that CUDA is installed using:
-```
-nvcc -V
-```
-and
+
 ```
 nvidia-smi
 ```
-Which should display version numbers and GPU information.
-In case of doubt, consult one of the following resources: [one](https://varhowto.com/install-pytorch-ubuntu-20-04/), [two](https://pytorch.org/get-started/locally/), [three](https://docs.nvidia.com/deploy/cuda-compatibility/index.html)
+
+This should display the GPU information and driver version.
+
+Which should display version numbers and GPU information. If you see this, you are ready to train on the GPU.
 
 ## **Downloading the code base and building**
 <!-- Now it's time to create a workspace that will serve as the basis for our project. To do this, follow the tutorial [here](https://automaticaddison.com/how-to-create-a-workspace-ros-2-foxy-fitzroy/) -->
