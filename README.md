@@ -335,6 +335,7 @@ controller_manager:
 
 ```
 
+
 ## **Utilities**
 
 ### Visualization: visualize the neural network activity
@@ -343,4 +344,14 @@ The `drlutils_visualization.py` file contains the code for visualizing the neura
 
 <p float="left">
  <img src="media/visual.gif" width="600">
+</p>
+
+### Collision Probability: calculate the collision probability
+
+The `drl_obstacle_cp.py` or `drl_obstacle_cp_real.py` file contains the code for calculating the collision probability. You can edit this file to change the collision probability calculation method.
+
+There is a viusalization of the collision probability using rviz. Example of the visualization is shown below:
+
+<p float="left">
+ <img src="media/collision_probability.gif" width="600">
 </p>
