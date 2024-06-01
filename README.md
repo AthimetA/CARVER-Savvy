@@ -9,12 +9,11 @@
 # **Table of contents**
 * [Introduction](#introduction)
 * [Installation](#installation)
-* [Training](#training)
-  * [Loading a Stored Model](#loading-a-stored-model)
+* [Running the Project](#running-the-project)
+  * [Training the Agent](#training-the-agent)
   * [Optional Configuration](#optional-configuration)
   * [Utilities](#utilities)
 * [Physical Robot](#physical-robot)
-* [Troubleshooting](#troubleshooting)
 
 # **Introduction**
 
@@ -164,3 +163,19 @@ export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$WORKSPACE_DIR/src/abwu_gazebo/model
 ```
 
 **Note: Always make sure to first run ```source install/setup.bash``` or open a fresh terminal after building with `colcon build`.**
+
+
+# **Running the Project**
+
+System architecture of the project is shown below:
+
+<p float="left">
+ <img src="media/SystemArchitecture.png" width="600">
+</p>
+
+The project is divided into two. 
+* The environment is created using ROS2 and Gazebo, where the agent is trained.
+* The trained agent is then used to navigate the robot in the real world. The robot is equipped with a 2D LiDAR, IMU, and encoders. The robot's odometry is corrected using the robot_localization package. 
+* The robot communicates with the agent using the micro-ROS package.
+
+## **Training the Agent**
