@@ -1,7 +1,0 @@
-zhbbot_local_planer_name:
-  - ZhbbotVFFNode
-  - ZhbbotDWANode
-zhbbot_local_planner_python_file:
-  - zhbbot_local_planer_vff_avoidance.py
-  - zhbbot_local_planer_dwa.py
-zhbbot_selceted_local_planer: 0 # 0: VFF, 1: DWA

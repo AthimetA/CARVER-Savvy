@@ -1,1 +1,0 @@
-/home/nuc11/CARVER-Savvy/carverabwu/src/uros/micro_ros_msgs/msg/Entity.msg

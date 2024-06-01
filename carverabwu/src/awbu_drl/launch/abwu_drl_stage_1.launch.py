@@ -129,14 +129,7 @@ def generate_launch_description():
         executable='abwu_inverse_kinematic.py',
         name='AbwuIKNode',
     )
-
-    # Forward Kinematics Node
-    abwu_forward_kinematic = Node(
-        package=control_package_name,
-        executable='abwu_forward_kinematic.py',
-        name='AbwuFKNode',
-    )
-    
+   
     # Add Obstacle launch file
     drl_package_name = 'awbu_drl'
 
@@ -169,7 +162,6 @@ def generate_launch_description():
                     joint_state_broadcaster_spawner,
                     diff_drive_controllers,
                     abwu_inverse_kinemetic,
-                    abwu_forward_kinematic,
                     obstacle_stage_1,
                 ]
             )

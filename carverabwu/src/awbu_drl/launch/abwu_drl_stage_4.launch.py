@@ -130,13 +130,6 @@ def generate_launch_description():
         name='AbwuIKNode',
     )
 
-    # Forward Kinematics Node
-    abwu_forward_kinematic = Node(
-        package=control_package_name,
-        executable='abwu_forward_kinematic.py',
-        name='AbwuFKNode',
-    )
-        
     stage_temp_file_init(number=4)
 
     # ***** RETURN LAUNCH DESCRIPTION ***** #
@@ -155,7 +148,6 @@ def generate_launch_description():
                     joint_state_broadcaster_spawner,
                     diff_drive_controllers,
                     abwu_inverse_kinemetic,
-                    abwu_forward_kinematic,
                 ]
             )
         ),

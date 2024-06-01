@@ -1,1 +1,0 @@
-/home/nuc11/CARVER-Savvy/carverabwu/build/micro_ros_msgs/ament_cmake_environment_hooks/pythonpath.sh
