@@ -356,9 +356,11 @@ There is a viusalization of the collision probability using rviz. Example of the
  <img src="media/collision_probability.gif" width="800">
 </p>
 
-# **Micro-Ros-node**
+# **Physical Robot**
 
-## **Set up Micro-Ros**
+## **Micro-Ros-node**
+
+### **Set up Micro-Ros**
 
 ```bash
 cd microros_ws
@@ -367,8 +369,95 @@ ros2 run micro_ros_setup build_agent.sh
 source install/local_setup.bash
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
 ```
-## Microcontroller Programming
-- **IMU set-up**
+### Microcontroller Programming
+- **subscription**
+  ```cpp
+  void subscription_callback(const void *msgin) 
+  {
+    const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
+    // if velocity in x direction is 0 turn off LED, if 1 turn on LED
+
+    Sub_speedL = (msg->linear.x/ROBOT_WHEEL_RADIUS) - (msg->angular.z * ROBOT_BASE_WIDTH / (2*ROBOT_WHEEL_RADIUS));
+      Sub_speedR = (msg->linear.x/ROBOT_WHEEL_RADIUS) + (msg->angular.z * ROBOT_BASE_WIDTH / (2*ROBOT_WHEEL_RADIUS));
+    robotVelocityCmd.Vx = msg->linear.x;
+    robotVelocityCmd.Vy = msg->linear.y;
+    robotVelocityCmd.w = msg->angular.z;
+  }
+  ```
+- **timer**
+  ```cpp
+  void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
+  {
+    RCLC_UNUSED(last_call_time);
+    if (timer != NULL) {
+
+    inputcontrolL_msg.data = Sub_speedL;
+    inputcontrolR_msg.data = Sub_speedR;
+    wheelL_vel_msg.data = encoderLrad;
+    wheelR_vel_msg.data = encoderRrad;
+    // IMU_msg.angular_velocity.x = -1.0*IMU_data[0];
+    // IMU_msg.angular_velocity.y = IMU_data[2];
+    IMU_vz_msg.data = IMU_data[1];
+    IMU_ax_msg.data = -1.0* IMU_data[3];
+    // IMU_msg.linear_acceleration.y = IMU_data[5];
+    // IMU_msg.linear_acceleration.z = IMU_data[4];
+    // IMU_msg.orientation.w = IMU_data[6];
+    // IMU_msg.orientation.x = IMU_data[7];
+    // IMU_msg.orientation.y = IMU_data[8];
+    IMU_yaw_msg.data = IMU_data[8];
+
+    RCSOFTCHECK(rcl_publish(&wheelL_vel_publisher, &wheelL_vel_msg, NULL));
+    RCSOFTCHECK(rcl_publish(&wheelR_vel_publisher, &wheelR_vel_msg, NULL));
+    RCSOFTCHECK(rcl_publish(&IMU_yaw_publisher, &IMU_yaw_msg, NULL));
+    RCSOFTCHECK(rcl_publish(&IMU_vz_publisher, &IMU_vz_msg, NULL));
+    RCSOFTCHECK(rcl_publish(&IMU_ax_publisher, &IMU_ax_msg, NULL));
+    RCSOFTCHECK(rcl_publish(&inputL_publisher, &inputcontrolL_msg, NULL));
+    RCSOFTCHECK(rcl_publish(&inputR_publisher, &inputcontrolR_msg, NULL));
+    }
+  }
+  ```
+- **setup**
+  ```cpp
+  void uROSsetup()	
+  {
+    set_microros_serial_transports(Serial);
+    allocator = rcl_get_default_allocator();
+    //create init_options
+    RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
+    //create node
+    RCCHECK(rclc_node_init_default(&node, "mini_project_PMZB_node", "", &support));
+      // sync time
+      // rmw_uros_sync_session(1000);
+    //create publisher
+
+    RCCHECK(rclc_publisher_init_default(&wheelL_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "wheelL_vel"));
+    RCCHECK(rclc_publisher_init_default(&wheelR_vel_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "wheelR_vel"));
+
+    // RCCHECK(rclc_publisher_init_default(&inputL_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputL"));
+    // RCCHECK(rclc_publisher_init_default(&inputR_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "inputR"));
+    RCCHECK(rclc_publisher_init_default(&IMU_yaw_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_yaw"));
+    RCCHECK(rclc_publisher_init_default(&IMU_vz_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_vz"));
+    RCCHECK(rclc_publisher_init_default(&IMU_ax_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32), "IMU_ax"));
+    //create subscriber
+    RCCHECK(rclc_subscription_init_default(&subscriber, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "carversavvy_cmd_vel"));
+    //create timer
+    const unsigned int timer_timeout = 1000/sampling_time; //25 HZ
+    RCCHECK(rclc_timer_init_default(&timer, &support, RCL_MS_TO_NS(timer_timeout), timer_callback));
+    //create executor
+    RCCHECK(rclc_executor_init(&executor_pub, &support.context, 6, &allocator));
+    RCCHECK(rclc_executor_add_timer(&executor_pub, &timer));
+    RCCHECK(rclc_executor_add_subscription(&executor_pub, &subscriber, &Speed_msg, &subscription_callback, ON_NEW_DATA));
+  }
+  ```
+- **loop**
+  ```cpp
+  void uROSloop()
+  {
+    RCSOFTCHECK(rclc_executor_spin_some(&executor_pub, RCL_MS_TO_NS(1)));
+    delay(1);
+  }	
+  ```
+- **IMU setup**
 
   ```cpp
   if (!bno08x.begin_I2C()) {
@@ -423,6 +512,7 @@ ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
 				break;
   		}
   ```
+ 
   | Index | Size |         Data          |
   | :---: | :--: | :-------------------: |
   |   0   |  32  |  Angular Velocity X   |
@@ -438,8 +528,170 @@ ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
 
 
   The performance of the data transmission is approximately 25Hz.
+ - **Feedforward function**
+  ```cpp
+  float InverseTFofMotorL(float Velo, float PredictVelo)
+  {
+    static float VeloLast = 0.0;
+    static float Voltage = 0.0;
+    static float VoltageLast = 0.0;
+    static float Pwm = 0;
+    if (PredictVelo > 0) 
+    {
+      Voltage = ((PredictVelo*2.2937 +3.5326)) - ((2.2937 *Velo));
+    }
+    else
+    {
+      Voltage = ((2.076*PredictVelo -3.1637) )- ((2.076*Velo) );
+    }
+    Pwm = (Voltage * 255)/24.0;
+    return Pwm;
+  }
 
-# **Physical Robot**
+  float InverseTFofMotorR(float Velo, float PredictVelo)
+  {
+    static float VeloLast = 0.0;
+    static float Voltage = 0.0;
+    static float VoltageLast = 0.0;
+    static float Pwm = 0;
+    if (PredictVelo > 0)
+    {
+      Voltage = ((PredictVelo*2.2501 +2.7908)) - ((2.2501 *Velo));
+    }
+    else
+    {
+      Voltage = ((2.1973*PredictVelo -2.9272) )- ((2.1973*Velo) );
+    }
+    Pwm = (Voltage * 255)/24.0;
+
+    return Pwm;
+  }
+  ```
+ - **Control setup**
+ ```cpp
+void controlSetup(){
+	//move parameter to general_params.h
+	//parameter setup
+  pidParameter1.Kp = 0.034;
+  pidParameter1.Ki = 0.001;
+  pidParameter1.Kd = 0.1;
+  pidParameter1.sampleTime = 1000/sampling_time;
+
+  pidParameter2.Kp = 0.034;
+  pidParameter2.Ki = 0.001;
+  pidParameter2.Kd = 0.1;
+  pidParameter2.sampleTime = 1000/sampling_time;
+
+  pidParameter3.Kp = 0.048;
+  pidParameter3.Ki = 0.002;
+  pidParameter3.Kd = 0.0;
+  pidParameter3.sampleTime = 1000/sampling_time;
+
+  pidParameter4.Kp = 0.048;
+  pidParameter4.Ki = 0.002;
+  pidParameter4.Kd = 0.0;
+  pidParameter4.sampleTime = 1000/sampling_time;
+
+  motorR.pwmChannel = 1;
+  motorR.pwmPin = 25;
+  motorR.outAPin = 27;
+  motorR.outBPin = 23;
+
+  motorL.pwmChannel = 0;
+  motorL.pwmPin = 26;
+  motorL.outAPin = 33;
+  motorL.outBPin = 32;
+	//encoder 
+	control.initialEnc(&encoderL, "enc1", pinEncA1, pinEncB1, 4096); 
+  // encoder pin 17, 4
+  control.initialEnc(&encoderR, "enc2", pinEncA2, pinEncB2, 4096); 
+  // encoder pin 14, 19
+  control.initialEnc(&encoder, "enc1", pinEncA1, pinEncB1, 4096);
+	control.initialEnc(&encoder2, "enc2", pinEncA2, pinEncB2, 4096);
+	// //motor setup
+	control.initialMotor(&motorL, 100, 8);
+  control.initialMotor(&motorR, 100, 8);
+	// //PID setup
+	control.initialPID(&pidController1, &pidParameter1, limitOffset1);
+ 	control.initialPID(&pidController2, &pidParameter2, limitOffset2);
+	control.initialPID(&pidController3, &pidParameter3, limitOffset1);	
+	control.initialPID(&pidController4, &pidParameter4, limitOffset2);
+	control.zeroOutputSum(&pidController1);
+	control.zeroOutputSum(&pidController2);
+	control.zeroOutputSum(&pidController3);
+	control.zeroOutputSum(&pidController4);
+}
+  ```
+ - **Control loop**
+  ```cpp
+  void controlLoop()
+  {
+	// PID 100 HZ
+	if (millis() - preIntervelMillis >= (1000/sampling_time)) 
+	{
+		preIntervelMillis = millis();
+		// get velocity command
+		robotVelocityCmd.v1 = Sub_speedL;
+		robotVelocityCmd.v2 = Sub_speedR;
+		pidParameter1.setPoint = rad_to_enc(robotVelocityCmd.v1);// 4096 pulse per revolution
+		pidParameter2.setPoint = rad_to_enc(robotVelocityCmd.v2);
+		pidParameter3.setPoint = rad_to_enc(robotVelocityCmd.v1);
+		pidParameter4.setPoint = rad_to_enc(robotVelocityCmd.v2);
+		encoderLrad = enc_to_rad(control.getIntervalEnc(&encoder)); 
+    encoderRrad = enc_to_rad(control.getIntervalEnc(&encoder2));
+    //feed forward control
+		feedfowardL = InverseTFofMotorL(encoderLrad, robotVelocityCmd.v1);
+		feedfowardR = InverseTFofMotorR(encoderRrad, robotVelocityCmd.v2);
+		// setpoint
+		if (robotVelocityCmd.w != 0)
+		{
+			control.setpoint(&pidController3, &pidParameter3, &encoderL);
+			control.setpoint(&pidController4, &pidParameter4, &encoderR);
+			feedfowardL = feedfowardL +pidParameter3.output;
+			feedfowardR = feedfowardR +pidParameter4.output;
+		}
+		else
+		{
+			control.setpoint(&pidController1, &pidParameter1, &encoderL);
+			control.setpoint(&pidController2, &pidParameter2, &encoderR);
+			feedfowardL = feedfowardL +pidParameter1.output;
+			feedfowardR = feedfowardR +pidParameter2.output;
+		}
+		if (feedfowardL > 250)
+		{
+			feedfowardL = 250;
+		}
+		if (feedfowardR > 250)
+		{
+			feedfowardR = 250;
+		}
+		if (robotVelocityCmd.Vx == 0 && robotVelocityCmd.w == 0) //all stop
+		{
+			control.drive(&motorL, 0);
+			control.drive(&motorR, 0);
+			control.zeroOutputSum(&pidController1);
+			control.zeroOutputSum(&pidController2);
+			control.zeroOutputSum(&pidController3);
+			control.zeroOutputSum(&pidController4);
+		}
+		if (pidParameter1.setPoint == 0 && pidParameter2.setPoint == 0)
+		{
+			control.drive(&motorL, 0);
+			control.drive(&motorR, 0);
+			control.zeroOutputSum(&pidController1);
+			control.zeroOutputSum(&pidController2);
+			control.zeroOutputSum(&pidController3);
+			control.zeroOutputSum(&pidController4);
+		}
+		else
+		{           
+		// drive
+			control.drive(&motorL, feedfowardL);
+			control.drive(&motorR, feedfowardR);
+		}
+		}
+  }  
+  ```
 
 ## **ROS Bridge**
 
