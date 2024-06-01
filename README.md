@@ -184,13 +184,13 @@ The project is divided into three main components: the reinforcement learning ag
 To train the agent, we need to run the following commands in separate terminals:
 
 1. Start the Gazebo simulation:
-```
+```bash
 # The stage number can be changed to choose a different stage
 ros2 launch awbu_drl abwu_drl_stage_5.launch
 ```
 
 2. Start the reinforcement environment:
-```
+```bash
 ros2 launch awbu_drl abwu_drl_env.launch
 ```
 
@@ -198,7 +198,7 @@ Note: the obstacle collision probability calculation node in simulation better b
 
 Your can change the obstacle detection and velocity calculation method by changing the `drl_obstacle_cp` node in the `abwu_drl_env.launch.py` file.
 
-```
+```python
 
     drl_obstacle_cp = Node(
             package='awbu_drl',
@@ -215,7 +215,7 @@ Note: By using drl_obstacle_cp_real.py script, the Evaluation matrix is calculat
 
 When no arguments are provided, the agent will run in the default mode. The default mode is agent = 'td3' and mode = 'train'. The agent will start training and the training progress will be displayed in the terminal. 
 
-```
+```bash
 ros2 run awbu_drl drl_agent
 ```
 
@@ -223,21 +223,20 @@ for Optinal mode, you can run the agent with the following command:
 
 TD3:
 
-```
+```bash
 ros2 run awbu_drl drl_agent td3
 ```
 SAC:
 
-```
+```bash
 ros2 run awbu_drl drl_agent sac
 ```
 
 Training and Testing, can be run with following command:
-```
+```bash
 ros2 run awbu_drl drl_agent td3 train
 ```
-
-```
+```bash
 ros2 run awbu_drl drl_agent td3 test
 ```
 
@@ -263,7 +262,7 @@ for dynamic goal, the goal position can be changed by editing the model file in 
 
 When edit Physic in Gazebo, if you want to run the simulation in real-time (x1) or faster (x2) you can change in the world file as shown below:
 
-```
+```yaml
     <physics type="ode">
 
       <!-- Physics Rule 
