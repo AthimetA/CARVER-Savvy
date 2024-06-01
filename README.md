@@ -9,7 +9,6 @@
 # **Table of contents**
 * [Introduction](#introduction)
 * [Installation](#installation)
-  * [Manual Installation](#manual-installation)
 * [Training](#training)
   * [Loading a Stored Model](#loading-a-stored-model)
   * [Optional Configuration](#optional-configuration)
@@ -29,4 +28,6 @@ The applications enabled by the current framework:
 * Develop custom Deep Reinforcement Learning (DRL) algorithm options [Algorithim in this repo: TD3, SAC.]
 * Micro-ros integration for real-time communication with the robot.
 * Kalman filter for sensor fusion and odometry correction using robot_localization package.
-* ROS2 Navigation stack integration for testing.
+* ROS2 Navigation for testing robot navigation in real-world environments.
+
+# **Installation**
