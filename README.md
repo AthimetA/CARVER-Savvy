@@ -219,20 +219,25 @@ ros2 run awbu_drl drl_agent
 ```
 
 for Optinal mode, you can run the agent with the following command:
-```
-TD3:
-ros2 run awbu_drl drl_agent td3
 
+TD3:
+
+```
+ros2 run awbu_drl drl_agent td3
+```
 SAC:
 
+```
 ros2 run awbu_drl drl_agent sac
 ```
 
 Training and Testing, can be run with following command:
 ```
 ros2 run awbu_drl drl_agent td3 train
+```
 
-ros2 run awbu_drl drl_agent sac test
+```
+ros2 run awbu_drl drl_agent td3 test
 ```
 
 ## **Optional Configuration**
