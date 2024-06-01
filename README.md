@@ -37,3 +37,13 @@ The applications enabled by the current framework:
 *   Ubuntu 22.04 LTS (Jammy Jellyfish) [link](https://releases.ubuntu.com/jammy/)
 *   ROS 2 Humble Hawksbill [link](https://docs.ros.org/en/humble/Installation.html)
 *   PyTorch (Version: 2.3.0)
+
+## **Installing ROS2**
+Install ROS 2 Humble according to the following guide: [link](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html). Recommended installation is the desktop version (ROS, RViz, demos, tutorials). <br>
+To prevent having to manually source the setup script every time, add the following line at the end of your `~/.bashrc` file:
+
+```
+# Replace ".bash" with your shell if you're not using bash
+# Possible values are: setup.bash, setup.sh, setup.zsh
+source /opt/ros/humble/setup.bash
+```
