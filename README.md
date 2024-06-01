@@ -53,23 +53,23 @@ source /opt/ros/humble/setup.bash
 The last tested version for this project was Python 3.10.12
 
 Install pip3 (python package manager for python 3) as follows:
-```
+```bash
 sudo apt install python3-pip
 ```
 
 To install the tested version of PyTorch (2.3.0) with CUDA support, run the following command:
-```
+```bash
 pip3 install torch torchvision torchaudio
 ```
 
 or without CUDA support:
-```
+```bash
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
 To install the `pyqtgraph` and `PyQt` with is optional and only necessary if you want to visualize the neural network activity. 
 
-```
+```bash
 pip3 install pyqtgraph PyQt5
 ```
 
@@ -89,7 +89,7 @@ The next step is to download the correct CUDA version. This will depend on your 
 
 You can then verify that CUDA is installed using:
 
-```
+```bash
 nvidia-smi
 ```
 
@@ -113,23 +113,23 @@ Example output:
 ## **Downloading the Repository**
 
 Open a terminal in the desired location for the new workspace. Clone the repository using:
-```
+```bash
 git clone https://github.com/AthimetA/CARVER-Savvy.git
 ```
 
 `cd` into the directory and make sure you are on the main branch
-```
+```bash
 cd CARVER-Savvy/
 git checkout main
 ```
 
 Next, the ros2 dependencies by running (this will install all the necessary dependencies for the project):
-```
+```bash
 source install.bash
 ```
 
 Next, Build the workspace using colcon:
-```
+```bash
 # If you are in the CARVER-Savvy directory
 cd carverabwu/
 # Build the workspace using colcon
@@ -137,18 +137,18 @@ cd carverabwu/
 colcon build --symlink-install
 ```
 After colcon has finished building source the repository using: 
-```
+```bash
 source install/setup.bash
 ```
 
 or add the following line to your `~/.bashrc` file (if the repository is in your home directory):
-```
+```bash
 source ~/CARVER-Savvy/carverabwu/install/setup.bash
 ```
 
 The last thing we need to do before running the code is add a few lines to our `~/.bashrc` file so that they are automatically executed whenever we open a new terminal. Add the following lines at the end of your `~/.bashrc` file and **replace the path to the workspace with the path to your workspace**:
 
-```
+```bash
 # ROS2 domain id for network communication, machines with the same ID will receive each others' messages
 export ROS_DOMAIN_ID=1
 
@@ -160,6 +160,7 @@ export SIM_MODEL_PATH=$WORKSPACE_DIR/src/abwu_gazebo/models/
 
 #Allow gazebo to find models
 export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$WORKSPACE_DIR/src/abwu_gazebo/models
+
 ```
 
 **Note: Always make sure to first run ```source install/setup.bash``` or open a fresh terminal after building with `colcon build`.**
