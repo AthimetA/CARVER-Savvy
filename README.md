@@ -211,8 +211,29 @@ Your can change the obstacle detection and velocity calculation method by changi
 Note: By using drl_obstacle_cp_real.py script, the Evaluation matrix is calculation is <b>not implemented</b> yet.
 
 3. Start the reinforcement learning agent:
+
+When no arguments are provided, the agent will run in the default mode. The default mode is agent = 'td3' and mode = 'train'. The agent will start training and the training progress will be displayed in the terminal. 
+
 ```
 ros2 run awbu_drl drl_agent
 ```
 
-The agent will start training and the training progress will be displayed in the terminal. 
+for Optinal mode, you can run the agent with the following command:
+```
+TD3:
+ros2 run awbu_drl drl_agent td3
+
+SAC:
+
+ros2 run awbu_drl drl_agent sac
+```
+
+Training and Testing, can be run with following command:
+```
+ros2 run awbu_drl drl_agent td3 train
+
+ros2 run awbu_drl drl_agent sac test
+```
+
+## **Optional Configuration**
+
