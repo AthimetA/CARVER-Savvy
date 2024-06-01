@@ -179,3 +179,38 @@ The project is divided into three main components: the reinforcement learning ag
 * The robot is responsible for executing the policy learned by the agent in the environment. In training, the robot is simulated in Gazebo and the micro-ros node is used to communicate with the environment. In testing, the robot is the physical robot.
 
 ## **Training the Agent**
+
+To train the agent, we need to run the following commands in separate terminals:
+
+1. Start the Gazebo simulation:
+```
+# The stage number can be changed to choose a different stage
+ros2 launch awbu_drl abwu_drl_stage_5.launch
+```
+
+2. Start the reinforcement environment:
+```
+ros2 launch awbu_drl abwu_drl_env.launch
+```
+
+Note: the obstacle collision probability calculation node in simulation better be running using drl_obstacle_cp.py script for better detection of obstacles. for the real obstacle collision probability calculation, the detection of obstacles is done using the lidar data and the velocity of the obstacles is calculated using the kalman filter. Your can change the obstacle detection and velocity calculation method by changing the `drl_obstacle_cp` node in the `abwu_drl_env.launch.py` file.
+
+```
+
+    drl_obstacle_cp = Node(
+            package='awbu_drl',
+            executable='drl_obstacle_cp_real.py', # change to drl_obstacle_cp.py for simulation
+            name='drl_obstacle_cp',
+            parameters=[{'use_sim_time': use_sim_time}],
+         )
+
+``` 
+
+Note: By using drl_obstacle_cp_real.py script, the Evaluation matrix is calculation is not implemented yet.
+
+3. Start the reinforcement learning agent:
+```
+ros2 run awbu_drl drl_agent
+```
+
+The agent will start training and the training progress will be displayed in the terminal. 
