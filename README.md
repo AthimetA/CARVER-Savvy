@@ -863,6 +863,7 @@ To run the DRL agent in the real world, you can use the DRL package. To launch t
 ```bash
 ros2 launch awbu_drl abwu_test.launch.py
 ```
+Note: For the real world, additional behaviors are added to the DRL agent. which prevents the robot from colliding with obstacles and allows the robot to reach the goal position.
 
 Which contains all the necessary nodes to run the DRL agent in the real world.
 
@@ -872,6 +873,18 @@ ros2 launch awbu_drl nav2.launch.py
 ```
 
 Then if you want to control the robot with the DRL agent, you can use the following command:
+
+Example of setting the goal position:
+
 ```bash
-ros2 service call /drl_agent/control "mode: 'train'"
+ros2 service call /abwu_drl_set_goal awbu_interfaces/srv/UserSetGoal "{goal_pose_x: 5.0,goal_pose_y: 0.0}"
 ```
+
+
+## **Real world implementation suggestion**
+
+From the implementation of deep reinforcement learning in a real-world environment, it was found that the agent was able to control a robot to reach the desired destination. However, the mismatch between the maximum and minimum linear and angular velocities of the robot in simulation and the real world resulted in some failed episodes where the agent could not avoid certain obstacles. 
+
+Additionally, LiDAR sometimes reflects off surfaces in a way that causes the sensor to misinterpret the presence or absence of obstacles. This issue can result in false positives, where the sensor detects an obstacle that isn't there, or false negatives, where it fails to detect an actual obstacle. These inaccuracies can significantly impact the performance of the agent.
+
+To enhance performance, refine the simulation parameters to better reflect real-world conditions or implement a system that allows agents to train in real-world scenarios. Additionally, improve LiDAR data processing algorithms to more effectively handle reflective surfaces. Utilizing sensor fusion techniques by combining LiDAR with other sensors, such as cameras, can also help mitigate LiDAR limitations and enhance overall obstacle detection and agent performance.
