@@ -257,5 +257,5 @@ The `drlutils_reward.py` file contains the reward design. You can change the rew
 The `drlutils_visualization.py` file contains the code for visualizing the neural network activity. You can edit this file to visualize the neural network activity or any other information you wish to visualize.
 
 <p float="left">
- <img src="media/vizualization.gif" width="600">
+ <img src="media/visual.gif" width="600">
 </p>
