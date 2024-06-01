@@ -17,7 +17,7 @@
   * [Micro-Ros-node](#micro-ros-node)
   * [ROS Bridge](#ros-bridge)
   * [DRL Agent](#drl-agent)
-  * [Real world implementation suggestions](#real-world-implementation-suggestions)
+  * [Real World Implementation Suggestions](#real-world-implementation-suggestions)
 
 # **Introduction**
 
@@ -882,7 +882,7 @@ ros2 service call /abwu_drl_set_goal awbu_interfaces/srv/UserSetGoal "{goal_pose
 ```
 
 
-## **Real world implementation suggestion**
+## **Real World Implementation Suggestions**
 
 From the implementation of deep reinforcement learning in a real-world environment, it was found that the agent was able to control a robot to reach the desired destination. However, the mismatch between the maximum and minimum linear and angular velocities of the robot in simulation and the real world resulted in some failed episodes where the agent could not avoid certain obstacles. 
 
