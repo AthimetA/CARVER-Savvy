@@ -249,3 +249,13 @@ The `settings/constparams.py` file contains most of the interesting parameters t
 ### Reward: tweak reward design
 
 The `drlutils_reward.py` file contains the reward design. You can change the reward function to improve the agent's performance.
+
+## **Utilities**
+
+### Visualization: visualize the neural network activity
+
+The `drlutils_visualization.py` file contains the code for visualizing the neural network activity. You can edit this file to visualize the neural network activity or any other information you wish to visualize.
+
+<p float="left">
+ <img src="media/vizualization.gif" width="600">
+</p>
