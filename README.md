@@ -857,3 +857,21 @@ slam_map_file = LaunchConfiguration('map', default=slam_map_path)
 
 
 ## **DRL Agent** 
+
+To run the DRL agent in the real world, you can use the DRL package. To launch the DRL agent, run the following command:
+
+```bash
+ros2 launch awbu_drl abwu_test.launch.py
+```
+
+Which contains all the necessary nodes to run the DRL agent in the real world.
+
+(Optional) if you want to add the Nav2 package to the DRL agent, you can use the following command:
+```bash
+ros2 launch awbu_drl nav2.launch.py
+```
+
+Then if you want to control the robot with the DRL agent, you can use the following command:
+```bash
+ros2 service call /drl_agent/control "mode: 'train'"
+```
