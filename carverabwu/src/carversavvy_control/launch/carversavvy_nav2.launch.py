@@ -154,13 +154,13 @@ def generate_launch_description():
     return LaunchDescription([
         
         # Robot State Publisher
-        # node_robot_state_publisher,
+        node_robot_state_publisher,
 
         # Forward Kinematics Node
-        # carversavvy_forward_kinematic,
+        carversavvy_forward_kinematic,
 
         # EKF Node
-        # ekf_filter_node_odom,
+        ekf_filter_node_odom,
 
         # RPLidar Node
         rplidar_node,

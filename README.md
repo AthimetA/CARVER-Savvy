@@ -355,3 +355,126 @@ There is a viusalization of the collision probability using rviz. Example of the
 <p float="left">
  <img src="media/collision_probability.gif" width="600">
 </p>
+
+# **Physical Robot**
+
+## **ROS Bridge**
+
+This node serves to compute Wheel Odometry and calibrate IMU data. It takes inputs such as Wheel Velocity and Raw IMU data from topics sent by the ESP32.
+```python
+ # Create the odometry message
+odom_msg = Odometry()
+odom_msg.header.stamp = self.get_clock().now().to_msg()
+odom_msg.header.frame_id = 'odom'
+odom_msg.child_frame_id = 'base_link'
+
+# Set the position
+odom_msg.pose.pose.position.x = self.x
+odom_msg.pose.pose.position.y = self.y
+odom_msg.pose.pose.position.z = 0.0
+
+# Convert yaw angle to quaternion
+qx,qy,qz,qw = tf_transformations.quaternion_from_euler(0, 0, self.theta)
+odom_msg.pose.pose.orientation.x = qx
+odom_msg.pose.pose.orientation.y = qy
+odom_msg.pose.pose.orientation.z = qz
+odom_msg.pose.pose.orientation.w = qw
+
+# Set the velocity
+odom_msg.twist.twist.linear.x = vx
+odom_msg.twist.twist.linear.y = 0.0
+odom_msg.twist.twist.angular.z = wz
+
+# Publish the odometry message
+self.odom_pub.publish(odom_msg)
+```
+
+## **EKF Configuration**
+
+This is the Odom and IMU Configuration for the EKF. The EKF is used to fuse the odometry and IMU data to get a more accurate odometry data. The EKF configuration file is located at `carversavvy_control/config/carversavvy_ekf.yaml`.
+
+```yaml
+odom0: carversavvy/wheel/odom
+odom0_config: [false, false, false,   # x y z
+              false, false, true,   # roll pitch yaw
+              true,  true,  false,   # vx vy vz
+              false, false, true,    # vroll vpitch vyaw
+              false, false, false]   # ax ay az
+
+imu0: /carversavvy/imu_ros
+imu0_config: [false, false, false,   # x y z
+              false, false, true,    # roll pitch yaw
+              false, false, false,   # vx vy vz
+              false,  false, true,    # vroll vpitch vyaw
+              true,  false, false]    # ax ay az
+```
+
+## **Launch Robot with just Rviz2**
+
+To launch the robot in the real world with just Rviz2, run the following command:
+
+```bash
+ros2 launch carversavvy_control carversavvy_rviz.launch.py
+```
+
+Note: The robot will not move in this case, it is just for visualization purposes.
+
+but if you want to move the robot in the real world, you can run the following command along with the previous command:
+
+```bash
+ros2 run carversavvy_control test.py
+```
+
+Note: This file is just a test file to move the robot STRAIGHT LINE. (I recommend using  moode 1 only)
+
+Moving the robot with a flexible distance and a 7-segment Trajectory Generation that you can choose by changing the distance variable in the file (self.Dist). Also yu can change the Jmax, Amax, Vmax for the trajectory generation.
+
+```python
+# Init Trahectory Profile
+if self.mode == 1:
+    self.Jmax = 0.2
+    self.Amax = 0.1
+    self.Vmax = 0.2
+    self.Dist = 1.0
+```
+
+## **Launch Robot with SLAM**
+
+To collect the map data of the environment, you can use the SLAM package. To launch the robot with SLAM, run the following command:
+
+```bash
+ros2 launch carversavvy_control carversavvy_slam.launch.py
+```
+
+Note: If you want to use the SLAM to localization. You can go to carversavvy_control/config/mapper_params_online_async.yaml and change the mode setting:
+
+```yaml
+# ROS Parameters
+odom_frame: odom
+map_frame: map
+base_frame: base_footprint
+scan_topic: /scan
+mode: localization
+```
+
+Note2: After collect the map data of the environment, you can save the map to the folder `carversavvy_control/maps`. And you can use this map to navigate the robot in the real world.
+
+## **Launch Robot with Navigation**
+
+To navigate the robot in the real world, you can use the Navigation package. To launch the robot with Navigation, run the following command:
+
+```bash
+ros2 launch carversavvy_control carversavvy_nav2.launch.py
+```
+
+Note: If you want to use your own map for the Navigation to localization. You can go to carversavvy_control/launch/carversavvy_nav2.launch.py and change the mode setting:
+
+```python
+slam_map_path = os.path.join(
+    get_package_share_directory(package_name),
+    'maps',
+    'FIBOFL5.yaml')
+
+slam_map_file = LaunchConfiguration('map', default=slam_map_path)
+```
+
