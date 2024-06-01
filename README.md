@@ -105,42 +105,32 @@ git clone https://github.com/AthimetA/CARVER-Savvy.git
 
 `cd` into the directory and make sure you are on the main branch
 ```
-cd turtlebot3_drlnav
+cd CARVER-Savvy/
 git checkout main
 ```
 
-Next, install the correct rosdep tool
+Next, install the ros2 dependencies by running:
 ```
 sudo apt install python3-rosdep2
 ```
 
-Then initialize rosdep by running
+Then initialize rosdep by running (this will install all the necessary dependencies for the project):
 ```
-rosdep update
-```
-
-Now we can use rosdep to install all ROS packages needed by our repository
-```
-rosdep install -i --from-path src --rosdistro foxy -y
+source install.bash
 ```
 
-Now that we have all of the packages in place it is time to build the repository. First update your package list
+Next, Build the workspace using colcon:
 ```
-sudo apt update
+colcon build --symlink-install
 ```
-
-Then install the build tool **colcon** which we will use to build our ROS2 package
-```
-sudo apt install python3-colcon-common-extensions
-```
-
-Next, it's time to actually build the repository code!
-```
-colcon build
-```
-After colcon has finished building source the repository
+After colcon has finished building source the repository using: 
 ```
 source install/setup.bash
+```
+
+or add the following line to your `~/.bashrc` file (if the repository is in your home directory):
+```
+source ~/CARVER-Savvy/carverabwu/install/setup.bash
 ```
 
 The last thing we need to do before running the code is add a few lines to our `~/.bashrc` file so that they are automatically executed whenever we open a new terminal. Add the following lines at the end of your `~/.bashrc` file and **replace ~/path/to/turtlebot3_drlnav/repo with the path where you cloned the repository. (e.g. ~/turtlebot3_drlnav)**
