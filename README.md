@@ -242,3 +242,10 @@ ros2 run awbu_drl drl_agent td3 test
 
 ## **Optional Configuration**
 
+### Settings: change parameters
+
+The `settings/constparams.py` file contains most of the interesting parameters that you might wish to change, including the DRL hyperparameters.
+
+### Reward: tweak reward design
+
+The `drlutils_reward.py` file contains the reward design. You can change the reward function to improve the agent's performance.
