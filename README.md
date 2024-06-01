@@ -3,7 +3,7 @@
 ## A ROS2 Project for DRL autonomous navigation on mobile robots with LiDAR.
 
 <p float="left">
- <img src="media/project_overview.gif" width="600">
+ <img src="media/project_overview.gif" width="800">
 </p>
 
 # **Table of contents**
@@ -171,7 +171,7 @@ export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$WORKSPACE_DIR/src/abwu_gazebo/model
 System architecture of the project is shown below:
 
 <p float="left">
- <img src="media/SystemArchitecture.jpg" width="600">
+ <img src="media/SystemArchitecture.jpg" width="800">
 </p>
 
 The project is divided into three main components: the reinforcement learning agent, the reinforcement learning environment, and the robot. 
@@ -343,7 +343,7 @@ controller_manager:
 The `drlutils_visualization.py` file contains the code for visualizing the neural network activity. You can edit this file to visualize the neural network activity or any other information you wish to visualize.
 
 <p float="left">
- <img src="media/visual.gif" width="600">
+ <img src="media/visual.gif" width="800">
 </p>
 
 ### Collision Probability: calculate the collision probability
@@ -353,7 +353,7 @@ The `drl_obstacle_cp.py` or `drl_obstacle_cp_real.py` file contains the code for
 There is a viusalization of the collision probability using rviz. Example of the visualization is shown below:
 
 <p float="left">
- <img src="media/collision_probability.gif" width="600">
+ <img src="media/collision_probability.gif" width="800">
 </p>
 
 # **Physical Robot**
@@ -361,6 +361,13 @@ There is a viusalization of the collision probability using rviz. Example of the
 ## **ROS Bridge**
 
 This node serves to compute Wheel Odometry and calibrate IMU data. It takes inputs such as Wheel Velocity and Raw IMU data from topics sent by the ESP32.
+<p float="left">
+ <img src="media/velocity.png" width="800">
+</p>
+<p float="left">
+ <img src="media/velocity2.png" width="800">
+</p>
+
 ```python
  # Create the odometry message
 odom_msg = Odometry()
